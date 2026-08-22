@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
-    "art-supabase-pro": "https://codeload.github.com/869123771/art-supabase-pro/tar.gz/84a73ca13e5d3f716d8eb756be730e1a11d50d38",
+    "art-supabase-pro": "https://codeload.github.com/869123771/art-supabase-pro/tar.gz/7f3259e88386576ab9718c5bb527ded9cd66fc75",
     "dayjs": "^1.11.21",
     "element-plus": "^2.14.2",
     "lodash-es": "^4.18.1",
