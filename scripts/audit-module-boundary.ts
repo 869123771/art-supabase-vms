@@ -4,7 +4,7 @@ import path from 'node:path'
 const repositoryRoot = process.cwd()
 const sourceRoot = path.join(repositoryRoot, 'src')
 const allowedSourceRoots = new Set(['api', 'views'])
-const allowedRootFiles = new Set(['index.ts'])
+const allowedRootFiles = new Set(['index.ts', 'main.ts'])
 const sourceExtensions = new Set(['.ts', '.tsx', '.vue'])
 const violations: string[] = []
 
@@ -19,6 +19,7 @@ for (const entry of readdirSync(sourceRoot, { withFileTypes: true })) {
 
 const requiredPaths = [
   'src/index.ts',
+  'src/main.ts',
   'src/views/archive-manage',
   'src/views/basic-info',
   'src/views/vehicle-manage',

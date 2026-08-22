@@ -11,9 +11,27 @@ VMS 车辆管理业务模块。这个仓库只维护 VMS 领域代码，不包�
 - `supabase/functions/ai-vehicle-health-advisor`：VMS 专属 Edge Function。
 - `tests/unit`：VMS 表单写入模型和车辆健康规则测试。
 
-## 运行方式
+## 独立运行与部署
 
-`art-supabase-pro` 是唯一公共宿主。主仓通过 Git submodule 固定本仓提交，并以 `@vms/*` 装载 VMS 源码。启动、登录、菜单、权限和部署由主仓统一完成：
+VMS 可以独立启动和部署，但公共运行时仍只维护在 `art-supabase-pro`。安装依赖时会拉取主平台的固定提交，复用同一套登录、租户、菜单、权限、布局、路由、公共组件、store 和 Supabase 客户端；本仓只注册 VMS 页面。
+
+```powershell
+pnpm install
+pnpm dev
+```
+
+生产构建统一输出到 `docs/`，默认静态路径为 `/art-supabase-vms/`：
+
+```powershell
+pnpm build
+pnpm preview
+```
+
+`docs/.nojekyll` 会随构建自动生成，可将 `docs/` 直接作为 Pages 发布目录。若部署在域名根目录，可在构建时覆盖 `VITE_BASE_URL=/`。
+
+## 由主平台统一运行
+
+主仓通过 Git submodule 固定本仓提交，并以 `@vms/*` 装载同一份 VMS 源码：
 
 ```powershell
 git clone --recurse-submodules https://gitee.com/wangyanghub/art-supabase-pro.git
@@ -22,7 +40,7 @@ pnpm install
 pnpm dev
 ```
 
-更新 VMS 后，先在本仓提交并推送，再在主仓更新 `modules/art-supabase-vms` 的提交指针。这样 VMS 业务只维护一份，同时主仓构建可复现。
+更新 VMS 后，先在本仓提交并推送，再在主仓更新 `modules/art-supabase-vms` 的提交指针。这样 VMS 业务只维护一份，同时独立部署和主平台构建都可复现。
 
 ## 路由与依赖边界
 

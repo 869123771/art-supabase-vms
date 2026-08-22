@@ -4,6 +4,8 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "strict": true,
+    "ignoreDeprecations": "6.0",
+    "types": ["node", "vite/client"],
     "jsx": "preserve",
     "jsxImportSource": "vue",
     "lib": ["esnext", "dom"],
@@ -12,9 +14,36 @@
     "baseUrl": ".",
     "paths": {
       "@vms/*": ["src/*"],
-      "@/*": ["../art-supabase-pro/src/*", "../../src/*"]
+      "@/*": ["../../src/*", "../art-supabase-pro/src/*", "node_modules/art-supabase-pro/src/*"],
+      "@views/*": [
+        "../../src/views/*",
+        "../art-supabase-pro/src/views/*",
+        "node_modules/art-supabase-pro/src/views/*"
+      ],
+      "@styles/*": [
+        "../../src/assets/styles/*",
+        "../art-supabase-pro/src/assets/styles/*",
+        "node_modules/art-supabase-pro/src/assets/styles/*"
+      ],
+      "@utils/*": [
+        "../../src/utils/*",
+        "../art-supabase-pro/src/utils/*",
+        "node_modules/art-supabase-pro/src/utils/*"
+      ],
+      "@stores/*": [
+        "../../src/store/*",
+        "../art-supabase-pro/src/store/*",
+        "node_modules/art-supabase-pro/src/store/*"
+      ]
     }
   },
-  "include": ["src/**/*", "tests/unit/**/*.ts", "supabase/functions/**/*.ts"],
+  "include": [
+    "vite.config.ts",
+    "src/**/*",
+    "tests/unit/**/*.ts",
+    "../../src/**/*.d.ts",
+    "../art-supabase-pro/src/**/*.d.ts",
+    "node_modules/art-supabase-pro/src/**/*.d.ts"
+  ],
   "exclude": ["node_modules"]
 }
