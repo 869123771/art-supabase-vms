@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
-    "art-supabase-pro": "git+https://github.com/869123771/art-supabase-pro.git#b9da287ad8def6956abc0ed38ee7a041827b879a",
+    "art-supabase-pro": "https://codeload.github.com/869123771/art-supabase-pro/tar.gz/84a73ca13e5d3f716d8eb756be730e1a11d50d38",
     "dayjs": "^1.11.21",
     "element-plus": "^2.14.2",
     "lodash-es": "^4.18.1",
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.1",
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "^26.0.1",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vitejs/plugin-vue-jsx": "^5.1.6",
