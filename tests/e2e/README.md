@@ -30,7 +30,7 @@ pnpm.cmd test:e2e:core
 pnpm.cmd check:ci
 ```
 
-测试准备阶段通过 Supabase 密码认证建立隔离会话，避免 Cloudflare Turnstile 阻断自动化。默认读取登录页自带的演示账号；需要覆盖账号、远程地址或本机浏览器通道时设置环境变量：
+测试准备阶段只通过 Supabase API 建立隔离会话，不在 VMS 内复制平台登录页面。默认使用测试账号；需要覆盖账号、远程地址或本机浏览器通道时设置环境变量：
 
 ```powershell
 $env:E2E_EMAIL='your-account@example.com'

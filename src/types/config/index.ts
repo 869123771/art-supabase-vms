@@ -160,6 +160,8 @@ export interface EnvConfig {
   VITE_PORT: string
   // 应用基础路径
   VITE_BASE_URL: string
+  // 平台统一登录地址
+  VITE_PLATFORM_URL?: string
   // API 地址
   VITE_API_URL: string
   // API provider: supabase / java

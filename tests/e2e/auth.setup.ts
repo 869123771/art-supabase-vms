@@ -21,9 +21,8 @@ function keysToCamelDeep(value: unknown): unknown {
 }
 
 function readDemoCredentials(): { email: string; password: string } {
-  const loginSource = fs.readFileSync('src/views/auth/login/index.vue', 'utf8')
-  const email = process.env.E2E_EMAIL || loginSource.match(/email:\s*'([^']+)'/)?.[1]
-  const password = process.env.E2E_PASSWORD || loginSource.match(/password:\s*'([^']+)'/)?.[1]
+  const email = process.env.E2E_EMAIL || '624944977@qq.com'
+  const password = process.env.E2E_PASSWORD || '123456'
 
   if (!email || !password) {
     throw new Error('请通过 E2E_EMAIL 和 E2E_PASSWORD 提供视觉回归账号')
@@ -124,7 +123,6 @@ setup('登录并保存视觉回归会话', async ({ page }) => {
     }
   )
 
-  await page.goto('/#/auth/login', { waitUntil: 'domcontentloaded' })
   await page.goto('/#/vms')
   await expect(page).not.toHaveURL(/#\/(?:auth\/)?login/, { timeout: 30_000 })
   await page.context().storageState({ path: authFile })

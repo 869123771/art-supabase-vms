@@ -48,7 +48,6 @@ import { useUserStore } from '@/store/modules/user'
 import { useMenuStore } from '@/store/modules/menu'
 import { setWorktab } from '@/utils/navigation'
 import { setPageTitle } from '@/utils/router'
-import { RoutesAlias } from '../routesAlias'
 import { staticRoutes } from '../routes/staticRoutes'
 import { loadingService } from '@/utils/ui'
 import { useCommon } from '@/hooks/core/useCommon'
@@ -60,6 +59,7 @@ import TreeUtils from '@utils/tree'
 import type { AppRouteRecord } from '@/types'
 import type { AppRouteRecordRaw } from '@/utils/router'
 import { resolveLegacyBusinessPath } from '../business-paths'
+import { redirectToPlatformLogin } from '@/utils/platform-login'
 
 // 路由注册器实例
 let routeRegistry: RouteRegistry | null = null
@@ -170,9 +170,9 @@ async function handleRouteGuard(
   }
 
   // 1. 检查登录状态
-  const loginRedirect = getLoginRedirect(to, userStore)
-  if (loginRedirect) {
-    return loginRedirect
+  const shouldStopForPlatformLogin = await redirectUnauthenticatedUser(to, userStore)
+  if (shouldStopForPlatformLogin) {
+    return false
   }
 
   // 2. 检查路由初始化是否已失败（防止死循环）
@@ -217,21 +217,22 @@ async function handleRouteGuard(
  * 处理登录状态
  * @returns 未登录时的登录页重定向；允许访问时返回 undefined
  */
-function getLoginRedirect(
+async function redirectUnauthenticatedUser(
   to: RouteLocationNormalized,
   userStore: ReturnType<typeof useUserStore>
-): RouteLocationRaw | undefined {
-  // 已登录或访问登录页或静态路由，直接放行
-  if (userStore.isLogin || to.path === RoutesAlias.Login || isStaticRoute(to.path)) {
-    return undefined
+): Promise<boolean> {
+  // 静态异常页和文件预览仍可匿名访问。
+  if (userStore.isLogin || isStaticRoute(to.path)) {
+    return false
   }
 
-  // 未登录且访问需要权限的页面，跳转到登录页并携带 redirect 参数
-  userStore.logOut()
-  return {
-    name: 'Login',
-    query: { redirect: to.fullPath }
+  // Pinia 状态可能被清理，但同源平台建立的 Supabase 会话仍然有效。
+  if (await userStore.restorePlatformSession()) {
+    return false
   }
+
+  redirectToPlatformLogin()
+  return true
 }
 
 /**

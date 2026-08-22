@@ -44,11 +44,16 @@ import { useMenuStore } from './menu'
 import { StorageConfig } from '@/utils/storage/storage-config'
 import type { DictMap } from '@/types/store'
 
-import { fetchGetUserInfo, logout } from '@/api/auth'
+import {
+  fetchPlatformUserInfo,
+  readPlatformSession,
+  signOutPlatformSession
+} from '@/api/platform-session'
 import { fetchGetDictList } from '@/api/data-center'
 import { groupBy } from 'lodash-es'
 import { SYSTEM_PARAM_DEFAULTS } from '@/config/system-param-defaults'
 import { hasPlatformSuperAccess } from '@/utils/platform-super-access'
+import { redirectToPlatformLogin } from '@/utils/platform-login'
 /**
  * 用户状态管理
  * 管理用户登录状态、个人信息、语言设置、搜索历史、锁屏状态等
@@ -166,7 +171,7 @@ export const useUserStore = defineStore(
       if (currentUserId) {
         localStorage.setItem(StorageConfig.LAST_USER_ID_KEY, String(currentUserId))
       }
-      await logout()
+      await signOutPlatformSession()
       // 清空用户信息
       info.value = {}
       // 重置登录状态
@@ -186,13 +191,7 @@ export const useUserStore = defineStore(
       useMenuStore().setHomePath('')
       // 重置路由状态
       resetRouterState(500)
-      // 跳转到登录页，携带当前路由作为 redirect 参数
-      const currentRoute = router.currentRoute.value
-      const redirect = currentRoute.path !== '/login' ? currentRoute.fullPath : undefined
-      await router.push({
-        name: 'Login',
-        query: redirect ? { redirect } : undefined
-      })
+      redirectToPlatformLogin()
     }
 
     /**
@@ -253,7 +252,7 @@ export const useUserStore = defineStore(
     }
 
     const fetchUserInfo = async () => {
-      const { data } = await fetchGetUserInfo()
+      const { data } = await fetchPlatformUserInfo()
       if (!data) return false
 
       const { id: userId, userEmail: email, ...res } = data ?? {}
@@ -262,6 +261,27 @@ export const useUserStore = defineStore(
         email,
         ...res
       })
+      return true
+    }
+
+    /**
+     * 从平台建立的 Supabase 会话恢复子应用运行态。
+     * 子应用不执行登录，只消费同源平台会话。
+     */
+    const restorePlatformSession = async (): Promise<boolean> => {
+      const session = await readPlatformSession()
+      if (!session) return false
+
+      setToken(session.access_token, session.refresh_token)
+      setLoginStatus(true)
+
+      const userLoaded = await fetchUserInfo()
+      if (!userLoaded) {
+        setLoginStatus(false)
+        return false
+      }
+
+      await fetchDictList()
       return true
     }
 
@@ -318,6 +338,7 @@ export const useUserStore = defineStore(
       logOut,
       checkAndClearWorkTabs,
       fetchUserInfo,
+      restorePlatformSession,
       fetchDictList,
       ensureDictLoaded
     }

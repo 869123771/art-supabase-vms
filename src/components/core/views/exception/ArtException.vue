@@ -72,6 +72,7 @@
 
 <script setup lang="ts">
   import { useCommon } from '@/hooks/core/useCommon'
+  import { redirectToPlatformLogin } from '@/utils/platform-login'
   import { useUserStore } from '@/store/modules/user'
 
   defineOptions({ name: 'ArtException' })
@@ -127,10 +128,7 @@
     const targetHomePath = homePath.value || '/'
 
     if (!userStore.isLogin) {
-      await router.push({
-        name: 'Login',
-        query: { redirect: targetHomePath }
-      })
+      redirectToPlatformLogin()
       return
     }
 

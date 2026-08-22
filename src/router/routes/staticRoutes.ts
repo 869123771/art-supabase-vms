@@ -19,30 +19,6 @@ export const staticRoutes: AppRouteRecordRaw[] = [
   //   meta: { title: 'menus.dashboard.title' }
   // },
   {
-    path: '/auth/login',
-    name: 'Login',
-    component: () => import('@views/auth/login/index.vue'),
-    meta: { title: 'menus.login.title', isHideTab: true }
-  },
-  {
-    path: '/auth/register',
-    name: 'Register',
-    component: () => import('@views/auth/register/index.vue'),
-    meta: { title: 'menus.register.title', isHideTab: true }
-  },
-  {
-    path: '/auth/forget-password',
-    name: 'ForgetPassword',
-    component: () => import('@views/auth/forget-password/index.vue'),
-    meta: { title: 'menus.forgetPassword.title', isHideTab: true }
-  },
-  {
-    path: '/auth/reset-password',
-    name: 'ResetPassword',
-    component: () => import('@views/auth/reset-password/index.vue'),
-    meta: { title: 'menus.resetPassword.title', isHideTab: true }
-  },
-  {
     path: '/file-preview',
     name: 'FilePreview',
     component: () => import('@/components/core/media/art-file-viewer/index.vue'),
