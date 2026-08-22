@@ -3,7 +3,7 @@ import test from 'node:test'
 import {
   EDITABLE_VEHICLE_INSURANCE_ACCESS,
   sanitizeVehicleInsurancePayload
-} from '../../src/views/vms/vehicle-manage/vehicle-insurance/modules/vehicle-insurance-model'
+} from '../../src/views/vehicle-manage/vehicle-insurance/modules/vehicle-insurance-model'
 
 const createInsurance = (): Api.Vms.VehicleManage.VehicleInsurance => ({
   id: 'insurance-1',

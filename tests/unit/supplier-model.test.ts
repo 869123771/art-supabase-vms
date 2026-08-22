@@ -3,7 +3,7 @@ import test from 'node:test'
 import {
   EDITABLE_SUPPLIER_ACCESS,
   sanitizeSupplierPayload
-} from '../../src/views/vms/basic-info/supplier/modules/supplier-model'
+} from '../../src/views/basic-info/supplier/modules/supplier-model'
 
 const createSupplier = (): Api.Vms.BasicInfo.Supplier => ({
   id: 'supplier-1',

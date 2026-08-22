@@ -3,7 +3,7 @@ import test from 'node:test'
 import {
   EDITABLE_VEHICLE_INSPECTION_ACCESS,
   sanitizeVehicleInspectionPayload
-} from '../../src/views/vms/vehicle-manage/vehicle-inspection/modules/vehicle-inspection-model'
+} from '../../src/views/vehicle-manage/vehicle-inspection/modules/vehicle-inspection-model'
 
 const createInspection = (): Api.Vms.VehicleManage.VehicleInspection => ({
   id: 'inspection-1',

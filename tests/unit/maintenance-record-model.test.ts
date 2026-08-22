@@ -3,7 +3,7 @@ import test from 'node:test'
 import {
   EDITABLE_VEHICLE_MAINTENANCE_ACCESS,
   sanitizeVehicleMaintenancePayload
-} from '../../src/views/vms/vehicle-manage/maintenance-record/modules/maintenance-record-model'
+} from '../../src/views/vehicle-manage/maintenance-record/modules/maintenance-record-model'
 
 const createMaintenance = (): Api.Vms.VehicleManage.VehicleMaintenanceRecord => ({
   id: 'maintenance-1',

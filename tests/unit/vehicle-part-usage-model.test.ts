@@ -3,7 +3,7 @@ import test from 'node:test'
 import {
   EDITABLE_VEHICLE_PART_USAGE_ACCESS,
   sanitizeVehiclePartUsagePayload
-} from '../../src/views/vms/vehicle-manage/part-manage/modules/vehicle-part-usage-model'
+} from '../../src/views/vehicle-manage/part-manage/modules/vehicle-part-usage-model'
 
 const createRecord = (): Api.Vms.VehicleManage.VehiclePartUsage => ({
   id: 'usage-1',

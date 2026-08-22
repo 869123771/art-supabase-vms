@@ -2,61 +2,58 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
 
 const repositoryRoot = process.cwd()
-const viewsRoot = path.join(repositoryRoot, 'src', 'views')
-const allowedViewRoots = new Set(['auth', 'exception', 'index', 'outside', 'vms'])
-const forbiddenApiModules = ['finance', 'fms', 'hr', 'smis', 'tms']
-const forbiddenApiBarrels = forbiddenApiModules.map((name) => `${name}.ts`)
+const sourceRoot = path.join(repositoryRoot, 'src')
+const allowedSourceRoots = new Set(['api', 'views'])
+const allowedRootFiles = new Set(['index.ts'])
 const sourceExtensions = new Set(['.ts', '.tsx', '.vue'])
-const forbiddenRuntimeImport = /@\/(?:api|views)\/(?:finance|fms|hr|smis|tms)(?:['"/])/g
-
 const violations: string[] = []
 
-for (const entry of readdirSync(viewsRoot, { withFileTypes: true })) {
-  if (entry.isDirectory() && !allowedViewRoots.has(entry.name)) {
-    violations.push(`不允许的业务页面目录: src/views/${entry.name}`)
+for (const entry of readdirSync(sourceRoot, { withFileTypes: true })) {
+  if (entry.isDirectory() && !allowedSourceRoots.has(entry.name)) {
+    violations.push(`不允许的公共源码目录: src/${entry.name}`)
+  }
+  if (entry.isFile() && !allowedRootFiles.has(entry.name)) {
+    violations.push(`不允许的应用壳文件: src/${entry.name}`)
   }
 }
 
-for (const moduleName of forbiddenApiModules) {
-  if (existsSync(path.join(repositoryRoot, 'src', 'api', 'modules', moduleName))) {
-    violations.push(`不允许的业务 API 目录: src/api/modules/${moduleName}`)
+const requiredPaths = [
+  'src/index.ts',
+  'src/views/archive-manage',
+  'src/views/basic-info',
+  'src/views/vehicle-manage',
+  'src/views/vehicle-query',
+  'src/api/index.ts',
+  'src/api/integration.ts'
+]
+for (const requiredPath of requiredPaths) {
+  if (!existsSync(path.join(repositoryRoot, requiredPath))) {
+    violations.push(`缺少 VMS 业务入口: ${requiredPath}`)
   }
 }
-
-for (const barrelName of forbiddenApiBarrels) {
-  if (existsSync(path.join(repositoryRoot, 'src', 'api', barrelName))) {
-    violations.push(`不允许的业务 API 入口: src/api/${barrelName}`)
-  }
-}
-
-const filesToAudit = [path.join(repositoryRoot, 'src')]
 
 function collectSourceFiles(target: string): string[] {
   if (!existsSync(target)) return []
   if (!statSync(target).isDirectory()) return [target]
-
   return readdirSync(target, { withFileTypes: true }).flatMap((entry) =>
     collectSourceFiles(path.join(target, entry.name))
   )
 }
 
-for (const filePath of filesToAudit.flatMap(collectSourceFiles)) {
+for (const filePath of collectSourceFiles(sourceRoot)) {
   if (!sourceExtensions.has(path.extname(filePath))) continue
   const source = readFileSync(filePath, 'utf8')
-  const matches = [...source.matchAll(forbiddenRuntimeImport)]
-  for (const match of matches) {
-    violations.push(`${path.relative(repositoryRoot, filePath)} 直接引用其他业务模块: ${match[0]}`)
+  if (source.includes('@/api/vms') || source.includes('@vms/api/vms')) {
+    violations.push(`${path.relative(repositoryRoot, filePath)} 必须通过 @vms/api 引用业务 API`)
   }
-}
-
-const environmentFile = readFileSync(path.join(repositoryRoot, '.env'), 'utf8')
-if (!/^VITE_APP_CODE\s*=\s*vms\s*$/m.test(environmentFile)) {
-  violations.push('.env 必须声明 VITE_APP_CODE = vms')
+  if (/@\/(?:views|api)\/(?:finance|fms|hr|smis|tms)(?:['"/])/.test(source)) {
+    violations.push(`${path.relative(repositoryRoot, filePath)} 直接引用了其他业务仓前端源码`)
+  }
 }
 
 if (violations.length > 0) {
   console.error(['VMS 模块边界审计失败：', ...violations.map((item) => `- ${item}`)].join('\n'))
   process.exitCode = 1
 } else {
-  console.log('VMS module boundary audit passed.')
+  console.log('VMS business-only boundary audit passed.')
 }

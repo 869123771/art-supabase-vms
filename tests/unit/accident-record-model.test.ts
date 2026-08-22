@@ -3,7 +3,7 @@ import test from 'node:test'
 import {
   EDITABLE_VEHICLE_ACCIDENT_ACCESS,
   sanitizeVehicleAccidentPayload
-} from '../../src/views/vms/vehicle-manage/accident-record/modules/accident-record-model'
+} from '../../src/views/vehicle-manage/accident-record/modules/accident-record-model'
 
 const createAccident = (): Api.Vms.VehicleManage.VehicleAccidentRecord => ({
   id: 'accident-1',

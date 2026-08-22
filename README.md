@@ -1,44 +1,32 @@
 # Art Supabase VMS
 
-独立运行、独立构建、独立部署的车辆管理系统。仓库只承载 VMS 业务页面；登录、租户、菜单、角色权限、数据字典和跨模块数据契约由 `art-supabase-pro` 平台基座提供。
+VMS 车辆管理业务模块。这个仓库只维护 VMS 领域代码，不包含登录、租户、菜单、权限、布局、路由、公共组件、公共 store 或 Supabase 客户端。
 
-## 运行
+## 仓库内容
 
-```bash
-pnpm install --frozen-lockfile
+- `src/views`：VMS 页面与页面内业务组件。仓名已经代表 VMS，因此不再嵌套 `views/vms`。
+- `src/api/index.ts`：VMS API 门面。
+- `src/api/providers/**/vehicle*`：VMS 领域数据访问实现。
+- `src/api/integration.ts`：VMS 读取 HR/TMS 数据的安全 RPC 契约适配层。
+- `supabase/functions/ai-vehicle-health-advisor`：VMS 专属 Edge Function。
+- `tests/unit`：VMS 表单写入模型和车辆健康规则测试。
+
+## 运行方式
+
+`art-supabase-pro` 是唯一公共宿主。主仓通过 Git submodule 固定本仓提交，并以 `@vms/*` 装载 VMS 源码。启动、登录、菜单、权限和部署由主仓统一完成：
+
+```powershell
+git clone --recurse-submodules https://gitee.com/wangyanghub/art-supabase-pro.git
+cd art-supabase-pro
+pnpm install
 pnpm dev
 ```
 
-默认开发地址为 `http://localhost:3015`，运行身份固定为：
+更新 VMS 后，先在本仓提交并推送，再在主仓更新 `modules/art-supabase-vms` 的提交指针。这样 VMS 业务只维护一份，同时主仓构建可复现。
 
-```dotenv
-VITE_APP_CODE = vms
-```
+## 路由与依赖边界
 
-登录后应用调用 `get_menus_for_current_application('vms')`，因此：
-
-- 平台超级用户可以看到全部 VMS 菜单；
-- 普通租户用户只看到其角色已分配的 VMS 菜单；
-- 未分配 VMS 菜单的用户不能通过输入 URL 绕过动态路由权限。
-
-## 跨模块数据
-
-VMS 不导入 HR、TMS、FMS 或 SMIS 的前端源码。
-
-- 承运商和司机通过 TMS 所有的安全引用数据 RPC 读取，保留租户过滤和字段脱敏。
-- HR 员工通过 `vms_list_hr_employee_options_secure` 读取最小投影，仅包含员工编号、姓名、组织、职务和在职状态。
-- 其他模块的数据写入仍由数据所有者完成；VMS 只能调用为其用途发布的受控命令契约。
-
-## 质量门禁
-
-```bash
-pnpm boundary:audit
-pnpm ui:audit
-pnpm typecheck
-pnpm lint
-pnpm build
-```
-
-`boundary:audit` 会阻止非 VMS 业务页面进入仓库，并阻止 VMS 运行时代码重新引用其他业务模块的 API / View 源码。
-
-平台契约与发布顺序见 [独立业务应用架构](architecture/modular-applications.md)。
+- 数据库菜单继续使用稳定的 `/vms/...` 路由前缀。主仓加载器负责把此前缀映射到本仓 `src/views/...`，子仓目录无需重复 VMS 名称。
+- `@vms/*` 只引用本仓业务代码；`@/*` 引用主仓提供的公共运行时。
+- VMS 不直接导入 HR/TMS 前端源码；跨模块数据通过租户隔离、字段最小化的 Supabase RPC 读取。
+- 业务写入仍由 VMS 自己的 API/provider 负责，数据库继续以 RLS 和服务端权限作为最终边界。

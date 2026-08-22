@@ -3,7 +3,7 @@ import test from 'node:test'
 import {
   EDITABLE_VEHICLE_ROUTINE_INSPECTION_ACCESS,
   sanitizeVehicleRoutineInspectionPayload
-} from '../../src/views/vms/vehicle-manage/routine-inspection/modules/routine-inspection-model'
+} from '../../src/views/vehicle-manage/routine-inspection/modules/routine-inspection-model'
 
 const createRecord = (): Api.Vms.VehicleManage.VehicleRoutineInspectionRecord => ({
   id: 'inspection-1',
