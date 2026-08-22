@@ -1,5 +1,5 @@
 {
-  "name": "art-supabase-pro",
+  "name": "art-supabase-vms",
   "version": "1.0.0",
   "type": "module",
   "engines": {
@@ -11,26 +11,22 @@
     "build": "vite build",
     "build:analyze": "tsx scripts/analyze-build.ts",
     "bundle:check": "tsx scripts/check-bundle-budget.ts",
-    "permissions:audit": "tsx scripts/audit-business-permissions.ts",
-    "snapshot:ai": "tsx scripts/generate-ai-project-snapshot.ts",
-    "snapshot:check": "tsx scripts/generate-ai-project-snapshot.ts --check",
+    "boundary:audit": "tsx scripts/audit-module-boundary.ts",
     "ui:audit": "tsx scripts/ui-audit.ts",
     "serve": "tsx scripts/serve-built-app.ts",
     "lint": "eslint \"src/**/*.{js,mjs,cjs,ts,tsx,vue}\" \"scripts/**/*.{js,mjs,cjs,ts,tsx}\" \"tests/**/*.{js,mjs,cjs,ts,tsx}\" \"*.{js,mjs,cjs,ts}\"",
     "typecheck": "vue-tsc --noEmit --pretty false",
-    "test:unit": "tsx --test tests/unit/*.test.ts",
+    "test:unit": "tsx --test tests/unit/application-profile.test.ts tests/unit/business-permission.test.ts tests/unit/field-permission.test.ts tests/unit/accident-record-model.test.ts tests/unit/maintenance-record-model.test.ts tests/unit/routine-inspection-model.test.ts tests/unit/supplier-model.test.ts tests/unit/vehicle-archive-model.test.ts tests/unit/vehicle-health-rules.test.ts tests/unit/vehicle-inspection-model.test.ts tests/unit/vehicle-insurance-model.test.ts tests/unit/vehicle-part-usage-model.test.ts",
     "test:coverage": "tsx --test --experimental-test-coverage \"--test-coverage-include=src/**/*.ts\" \"--test-coverage-include=supabase/functions/_shared/*.ts\" \"--test-coverage-include=scripts/*.ts\" --test-coverage-lines=85 --test-coverage-branches=70 --test-coverage-functions=80 tests/unit/*.test.ts",
     "test:db": "supabase db query --linked --file supabase/tests/workflow_engine_test.sql",
-    "test:e2e": "playwright test",
+    "test:e2e": "pnpm test:e2e:vms",
     "test:e2e:auth": "playwright test tests/e2e/auth-pages.accessibility.spec.ts --project=public-desktop-1440 --project=public-mobile-390",
-    "test:e2e:critical": "playwright test tests/e2e/critical-business-flows.spec.ts --project=desktop-1440 --project=mobile-390 && playwright test tests/e2e/ai-configuration-inheritance.smoke.spec.ts --project=desktop-1440",
-    "test:e2e:core": "playwright test tests/e2e/core-pages.visual.spec.ts --project=desktop-1440 --project=mobile-390",
+    "test:e2e:vms": "playwright test tests/e2e/vms-independent.spec.ts --project=desktop-1440",
     "test:e2e:install": "playwright install chromium",
-    "test:e2e:update": "playwright test --update-snapshots",
     "test:e2e:report": "playwright show-report",
-    "check:fast": "pnpm ui:audit && pnpm typecheck && pnpm lint && pnpm test:unit",
+    "check:fast": "pnpm boundary:audit && pnpm ui:audit && pnpm typecheck && pnpm lint && pnpm test:unit",
     "check": "pnpm check:fast && pnpm lint:stylelint",
-    "check:ci": "pnpm ui:audit && pnpm typecheck && pnpm lint && pnpm lint:stylelint && pnpm test:coverage && pnpm snapshot:check && pnpm build && pnpm bundle:check && pnpm test:e2e:auth && pnpm test:e2e:critical && pnpm test:e2e:core",
+    "check:ci": "pnpm check && pnpm build && pnpm bundle:check && pnpm test:e2e:vms",
     "fix": "pnpm lint --fix",
     "lint:prettier": "prettier --write \"**/*.{js,cjs,ts,json,tsx,css,less,scss,vue,html,md}\"",
     "lint:stylelint": "stylelint \"src/**/*.{css,scss,vue}\"",
@@ -161,14 +157,14 @@
     "vue-img-cutter": "^3.1.1",
     "vue-tsc": "~3.3.5"
   },
-  "description": "Art Supabase Pro 是一个基于 Vue 3、TypeScript、Element Plus、Supabase 和 AI SQL 助手的企业级中后台应用模板，内置 RBAC 权限、SQL 工作台、AI 写 SQL、车辆管理系统、TMS 运输管理系统和司机端相关能力。",
+  "description": "Art Supabase VMS 是可独立运行和部署的车辆管理系统，通过平台契约共享认证、租户、菜单、权限及跨域只读数据。",
   "main": "index.js",
   "directories": {
     "doc": "docs"
   },
   "repository": {
     "type": "git",
-    "url": "https://gitee.com/wangyanghub/art-supabase-pro.git"
+    "url": "https://gitee.com/wangyanghub/art-supabase-vms.git"
   },
   "keywords": [
     "supabase",

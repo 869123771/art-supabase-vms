@@ -125,7 +125,7 @@ setup('登录并保存视觉回归会话', async ({ page }) => {
   )
 
   await page.goto('/#/auth/login', { waitUntil: 'domcontentloaded' })
-  await page.goto('/#/dashboard/console')
+  await page.goto('/#/vms')
   await expect(page).not.toHaveURL(/#\/(?:auth\/)?login/, { timeout: 30_000 })
   await page.context().storageState({ path: authFile })
 })

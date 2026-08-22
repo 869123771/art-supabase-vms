@@ -34,11 +34,12 @@ import { SystemConfig } from '@/types/config'
 import { configImages } from './assets/images'
 import fastEnterConfig from './modules/fastEnter'
 import { headerBarConfig } from './modules/headerBar'
+import { currentApplication } from './application'
 
 const appConfig: SystemConfig = {
   // 系统信息
   systemInfo: {
-    name: 'Art Supabase Pro' // 系统名称
+    name: currentApplication.name // 系统名称
   },
   // 系统主题
   systemThemeStyles: {
