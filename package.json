@@ -28,7 +28,7 @@
     "@vue-flow/core": "1.48.2",
     "@vue-flow/minimap": "1.5.4",
     "@vueuse/core": "^14.3.0",
-    "art-supabase-pro": "https://codeload.github.com/869123771/art-supabase-pro/tar.gz/f528c45ff6ef3b3581b8eafcc0092f5466c81a12",
+    "art-supabase-pro": "https://gitee.com/wangyanghub/art-supabase-pro/repository/archive/877b644c9e6fb1b8dc0925b9f5aa64d503a5cbfe.tar.gz",
     "dayjs": "^1.11.21",
     "element-plus": "^2.14.2",
     "lodash-es": "^4.18.1",

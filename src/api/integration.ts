@@ -32,7 +32,7 @@ export interface VmsHrEmployeeReference {
   employeeName: string
   organizationId?: string | null
   jobTitle?: string | null
-  employmentStatus: Api.Hr.EmploymentStatus
+  employmentStatus: 'probation' | 'active' | 'leave' | 'terminated'
 }
 
 interface CarrierReferenceParams {
