@@ -611,6 +611,42 @@ declare global {
           generatedAt: string
           assessment: VehicleHealthAssessment
         }
+
+        interface FleetHealthRecord {
+          vehicleId: string
+          plateNo: string
+          companyName?: string | null
+          vehicleType?: string | null
+          operationStatus?: string | null
+          riskLevel: VehicleHealthRiskLevel
+          riskScore: number
+          healthScore: number
+          insuranceDaysRemaining: number | null
+          inspectionDaysRemaining: number | null
+          daysSinceMaintenance: number | null
+          unresolvedAccidentCount: number
+          failedInspectionCount: number
+          openWorkOrderCount: number
+          issueCount: number
+          issues: string[]
+          updateTime?: string | null
+        }
+
+        interface FleetHealthOverview {
+          total: number
+          critical: number
+          high: number
+          medium: number
+          low: number
+          openWorkOrders: number
+        }
+
+        interface FleetHealthSearchParams {
+          keyword?: string
+          riskLevel?: VehicleHealthRiskLevel | ''
+          from?: number
+          to?: number
+        }
       }
 
       namespace ReminderManage {
