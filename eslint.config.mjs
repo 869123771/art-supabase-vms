@@ -14,10 +14,14 @@ import tseslint from 'typescript-eslint'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// 读取 .auto-import.json 文件的内容，并将其解析为 JSON 对象
-const autoImportConfig = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, '.auto-import.json'), 'utf-8')
-)
+// 子应用不维护公共 auto-import 清单；仅在本地生成文件存在时读取。
+const autoImportFile = [
+  path.resolve(__dirname, '.auto-import.json'),
+  path.resolve(__dirname, 'node_modules/art-supabase-pro/.auto-import.json')
+].find((file) => fs.existsSync(file))
+const autoImportConfig = autoImportFile
+  ? JSON.parse(fs.readFileSync(autoImportFile, 'utf-8'))
+  : { globals: {} }
 
 export default [
   // 指定文件匹配规则

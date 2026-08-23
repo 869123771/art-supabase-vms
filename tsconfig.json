@@ -36,13 +36,6 @@
       ]
     }
   },
-  "include": [
-    "vite.config.ts",
-    "src/**/*",
-    "tests/unit/**/*.ts",
-    "../../src/**/*.d.ts",
-    "../art-supabase-pro/src/**/*.d.ts",
-    "node_modules/art-supabase-pro/src/**/*.d.ts"
-  ],
+  "include": ["vite.config.ts", "src/**/*", "tests/unit/**/*.ts"],
   "exclude": ["node_modules"]
 }
