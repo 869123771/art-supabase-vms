@@ -1,25 +1,29 @@
 <template>
   <ArtDrawer ref="drawerRef">
     <div class="reminder-work-order">
-      <section class="reminder-work-order__summary art-card-xs">
-        <header class="reminder-work-order__summary-header">
-          <div class="reminder-work-order__identity">
-            <span class="reminder-work-order__identity-icon" aria-hidden="true">
-              <ArtSvgIcon icon="ri:alarm-warning-line" />
-            </span>
-            <div>
-              <span class="reminder-work-order__eyebrow">车辆到期提醒</span>
-              <h3>{{ state.openData?.row.plateNo || '--' }} · {{ state.openData?.sourceLabel }}</h3>
-              <p>处理车辆到期风险，所有状态变更均记录操作人与时间。</p>
+      <ArtSectionCard class="reminder-work-order__summary" preserve-content-structure>
+        <template #header>
+          <header class="reminder-work-order__summary-header">
+            <div class="reminder-work-order__identity">
+              <span class="reminder-work-order__identity-icon" aria-hidden="true">
+                <ArtSvgIcon icon="ri:alarm-warning-line" />
+              </span>
+              <div>
+                <span class="reminder-work-order__eyebrow">车辆到期提醒</span>
+                <h3
+                  >{{ state.openData?.row.plateNo || '--' }} · {{ state.openData?.sourceLabel }}</h3
+                >
+                <p>处理车辆到期风险，所有状态变更均记录操作人与时间。</p>
+              </div>
             </div>
-          </div>
-          <ArtDictDisplay
-            v-if="state.workOrder"
-            dict-code="vehicleReminderWorkOrderStatus"
-            :value="state.workOrder.status"
-            display="tag"
-          />
-        </header>
+            <ArtDictDisplay
+              v-if="state.workOrder"
+              dict-code="vehicleReminderWorkOrderStatus"
+              :value="state.workOrder.status"
+              display="tag"
+            />
+          </header>
+        </template>
 
         <div class="reminder-work-order__facts">
           <div class="reminder-work-order__fact reminder-work-order__fact--company">
@@ -41,18 +45,24 @@
             <strong>{{ state.workOrder?.assigneeName || '尚未认领' }}</strong>
           </div>
         </div>
-      </section>
+      </ArtSectionCard>
 
-      <section v-if="state.workOrder" class="reminder-work-order__workflow art-card-xs">
-        <div class="reminder-work-order__section-heading">
-          <div>
-            <ArtSectionTitle :show-line="false">处置进度</ArtSectionTitle>
-            <p>关键节点及处理时间</p>
-          </div>
-          <span class="reminder-work-order__progress-count">
-            已完成 {{ completedStepCount }}/{{ progressSteps.length }}
-          </span>
-        </div>
+      <ArtSectionCard
+        v-if="state.workOrder"
+        class="reminder-work-order__workflow"
+        preserve-content-structure
+      >
+        <template #header
+          ><div class="reminder-work-order__section-heading">
+            <div>
+              <ArtSectionTitle :show-line="false">处置进度</ArtSectionTitle>
+              <p>关键节点及处理时间</p>
+            </div>
+            <span class="reminder-work-order__progress-count">
+              已完成 {{ completedStepCount }}/{{ progressSteps.length }}
+            </span>
+          </div></template
+        >
         <div class="reminder-work-order__timeline">
           <div
             v-for="(step, index) in progressSteps"
@@ -81,18 +91,21 @@
           <span>最近处置结果</span>
           <p>{{ state.workOrder.resolution }}</p>
         </div>
-      </section>
+      </ArtSectionCard>
 
-      <section
+      <ArtSectionCard
         v-if="state.workOrder && canTransition"
-        class="reminder-work-order__action art-card-xs"
+        class="reminder-work-order__action"
+        preserve-content-structure
       >
-        <div class="reminder-work-order__section-heading">
-          <div>
-            <ArtSectionTitle :show-line="false">下一步处置</ArtSectionTitle>
-            <p>选择本次处理结果，提交后将同步更新处置进度。</p>
-          </div>
-        </div>
+        <template #header
+          ><div class="reminder-work-order__section-heading">
+            <div>
+              <ArtSectionTitle :show-line="false">下一步处置</ArtSectionTitle>
+              <p>选择本次处理结果，提交后将同步更新处置进度。</p>
+            </div>
+          </div></template
+        >
         <ArtForm
           ref="formRef"
           v-model="form.data"
@@ -102,7 +115,7 @@
           :show-submit="false"
           label-position="top"
         />
-      </section>
+      </ArtSectionCard>
 
       <section v-else-if="state.workOrder" class="reminder-work-order__action art-card-xs">
         <ElAlert title="该处置单已结束，仅保留审计查看。" type="info" :closable="false" show-icon />
@@ -112,13 +125,14 @@
 </template>
 
 <script setup lang="ts">
+  import ArtSectionCard from '@/components/core/surfaces/art-section-card/index.vue'
   import dayjs from 'dayjs'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import type { FormRules } from 'element-plus'
   import ArtDrawer from '@/components/core/drawers/art-drawer/index.vue'
   import type { ArtDrawerExpose } from '@/components/core/drawers/art-drawer/types'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
-  import ArtSectionTitle from '@/components/core/forms/art-section-title/index.vue'
+  import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import ArtDictDisplay from '@/components/core/base/art-dict-display/index.vue'
   import { createVehicleReminderWorkOrder, transitionVehicleReminderWorkOrder } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'

@@ -1,5 +1,5 @@
 <template>
-  <ArtPageSection :card="false" title="维修保养记录">
+  <ArtPageSection title="维修保养记录">
     <template #actions>
       <ElSelect
         v-model="panel.maintenanceType"

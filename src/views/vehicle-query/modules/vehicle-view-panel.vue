@@ -1,5 +1,5 @@
 <template>
-  <ArtPageSection :card="false" title="车辆视图">
+  <ArtPageSection title="车辆视图">
     <div class="vehicle-view-panel">
       <div class="vehicle-view-panel__canvas">
         <svg viewBox="0 0 980 420" role="img" aria-label="车辆视图">

@@ -1,5 +1,5 @@
 <template>
-  <ArtPageSection :card="false" title="零部件管理">
+  <ArtPageSection title="零部件管理">
     <template #actions>
       <ElInput v-model="panel.keyword" clearable placeholder="零部件名称" style="width: 220px" />
     </template>

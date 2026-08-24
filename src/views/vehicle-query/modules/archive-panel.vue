@@ -2,12 +2,11 @@
   <div class="vehicle-query-archive-panel">
     <ElTabs v-model="panel.activeTab">
       <ElTabPane label="基础信息" name="basic">
-        <ArtPageSection :card="false" title="基础信息">
+        <ArtPageSection title="基础信息">
           <ArtDescriptions :data="descriptionData" :items="basicDescriptionItems" />
         </ArtPageSection>
         <ArtPageSection
           v-if="canViewField(vehicle.fieldAccess, 'documents')"
-          :card="false"
           title="车辆证件"
           class="vehicle-query-archive-panel__certificates"
         >
@@ -30,17 +29,17 @@
         </ArtPageSection>
       </ElTabPane>
       <ElTabPane label="车身参数" name="body">
-        <ArtPageSection :card="false" title="车身参数">
+        <ArtPageSection title="车身参数">
           <ArtDescriptions :data="descriptionData" :items="bodyDescriptionItems" />
         </ArtPageSection>
       </ElTabPane>
       <ElTabPane label="发动机参数" name="engine">
-        <ArtPageSection :card="false" title="发动机参数">
+        <ArtPageSection title="发动机参数">
           <ArtDescriptions :data="descriptionData" :items="engineDescriptionItems" />
         </ArtPageSection>
       </ElTabPane>
       <ElTabPane label="其他信息" name="other">
-        <ArtPageSection :card="false" title="其他信息">
+        <ArtPageSection title="其他信息">
           <ArtDescriptions :data="descriptionData" :items="otherDescriptionItems" />
         </ArtPageSection>
       </ElTabPane>

@@ -1,5 +1,5 @@
 <template>
-  <ArtPageSection :card="false" title="里程记录">
+  <ArtPageSection title="里程记录">
     <VehicleQueryTable :data="records" :columns="columns" :loading="loading" />
   </ArtPageSection>
 </template>
