@@ -17,8 +17,15 @@
     </BusinessWorkspaceHeader>
 
     <div class="parts-category-layout">
-      <ElSplitter class="parts-category-splitter">
-        <ElSplitterPanel size="400px" min="400px" max="640px">
+      <ArtWorkspaceSplitter
+        class="parts-category-splitter"
+        primary-size="400px"
+        primary-min="400px"
+        primary-max="640px"
+        :breakpoint="768"
+        stacked-primary-size="400px"
+      >
+        <template #primary>
           <div class="parts-category-tree-panel">
             <PartsCategoryTree
               ref="treeRef"
@@ -26,31 +33,30 @@
               @data-change="handleTreeDataChange"
             />
           </div>
-        </ElSplitterPanel>
+        </template>
 
-        <ElSplitterPanel>
-          <div class="parts-category-table-panel">
-            <ArtTableQuery
-              ref="tableQueryRef"
-              v-model="searchQuery"
-              :search-items="searchItems"
-              :api-fn="fetchTableData"
-              :columns-factory="columnsFactory"
-              :header-actions="headerActions"
-              header-actions-placement="workspace"
-              :search-bar-props="{ span: 8, labelWidth: 90 }"
-              :table-props="{
-                rowKey: 'id',
-                tableLayout: 'fixed',
-                emptyText: '当前层级暂无零部件类别',
-                emptyDescription: '可新增当前层级类别，或调整名称、编码和状态后重新查询。'
-              }"
-              :on-success="handleTableSuccess"
-              focusable
-            />
-          </div>
-        </ElSplitterPanel>
-      </ElSplitter>
+        <div class="parts-category-table-panel">
+          <ArtTableQuery
+            ref="tableQueryRef"
+            v-model="searchQuery"
+            :search-items="searchItems"
+            :api-fn="fetchTableData"
+            :columns-factory="columnsFactory"
+            :header-actions="headerActions"
+            header-actions-placement="workspace"
+            :search-bar-props="{ span: 8, labelWidth: 90 }"
+            :table-props="{
+              rowKey: 'id',
+              tableLayout: 'fixed',
+              emptyText: '当前层级暂无零部件类别',
+              emptyDescription: '可新增当前层级类别，或调整名称、编码和状态后重新查询。'
+            }"
+            :on-success="handleTableSuccess"
+            focusable
+            focus-scope-selector=".parts-category-layout"
+          />
+        </div>
+      </ArtWorkspaceSplitter>
     </div>
 
     <PartsCategoryDialog ref="dialogRef" @success="handleSaveSuccess" />
@@ -89,6 +95,7 @@
     type BusinessWorkspaceMetric
   } from '@/components/business/business-workspace-header/index.vue'
   import BusinessTableWorkspaceActions from '@/components/business/business-table-workspace-actions/index.vue'
+  import ArtWorkspaceSplitter from '@/components/core/layouts/art-workspace-splitter/index.vue'
 
   defineOptions({ name: 'PartsCategory' })
 
@@ -381,96 +388,12 @@
         min-height: 0;
       }
 
-      .parts-category-tree-panel {
-        padding-right: 8px;
-      }
-
-      .parts-category-table-panel {
-        padding-left: 8px;
-      }
-
       .parts-category-splitter {
         height: 100%;
-
-        :deep(.el-splitter-panel) {
-          overflow: hidden;
-        }
-
-        :deep(.el-splitter-bar) {
-          width: 16px;
-          cursor: col-resize;
-        }
-
-        :deep(.el-splitter-bar::before) {
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          left: 50%;
-          width: 1px;
-          content: '';
-          background: var(--el-border-color);
-          opacity: 0;
-          transform: translateX(-50%);
-          transition:
-            opacity 0.18s ease,
-            background-color 0.18s ease;
-        }
-
-        :deep(.el-splitter-bar__dragger) {
-          width: 16px;
-          height: 56px;
-          border-radius: 999px;
-          opacity: 0;
-          transition:
-            opacity 0.18s ease,
-            background-color 0.18s ease,
-            box-shadow 0.18s ease;
-        }
-
-        :deep(.el-splitter-bar__dragger::before) {
-          width: 3px;
-          height: 32px;
-          background: var(--el-color-primary);
-          border-radius: 999px;
-        }
-
-        :deep(.el-splitter-bar:hover::before),
-        :deep(.el-splitter-bar:has(.el-splitter-bar__dragger-active)::before) {
-          background: var(--el-color-primary-light-7);
-          opacity: 1;
-        }
-
-        :deep(.el-splitter-bar:hover .el-splitter-bar__dragger),
-        :deep(.el-splitter-bar__dragger-active) {
-          opacity: 1;
-        }
       }
 
       @media (width <= 768px) {
         height: auto;
-
-        .parts-category-splitter {
-          display: block;
-
-          :deep(.el-splitter-panel) {
-            width: 100% !important;
-            height: auto;
-            overflow: visible;
-          }
-
-          :deep(.el-splitter-bar) {
-            display: none;
-          }
-        }
-
-        .parts-category-tree-panel {
-          padding-right: 0;
-          margin-bottom: 20px;
-        }
-
-        .parts-category-table-panel {
-          padding-left: 0;
-        }
       }
     }
   }
