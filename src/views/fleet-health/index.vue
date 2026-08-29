@@ -1,42 +1,41 @@
 <template>
-  <div
-    v-auth="'VehicleFleetHealth:View'"
-    class="fleet-health-page business-workspace-page art-full-height"
-  >
-    <BusinessWorkspaceHeader
-      eyebrow="FLEET HEALTH CONTROL"
-      title="车队健康中心"
-      description="聚合保险、年检、维保、事故、例检与提醒工单，按风险优先级安排车务处置。"
-      icon="ri:heart-pulse-line"
-      :tags="[
-        { label: '规则化评分', type: 'primary' },
-        { label: '租户数据隔离', type: 'success' },
-        { label: '风险优先', type: 'warning' }
-      ]"
-      :metrics="metrics"
-      refreshable
-      refresh-label="刷新车队健康"
-      @refresh="tableRef?.refreshData()"
-    />
-
-    <section class="fleet-health-page__workspace art-card-xs">
-      <ArtTableQuery
-        ref="tableRef"
-        v-model="table.search"
-        :search-items="searchItems"
-        :api-fn="fetchTableData"
-        :columns-factory="columnsFactory"
-        :search-bar-props="{ span: 8, labelWidth: 82 }"
-        :table-props="{
-          rowKey: 'vehicleId',
-          tableLayout: 'fixed',
-          emptyText: '暂无符合条件的车辆',
-          emptyDescription: '可调整车牌、公司或风险等级后重新查询。'
-        }"
-        focusable
+  <ArtPermissionGuard permission="VehicleFleetHealth:View">
+    <div class="fleet-health-page business-workspace-page art-full-height">
+      <BusinessWorkspaceHeader
+        eyebrow="FLEET HEALTH CONTROL"
+        title="车队健康中心"
+        description="聚合保险、年检、维保、事故、例检与提醒工单，按风险优先级安排车务处置。"
+        icon="ri:heart-pulse-line"
+        :tags="[
+          { label: '规则化评分', type: 'primary' },
+          { label: '租户数据隔离', type: 'success' },
+          { label: '风险优先', type: 'warning' }
+        ]"
+        :metrics="metrics"
+        refreshable
+        refresh-label="刷新车队健康"
+        @refresh="tableRef?.refreshData()"
       />
-    </section>
-  </div>
+
+      <section class="fleet-health-page__workspace art-card-xs">
+        <ArtTableQuery
+          ref="tableRef"
+          v-model="table.search"
+          :search-items="searchItems"
+          :api-fn="fetchTableData"
+          :columns-factory="columnsFactory"
+          :search-bar-props="{ span: 8, labelWidth: 82 }"
+          :table-props="{
+            rowKey: 'vehicleId',
+            tableLayout: 'fixed',
+            emptyText: '暂无符合条件的车辆',
+            emptyDescription: '可调整车牌、公司或风险等级后重新查询。'
+          }"
+          focusable
+        />
+      </section>
+    </div>
+  </ArtPermissionGuard>
 </template>
 
 <script setup lang="tsx">

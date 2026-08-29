@@ -20,16 +20,13 @@
       <section v-if="canViewInsuranceField('documents')" class="vehicle-insurance-dialog__section">
         <div class="vehicle-insurance-dialog__section-header">
           <ArtSectionTitle :show-line="false">保险附件</ArtSectionTitle>
-          <ArtExcelImport
+          <ArtUploadFile
             v-if="canEditInsuranceField('documents')"
-            accept=""
-            :parse-excel="false"
-            :disabled="form.attachmentUploading"
-            :button-props="{ type: 'primary', plain: true, loading: form.attachmentUploading }"
-            @file-change="handleAttachmentUpload"
-          >
-            上传附件
-          </ArtExcelImport>
+            title="上传附件"
+            :show-file-list="false"
+            :show-tip="false"
+            @upload-success="handleAttachmentUpload"
+          />
         </div>
         <ArtTable
           :data="form.data.attachments"
@@ -44,7 +41,6 @@
 </template>
 
 <script setup lang="tsx">
-  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import { cloneDeep } from 'lodash-es'
@@ -52,7 +48,7 @@
   import { ElMessage } from 'element-plus'
   import ArtDialog from '@/components/core/dialogs/art-dialog/index.vue'
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
-  import ArtExcelImport from '@/components/core/forms/art-excel-import/index.vue'
+  import ArtUploadFile from '@/components/core/forms/art-upload-file/index.vue'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
@@ -64,7 +60,6 @@
     fetchInsuranceCompanyOptions,
     fetchVehicleArchiveOptions
   } from '@vms/api'
-  import { uploadAttachment } from '@/api/common'
   import { downloadAttachment, getFileExtension } from '@/utils/file'
   import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
   import { canEditField, canViewField } from '@/utils/field-permission'
@@ -95,7 +90,6 @@
     rules: ComputedRef<FormRules<VehicleInsurance>>
     vehicleOptions: VehicleOption[]
     companyOptions: InsuranceCompanyOption[]
-    attachmentUploading: boolean
   }
 
   interface Emits {
@@ -168,7 +162,6 @@
     data: createInitialForm(),
     vehicleOptions: [],
     companyOptions: [],
-    attachmentUploading: false,
     items: computed<FormItem[]>(() => {
       const items: FormItem[] = [
         { label: '车辆信息', key: 'vehicleSection', type: 'divider', span: 24 },
@@ -426,26 +419,19 @@
     })
   }
 
-  const handleAttachmentUpload = async (file: File): Promise<void> => {
-    form.attachmentUploading = true
-    try {
-      const [resource] = await uploadAttachment(file)
-      if (!resource?.url) throw new Error('附件上传失败')
-      form.data.attachments = [
-        ...(form.data.attachments ?? []),
-        {
-          name: resource.originName || file.name,
-          url: resource.url,
-          fileType: getFileExtension(file.name, resource.suffix),
-          fileSize: resource.sizeInfo
-        }
-      ]
-      ElMessage.success('附件上传成功')
-    } catch (error) {
-      ElMessage.error(getFriendlySupabaseErrorMessage(error, '附件上传失败'))
-    } finally {
-      form.attachmentUploading = false
-    }
+  const handleAttachmentUpload = (resource: Api.DataCenter.Resources.ResourceListItem): void => {
+    if (!resource.url) return
+    const fileName = resource.originName || resource.objectName || '附件'
+    form.data.attachments = [
+      ...(form.data.attachments ?? []),
+      {
+        name: fileName,
+        url: resource.url,
+        fileType: getFileExtension(fileName, resource.suffix),
+        fileSize: resource.sizeInfo
+      }
+    ]
+    ElMessage.success('附件上传成功')
   }
 
   const removeAttachment = async (row: Attachment): Promise<void> => {

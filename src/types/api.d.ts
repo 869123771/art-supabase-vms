@@ -3,6 +3,41 @@ export {}
 declare global {
   declare namespace Api {
     namespace Vms {
+      /** VMS 消费 TMS 只读 RPC 时使用的最小集成契约。 */
+      namespace Integration {
+        type CarrierFieldKey =
+          'contactPhone' | 'addressDetail' | 'taxNo' | 'bankAccount' | 'attachments'
+        type CarrierFieldAccessMap = Partial<Record<CarrierFieldKey, Api.Common.FieldAccessLevel>>
+
+        interface CarrierReference {
+          id: string
+          carrierCode?: string
+          companyName: string
+          enabled?: boolean
+          contactName?: string
+          contactPhone?: string
+          fieldAccess?: CarrierFieldAccessMap
+          isRecordOwner?: boolean
+        }
+
+        type DriverFieldKey =
+          'contactPhone' | 'idCardNo' | 'homeAddress' | 'emergencyContact' | 'identityDocuments'
+        type DriverFieldAccessMap = Partial<Record<DriverFieldKey, Api.Common.FieldAccessLevel>>
+
+        interface DriverReference {
+          id: string
+          carrierId?: string | null
+          driverName: string
+          phone?: string
+          driverType?: 'primary' | 'secondary'
+          licenseType?: string
+          licenseExpireDate?: string | null
+          enabled?: boolean
+          fieldAccess?: DriverFieldAccessMap
+          isRecordOwner?: boolean
+        }
+      }
+
       namespace ArchiveManage {
         type AuditStatus = 'pending' | 'approved' | 'rejected'
         type VehicleArchiveFieldKey =
@@ -31,7 +66,7 @@ declare global {
           tenantId?: string
           plateNo: string
           carrierId?: string | null
-          carrier?: Api.Tms.BasicData.CarrierOption | null
+          carrier?: Api.Vms.Integration.CarrierReference | null
           companyName?: string
           selfNo?: string
           vehicleType: string
@@ -104,9 +139,9 @@ declare global {
           mailingAddress?: string
           tonnageOrSeat?: string
           primaryDriverId?: string | null
-          primaryDriver?: Api.Tms.BasicData.DriverOption | null
+          primaryDriver?: Api.Vms.Integration.DriverReference | null
           secondaryDriverId?: string | null
-          secondaryDriver?: Api.Tms.BasicData.DriverOption | null
+          secondaryDriver?: Api.Vms.Integration.DriverReference | null
           driverOneName?: string
           driverOnePhone?: string
           driverTwoName?: string

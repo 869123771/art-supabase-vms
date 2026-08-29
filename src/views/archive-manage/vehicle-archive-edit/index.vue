@@ -98,19 +98,13 @@
               <ArtSectionTitle class="vehicle-archive-edit__section-title" :show-line="false">
                 车辆档案附件
               </ArtSectionTitle>
-              <ArtExcelImport
-                accept=""
-                :parse-excel="false"
-                :disabled="page.attachmentUploading || !canEditArchiveField('documents')"
-                :button-props="{
-                  type: 'primary',
-                  plain: true,
-                  loading: page.attachmentUploading
-                }"
-                @file-change="handleAttachmentUpload"
-              >
-                上传附件
-              </ArtExcelImport>
+              <ArtUploadFile
+                title="上传附件"
+                :disabled="!canEditArchiveField('documents')"
+                :show-file-list="false"
+                :show-tip="false"
+                @upload-success="handleAttachmentUpload"
+              />
             </div>
             <ArtTable
               :data="form.attachments"
@@ -137,7 +131,6 @@
 </template>
 
 <script setup lang="tsx">
-  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, Ref, UnwrapNestedRefs } from 'vue'
   import type { FormRules } from 'element-plus'
@@ -151,7 +144,7 @@
   import ArtButtonMore, {
     type ButtonMoreItem
   } from '@/components/core/forms/art-button-more/index.vue'
-  import ArtExcelImport from '@/components/core/forms/art-excel-import/index.vue'
+  import ArtUploadFile from '@/components/core/forms/art-upload-file/index.vue'
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import ArtUploadImage from '@/components/core/forms/art-upload-image/index.vue'
   import type { ColumnOption } from '@/types'
@@ -165,7 +158,6 @@
     type VmsCarrierReference,
     type VmsDriverReference
   } from '@vms/api'
-  import { uploadAttachment } from '@/api/common'
   import { useUserStore } from '@/store/modules/user'
   import { useDocumentNumberRule } from '@/hooks/core/useDocumentNumberRule'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
@@ -217,7 +209,6 @@
     activeTab: ArchiveTabName
     loading: boolean
     saving: boolean
-    attachmentUploading: boolean
     error: Error | null
   }
 
@@ -250,7 +241,6 @@
     activeTab: 'basic',
     loading: false,
     saving: false,
-    attachmentUploading: false,
     error: null
   })
   const pageRef = ref<HTMLElement>()
@@ -1066,27 +1056,17 @@
     }
   }
 
-  const handleAttachmentUpload = async (file: File): Promise<void> => {
-    page.attachmentUploading = true
-    try {
-      const [resource] = await uploadAttachment(file)
-      if (!resource?.url) {
-        throw new Error('附件上传失败')
-      }
-
-      const nextAttachment: ArchiveAttachment = {
-        name: resource.originName || file.name,
-        url: resource.url,
-        fileType: getFileExtension(file.name, resource.suffix),
-        fileSize: resource.sizeInfo
-      }
-      form.attachments = [...(form.attachments ?? []), nextAttachment]
-      ElMessage.success('附件上传成功')
-    } catch (error) {
-      ElMessage.error(getFriendlySupabaseErrorMessage(error, '附件上传失败'))
-    } finally {
-      page.attachmentUploading = false
+  const handleAttachmentUpload = (resource: Api.DataCenter.Resources.ResourceListItem): void => {
+    if (!resource.url) return
+    const fileName = resource.originName || resource.objectName || '附件'
+    const nextAttachment: ArchiveAttachment = {
+      name: fileName,
+      url: resource.url,
+      fileType: getFileExtension(fileName, resource.suffix),
+      fileSize: resource.sizeInfo
     }
+    form.attachments = [...(form.attachments ?? []), nextAttachment]
+    ElMessage.success('附件上传成功')
   }
 
   const removeAttachment = async (row: ArchiveAttachment): Promise<void> => {

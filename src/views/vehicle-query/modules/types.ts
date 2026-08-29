@@ -9,7 +9,7 @@ export type VehicleAccidentRecord = Api.Vms.VehicleManage.VehicleAccidentRecord
 export type VehicleMaintenanceRecord = Api.Vms.VehicleManage.VehicleMaintenanceRecord
 export type VehicleRoutineInspectionRecord = Api.Vms.VehicleManage.VehicleRoutineInspectionRecord
 export type VehicleMileageRecord = Api.Vms.VehicleManage.VehicleMileageRecord
-export type VehicleDriver = Api.Tms.BasicData.DriverOption
+export type VehicleDriver = Api.Vms.Integration.DriverReference
 
 export type VehicleQueryTabKey =
   | 'view'

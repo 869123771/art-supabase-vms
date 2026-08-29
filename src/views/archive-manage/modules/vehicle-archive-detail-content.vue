@@ -202,7 +202,7 @@
   const loadError = shallowRef<Error | null>(null)
   const canViewArchiveField = (field: Api.Vms.ArchiveManage.VehicleArchiveFieldKey): boolean =>
     canViewField(archive.value?.fieldAccess, field)
-  const canViewDriverPhone = (driver?: Api.Tms.BasicData.DriverOption | null): boolean =>
+  const canViewDriverPhone = (driver?: Api.Vms.Integration.DriverReference | null): boolean =>
     canViewField(driver?.fieldAccess, 'contactPhone')
 
   onMounted(async () => {

@@ -2,29 +2,9 @@ import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
 import type { ApiRequestOptions } from '@/types/api/request'
 
-export interface VmsCarrierReference {
-  id: string
-  carrierCode?: string
-  companyName: string
-  enabled?: boolean
-  contactName?: string
-  contactPhone?: string
-  fieldAccess?: Api.Tms.BasicData.CarrierFieldAccessMap
-  isRecordOwner?: boolean
-}
+export type VmsCarrierReference = Api.Vms.Integration.CarrierReference
 
-export interface VmsDriverReference {
-  id: string
-  carrierId?: string | null
-  driverName: string
-  phone?: string
-  driverType?: 'primary' | 'secondary'
-  licenseType?: string
-  licenseExpireDate?: string | null
-  enabled?: boolean
-  fieldAccess?: Api.Tms.BasicData.DriverFieldAccessMap
-  isRecordOwner?: boolean
-}
+export type VmsDriverReference = Api.Vms.Integration.DriverReference
 
 export interface VmsHrEmployeeReference {
   id: string

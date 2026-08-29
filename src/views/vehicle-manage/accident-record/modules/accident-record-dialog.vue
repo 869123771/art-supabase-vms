@@ -79,15 +79,12 @@
       >
         <template #file>
           <div class="accident-attachment-dialog__upload">
-            <ArtExcelImport
-              accept=""
-              :parse-excel="false"
-              :disabled="attachment.uploading"
-              :button-props="{ loading: attachment.uploading }"
-              @file-change="handleAttachmentFileChange"
-            >
-              选择上传文件
-            </ArtExcelImport>
+            <ArtUploadFile
+              title="选择上传文件"
+              :show-file-list="false"
+              :show-tip="false"
+              @upload-success="handleAttachmentFileChange"
+            />
             <div v-if="attachment.data.fileName" class="accident-attachment-dialog__file">
               <span>{{ attachment.data.fileName }}</span>
               <ArtSvgIcon v-if="attachment.data.url" icon="ri:check-line" />
@@ -100,7 +97,6 @@
 </template>
 
 <script setup lang="tsx">
-  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import { cloneDeep } from 'lodash-es'
@@ -109,7 +105,7 @@
   import { storeToRefs } from 'pinia'
   import ArtDialog from '@/components/core/dialogs/art-dialog/index.vue'
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
-  import ArtExcelImport from '@/components/core/forms/art-excel-import/index.vue'
+  import ArtUploadFile from '@/components/core/forms/art-upload-file/index.vue'
   import ArtAddressPicker from '@/components/core/forms/art-address-picker/index.vue'
   import type { AddressLocationPayload } from '@/components/core/forms/art-address-picker/types'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
@@ -123,7 +119,6 @@
   import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import { addVehicleAccident, editVehicleAccident, fetchVehicleArchiveList } from '@vms/api'
-  import { uploadAttachment } from '@/api/common'
   import { pageInfoHandler } from '@/utils/table/tableUtils'
   import { downloadAttachment, getFileExtension } from '@/utils/file'
   import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
@@ -168,7 +163,6 @@
     data: AttachmentFormData
     items: ComputedRef<FormItem[]>
     rules: ComputedRef<FormRules<AttachmentFormData>>
-    uploading: boolean
   }
 
   interface Emits {
@@ -364,7 +358,6 @@
 
   const attachment: UnwrapNestedRefs<AttachmentGroup> = reactive<AttachmentGroup>({
     data: createInitialAttachmentForm(),
-    uploading: false,
     items: computed<FormItem[]>(() => [
       {
         label: '事故附件名称',
@@ -506,7 +499,6 @@
 
   const resetAttachmentForm = async (): Promise<void> => {
     Object.assign(attachment.data, createInitialAttachmentForm())
-    attachment.uploading = false
     await nextTick()
     attachmentFormRef.value?.clearValidate()
   }
@@ -521,26 +513,19 @@
     })
   }
 
-  const handleAttachmentFileChange = async (file: File): Promise<void> => {
-    attachment.uploading = true
-    try {
-      const [resource] = await uploadAttachment(file)
-      if (!resource?.url) throw new Error('附件上传失败')
-      attachment.data.file = resource.url
-      attachment.data.fileName = resource.originName || file.name
-      attachment.data.url = resource.url
-      attachment.data.fileType = getFileExtension(file.name, resource.suffix)
-      attachment.data.fileSize = resource.sizeInfo
-      if (!attachment.data.name) {
-        attachment.data.name = resource.originName || file.name
-      }
-      attachmentFormRef.value?.clearValidate()
-      ElMessage.success('附件上传成功')
-    } catch (error) {
-      ElMessage.error(getFriendlySupabaseErrorMessage(error, '附件上传失败'))
-    } finally {
-      attachment.uploading = false
-    }
+  const handleAttachmentFileChange = (
+    resource: Api.DataCenter.Resources.ResourceListItem
+  ): void => {
+    if (!resource.url) return
+    const fileName = resource.originName || resource.objectName || '附件'
+    attachment.data.file = resource.url
+    attachment.data.fileName = fileName
+    attachment.data.url = resource.url
+    attachment.data.fileType = getFileExtension(fileName, resource.suffix)
+    attachment.data.fileSize = resource.sizeInfo
+    if (!attachment.data.name) attachment.data.name = fileName
+    attachmentFormRef.value?.clearValidate()
+    ElMessage.success('附件上传成功')
   }
 
   const handleAttachmentConfirm = async (): Promise<boolean> => {
