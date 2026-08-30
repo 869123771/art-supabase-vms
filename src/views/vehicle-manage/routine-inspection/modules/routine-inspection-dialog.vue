@@ -27,9 +27,13 @@
             description-key="companyName"
             title="选择车辆"
             search-placeholder="输入车牌号或所属公司"
+            empty-text="暂无可选车辆"
+            empty-description="请先维护车辆档案并确保车辆已启用。"
             show-pagination
             @change="handleVehicleChange"
-          />
+          >
+            <template #empty><VehicleDataSourceEmptyActions source="vehicle" /></template>
+          </ArtTableSingleSelect>
         </template>
       </ArtForm>
 
@@ -100,6 +104,7 @@
   import ArtDialog from '@/components/core/dialogs/art-dialog/index.vue'
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtTableSingleSelect from '@/components/core/forms/art-data-select/table-single.vue'
+  import VehicleDataSourceEmptyActions from '../../../components/vehicle-data-source-empty-actions.vue'
   import type {
     DataSelectColumn,
     DataSelectRecord

@@ -36,9 +36,13 @@
           description-key="companyName"
           title="选择车辆"
           search-placeholder="输入车牌号或所属公司"
+          empty-text="暂无可选车辆"
+          empty-description="请先维护车辆档案并确保车辆已启用。"
           show-pagination
           @change="handleVehicleChange"
-        />
+        >
+          <template #empty><VehicleDataSourceEmptyActions source="vehicle" /></template>
+        </ArtTableSingleSelect>
       </template>
 
       <template #partId>
@@ -52,9 +56,13 @@
           description-key="partCode"
           title="选择零部件"
           search-placeholder="输入零部件名称或编码"
+          empty-text="暂无可选零部件"
+          empty-description="请先维护零部件资料，并确认库存与启用状态满足当前领用条件。"
           show-pagination
           @change="handlePartChange"
-        />
+        >
+          <template #empty><VehicleDataSourceEmptyActions source="part" /></template>
+        </ArtTableSingleSelect>
       </template>
 
       <template #rfidTag>
@@ -215,6 +223,7 @@
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import ArtTableSingleSelect from '@/components/core/forms/art-data-select/table-single.vue'
+  import VehicleDataSourceEmptyActions from '../../../components/vehicle-data-source-empty-actions.vue'
   import type {
     DataSelectColumn,
     DataSelectFetchParams,
