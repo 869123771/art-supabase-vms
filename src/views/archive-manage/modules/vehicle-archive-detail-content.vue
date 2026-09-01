@@ -49,7 +49,7 @@
       </template>
     </ArtPageHeader>
 
-    <ElTabs v-model="activeTab" class="vehicle-archive-detail__tabs art-card-xs">
+    <ElTabs v-model="activeTab" class="vehicle-archive-detail__tabs art-card-xs" stretch>
       <ElTabPane label="基础信息" name="basic">
         <InfoDescriptions :items="basicInfoItems" />
         <section

@@ -1,6 +1,6 @@
 <template>
   <div class="vehicle-query-archive-panel">
-    <ElTabs v-model="panel.activeTab">
+    <ElTabs v-model="panel.activeTab" stretch>
       <ElTabPane label="基础信息" name="basic">
         <ArtPageSection title="基础信息">
           <ArtDescriptions :data="descriptionData" :items="basicDescriptionItems" />
