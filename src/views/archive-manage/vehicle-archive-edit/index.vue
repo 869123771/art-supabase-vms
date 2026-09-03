@@ -16,7 +16,7 @@
     />
 
     <div ref="pageRef" class="vehicle-archive-edit__content">
-      <ElTabs v-model="page.activeTab" class="vehicle-archive-edit__tabs art-card-xs" stretch>
+      <ElTabs v-model="page.activeTab" class="vehicle-archive-edit__tabs art-card-xs">
         <ElTabPane label="基础信息" name="basic">
           <ArtForm
             ref="basicFormRef"
