@@ -14,7 +14,15 @@
       </div>
     </template>
 
-    <ElScrollbar v-loading="loading">
+    <ArtOverlayLoading
+      v-if="loading"
+      loading
+      overlay
+      size="compact"
+      text="正在加载类别树…"
+      description=""
+    />
+    <ElScrollbar>
       <ElTree
         ref="treeRef"
         :data="treeData"
@@ -201,6 +209,7 @@
     }
 
     :deep(.el-card__body) {
+      position: relative;
       flex: 1;
       min-height: 0;
       padding: 0 12px 12px;
