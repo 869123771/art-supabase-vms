@@ -31,9 +31,7 @@ function text(value: unknown): string {
 }
 
 function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value
-  )
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
 Deno.serve(async (request) => {
@@ -87,7 +85,7 @@ Deno.serve(async (request) => {
   let runId = ''
   try {
     const { data: vehicle, error: vehicleError } = await userClient
-      .from('vehicle_archive')
+      .from('mdm_vehicle')
       .select(
         'id,plate_no,vehicle_type,operation_status,manufacturer,brand_model,start_use_date,service_years'
       )

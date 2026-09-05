@@ -28,7 +28,7 @@ export async function fetchInsuranceCompanyList(
   ]
 
   let query = supabase
-    .from('vehicle_insurance_company')
+    .from('mdm_insurance_company')
     .select('*', { count: 'exact' })
     .order('create_time', { ascending: false })
     .range(from, to)
@@ -51,7 +51,7 @@ export async function exportInsuranceCompanyList(
   ]
 
   let query = supabase
-    .from('vehicle_insurance_company')
+    .from('mdm_insurance_company')
     .select('*')
     .order('create_time', { ascending: false })
     .limit(maxRows)
@@ -70,7 +70,7 @@ export async function exportInsuranceCompanyList(
 
 export async function addInsuranceCompany(params: InsuranceCompany) {
   return await responseHandle(
-    () => supabase.from('vehicle_insurance_company').insert(keysToSnakeDeep(params)),
+    () => supabase.from('mdm_insurance_company').insert(keysToSnakeDeep(params)),
     { showMessage: true, breakReturn: true }
   )
 }
@@ -78,21 +78,21 @@ export async function addInsuranceCompany(params: InsuranceCompany) {
 export async function editInsuranceCompany(params: InsuranceCompany) {
   const { id, ...data } = params
   return await responseHandle(
-    () => supabase.from('vehicle_insurance_company').update(keysToSnakeDeep(data)).eq('id', id),
+    () => supabase.from('mdm_insurance_company').update(keysToSnakeDeep(data)).eq('id', id),
     { showMessage: true, breakReturn: true }
   )
 }
 
 export async function deleteInsuranceCompany(id: string) {
   return await responseHandle(
-    () => supabase.from('vehicle_insurance_company').delete().eq('id', id),
+    () => supabase.from('mdm_insurance_company').delete().eq('id', id),
     { showMessage: true }
   )
 }
 
 export async function deleteInsuranceCompanyBatch(ids: string[]) {
   return await responseHandle(
-    () => supabase.from('vehicle_insurance_company').delete().in('id', ids),
+    () => supabase.from('mdm_insurance_company').delete().in('id', ids),
     { showMessage: true }
   )
 }
@@ -100,7 +100,7 @@ export async function deleteInsuranceCompanyBatch(ids: string[]) {
 export async function importInsuranceCompanies(rows: InsuranceCompany[]) {
   return await responseHandle(
     () =>
-      supabase.from('vehicle_insurance_company').upsert(keysToSnakeDeep(rows), {
+      supabase.from('mdm_insurance_company').upsert(keysToSnakeDeep(rows), {
         onConflict: 'company_name'
       }),
     { showMessage: true, breakReturn: true }
@@ -223,7 +223,7 @@ export async function fetchPartsCategoryList(
   ]
 
   let query = supabase
-    .from('vehicle_parts_category')
+    .from('mdm_part_category')
     .select('*', { count: 'exact' })
     .order('sort', { ascending: true })
     .order('create_time', { ascending: false })
@@ -247,7 +247,7 @@ export async function fetchPartsCategoryTree(
 ) {
   const { categoryName } = params
   let query = supabase
-    .from('vehicle_parts_category')
+    .from('mdm_part_category')
     .select('*')
     .order('sort', { ascending: true })
     .order('create_time', { ascending: false })
@@ -273,7 +273,7 @@ export async function exportPartsCategoryList(
   ]
 
   let query = supabase
-    .from('vehicle_parts_category')
+    .from('mdm_part_category')
     .select('*')
     .order('sort', { ascending: true })
     .order('create_time', { ascending: false })
@@ -297,7 +297,7 @@ export async function exportPartsCategoryList(
 
 export async function addPartsCategory(params: PartsCategory) {
   return await responseHandle(
-    () => supabase.from('vehicle_parts_category').insert(keysToSnakeDeep(params)),
+    () => supabase.from('mdm_part_category').insert(keysToSnakeDeep(params)),
     { showMessage: true, breakReturn: true }
   )
 }
@@ -305,20 +305,20 @@ export async function addPartsCategory(params: PartsCategory) {
 export async function editPartsCategory(params: PartsCategory) {
   const { id, ...data } = params
   return await responseHandle(
-    () => supabase.from('vehicle_parts_category').update(keysToSnakeDeep(data)).eq('id', id),
+    () => supabase.from('mdm_part_category').update(keysToSnakeDeep(data)).eq('id', id),
     { showMessage: true, breakReturn: true }
   )
 }
 
 export async function deletePartsCategory(id: string) {
-  return await responseHandle(() => supabase.from('vehicle_parts_category').delete().eq('id', id), {
+  return await responseHandle(() => supabase.from('mdm_part_category').delete().eq('id', id), {
     showMessage: true
   })
 }
 
 export async function deletePartsCategoryBatch(ids: string[]) {
   return await responseHandle(
-    () => supabase.from('vehicle_parts_category').delete().in('id', ids),
+    () => supabase.from('mdm_part_category').delete().in('id', ids),
     { showMessage: true }
   )
 }
@@ -326,7 +326,7 @@ export async function deletePartsCategoryBatch(ids: string[]) {
 export async function importPartsCategories(rows: PartsCategory[]) {
   return await responseHandle(
     () =>
-      supabase.from('vehicle_parts_category').upsert(keysToSnakeDeep(rows), {
+      supabase.from('mdm_part_category').upsert(keysToSnakeDeep(rows), {
         onConflict: 'category_code'
       }),
     { showMessage: true, breakReturn: true }
@@ -346,7 +346,7 @@ const getPartsSearchFilters = (params: PartsSearchParams): FilterSpec[] => [
 
 const PARTS_SELECT = `
   *,
-  category:vehicle_parts_category!vehicle_parts_category_id_fkey(
+  category:mdm_part_category!vehicle_parts_category_id_fkey(
     id,
     category_name
   )
@@ -373,7 +373,7 @@ export async function fetchPartsList(params: PartsSearchParams, options?: ApiReq
   const filters = getPartsSearchFilters(params)
 
   let query = supabase
-    .from('vehicle_parts')
+    .from('mdm_part')
     .select(PARTS_SELECT, { count: 'exact' })
     .order('create_time', { ascending: false })
     .range(from, to)
@@ -393,7 +393,7 @@ export async function exportPartsList(
   const filters = getPartsSearchFilters(params)
 
   let query = supabase
-    .from('vehicle_parts')
+    .from('mdm_part')
     .select(PARTS_SELECT)
     .order('create_time', { ascending: false })
     .limit(maxRows)
@@ -413,7 +413,7 @@ export async function exportPartsList(
 
 export async function addParts(params: Parts) {
   return await responseHandle(
-    () => supabase.from('vehicle_parts').insert(keysToSnakeDeep(params)),
+    () => supabase.from('mdm_part').insert(keysToSnakeDeep(params)),
     { showMessage: true, breakReturn: true }
   )
 }
@@ -421,19 +421,19 @@ export async function addParts(params: Parts) {
 export async function editParts(params: Parts) {
   const { id, ...data } = params
   return await responseHandle(
-    () => supabase.from('vehicle_parts').update(keysToSnakeDeep(data)).eq('id', id),
+    () => supabase.from('mdm_part').update(keysToSnakeDeep(data)).eq('id', id),
     { showMessage: true, breakReturn: true }
   )
 }
 
 export async function deleteParts(id: string) {
-  return await responseHandle(() => supabase.from('vehicle_parts').delete().eq('id', id), {
+  return await responseHandle(() => supabase.from('mdm_part').delete().eq('id', id), {
     showMessage: true
   })
 }
 
 export async function deletePartsBatch(ids: string[]) {
-  return await responseHandle(() => supabase.from('vehicle_parts').delete().in('id', ids), {
+  return await responseHandle(() => supabase.from('mdm_part').delete().in('id', ids), {
     showMessage: true
   })
 }
@@ -441,7 +441,7 @@ export async function deletePartsBatch(ids: string[]) {
 export async function importParts(rows: Parts[]) {
   return await responseHandle(
     () =>
-      supabase.from('vehicle_parts').upsert(keysToSnakeDeep(rows), {
+      supabase.from('mdm_part').upsert(keysToSnakeDeep(rows), {
         onConflict: 'tenant_id,part_code'
       }),
     { showMessage: true, breakReturn: true }

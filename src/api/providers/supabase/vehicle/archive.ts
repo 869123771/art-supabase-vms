@@ -333,7 +333,7 @@ export async function fetchVehicleReminderPartServiceLifeRiskOverview(
 
 export async function fetchInsuranceCompanyOptions(_params?: unknown, options?: ApiRequestOptions) {
   const query = supabase
-    .from('vehicle_insurance_company')
+    .from('mdm_insurance_company')
     .select('id, company_name, contact_person, contact_phone')
     .order('company_name', { ascending: true })
     .limit(200)
