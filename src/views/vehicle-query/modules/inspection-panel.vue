@@ -14,8 +14,8 @@
   import { useVehiclePanelList } from './use-vehicle-panel-list'
   import {
     canViewField,
-    formatSensitiveNumber,
-    mergeFieldAccessMaps
+    mergeFieldAccessMaps,
+    formatSensitiveNumberWithAffix
   } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehicleQueryInspectionPanel' })
@@ -39,8 +39,7 @@
   )
 
   const formatMoney = (value?: number | string | null): string => {
-    const formatted = formatSensitiveNumber(value)
-    return formatted === '--' || formatted === '***' ? formatted : `${formatted} 元`
+    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
   }
 
   const columns = computed<ColumnOption<VehicleInspection>[]>(() => [

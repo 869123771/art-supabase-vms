@@ -39,7 +39,8 @@
 </template>
 
 <script setup lang="tsx">
-  import { ElProgress, ElTag, ElTooltip } from 'element-plus'
+  import { ElProgress, ElTag } from 'element-plus'
+  import ArtTooltip from '@/components/core/feedback/art-tooltip/index.vue'
   import { storeToRefs } from 'pinia'
   import type { SearchFormItem } from '@/components/core/forms/art-search-bar/index.vue'
   import type { ArtTableQueryExpose } from '@/components/core/tables/art-table-query/index.vue'
@@ -209,7 +210,7 @@
       minWidth: 300,
       formatter: (row) =>
         row.issues.length ? (
-          <ElTooltip content={row.issues.join('；')} placement="top" showAfter={250}>
+          <ArtTooltip content={row.issues.join('；')} placement="top" showAfter={250}>
             <div class="fleet-health-page__issues">
               {row.issues.slice(0, 2).map((issue) => (
                 <ElTag type="warning" effect="plain" size="small">
@@ -218,7 +219,7 @@
               ))}
               {row.issues.length > 2 ? <span>+{row.issues.length - 2}</span> : null}
             </div>
-          </ElTooltip>
+          </ArtTooltip>
         ) : (
           <ElTag type="success" effect="plain" size="small">
             未发现显著风险

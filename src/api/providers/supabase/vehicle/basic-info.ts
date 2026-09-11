@@ -84,17 +84,15 @@ export async function editInsuranceCompany(params: InsuranceCompany) {
 }
 
 export async function deleteInsuranceCompany(id: string) {
-  return await responseHandle(
-    () => supabase.from('mdm_insurance_company').delete().eq('id', id),
-    { showMessage: true }
-  )
+  return await responseHandle(() => supabase.from('mdm_insurance_company').delete().eq('id', id), {
+    showMessage: true
+  })
 }
 
 export async function deleteInsuranceCompanyBatch(ids: string[]) {
-  return await responseHandle(
-    () => supabase.from('mdm_insurance_company').delete().in('id', ids),
-    { showMessage: true }
-  )
+  return await responseHandle(() => supabase.from('mdm_insurance_company').delete().in('id', ids), {
+    showMessage: true
+  })
 }
 
 export async function importInsuranceCompanies(rows: InsuranceCompany[]) {
@@ -317,10 +315,9 @@ export async function deletePartsCategory(id: string) {
 }
 
 export async function deletePartsCategoryBatch(ids: string[]) {
-  return await responseHandle(
-    () => supabase.from('mdm_part_category').delete().in('id', ids),
-    { showMessage: true }
-  )
+  return await responseHandle(() => supabase.from('mdm_part_category').delete().in('id', ids), {
+    showMessage: true
+  })
 }
 
 export async function importPartsCategories(rows: PartsCategory[]) {
@@ -412,10 +409,10 @@ export async function exportPartsList(
 }
 
 export async function addParts(params: Parts) {
-  return await responseHandle(
-    () => supabase.from('mdm_part').insert(keysToSnakeDeep(params)),
-    { showMessage: true, breakReturn: true }
-  )
+  return await responseHandle(() => supabase.from('mdm_part').insert(keysToSnakeDeep(params)), {
+    showMessage: true,
+    breakReturn: true
+  })
 }
 
 export async function editParts(params: Parts) {

@@ -84,7 +84,7 @@
   import { fetchVehicleAccidentDetail } from '@vms/api'
   import { downloadAttachment, viewAttachment } from '@/utils/file'
   import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
-  import { canViewField, formatSensitiveNumber } from '@/utils/field-permission'
+  import { canViewField, formatSensitiveNumberWithAffix } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehicleAccidentDetail' })
 
@@ -233,8 +233,7 @@
   }
 
   const formatMoney = (value?: number | string | null): string => {
-    const formatted = formatSensitiveNumber(value)
-    return formatted === '--' || formatted === '***' ? formatted : `${formatted} 元`
+    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
   }
 
   const formatPercent = (value?: number | null): string => {

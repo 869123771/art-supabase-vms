@@ -56,8 +56,8 @@
   import BusinessTableWorkspaceActions from '@/components/business/business-table-workspace-actions/index.vue'
   import {
     canViewField,
-    formatSensitiveNumber,
-    mergeFieldAccessMaps
+    mergeFieldAccessMaps,
+    formatSensitiveNumberWithAffix
   } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehicleMileage' })
@@ -233,8 +233,7 @@
   }
 
   const formatMileage = (value?: number | string | null): string => {
-    const formatted = formatSensitiveNumber(value)
-    return formatted === '--' || formatted === '***' ? formatted : `${formatted} km`
+    return formatSensitiveNumberWithAffix(value, { suffix: ' km' })
   }
 
   const formatMileageTime = (value?: string | null): string =>

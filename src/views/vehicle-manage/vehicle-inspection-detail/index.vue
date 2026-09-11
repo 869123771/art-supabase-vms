@@ -66,7 +66,7 @@
   import { fetchVehicleInspectionDetail } from '@vms/api'
   import { downloadAttachment } from '@/utils/file'
   import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
-  import { canViewField, formatSensitiveNumber } from '@/utils/field-permission'
+  import { canViewField, formatSensitiveNumberWithAffix } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehicleInspectionDetail' })
 
@@ -154,8 +154,7 @@
   }
 
   const formatMoney = (value?: number | string | null): string => {
-    const formatted = formatSensitiveNumber(value)
-    return formatted === '--' || formatted === '***' ? formatted : `${formatted} 元`
+    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
   }
 </script>
 

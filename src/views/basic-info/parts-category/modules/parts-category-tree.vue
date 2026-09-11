@@ -92,6 +92,7 @@
 <script setup lang="ts">
   import { debounce } from 'lodash-es'
   import type { ElTree } from 'element-plus'
+  import TreeUtils from '@/utils/tree'
   import { deletePartsCategory, fetchPartsCategoryTree } from '@vms/api'
   import PartsCategoryDialog from './parts-category-dialog.vue'
 
@@ -120,25 +121,15 @@
     label: 'categoryName'
   }
 
-  const buildTree = (records: PartsCategory[]): PartsCategory[] => {
-    const nodeMap = new Map<string, PartsCategory>()
-    const roots: PartsCategory[] = []
+  const categoryTree = new TreeUtils({
+    idKey: 'id',
+    parentKey: 'parentId',
+    childrenKey: 'children',
+    deepClone: false
+  })
 
-    records.forEach((item) => {
-      if (!item.id) return
-      nodeMap.set(item.id, { ...item, children: [] })
-    })
-
-    nodeMap.forEach((node) => {
-      if (node.parentId && nodeMap.has(node.parentId)) {
-        nodeMap.get(node.parentId)?.children?.push(node)
-      } else {
-        roots.push(node)
-      }
-    })
-
-    return roots
-  }
+  const buildTree = (records: PartsCategory[]): PartsCategory[] =>
+    categoryTree.listToTree(records.filter((item) => Boolean(item.id)))
 
   const getCurrentCategory = computed<PartsCategory | undefined>(() => {
     return treeRef.value?.getCurrentNode() as PartsCategory | undefined
