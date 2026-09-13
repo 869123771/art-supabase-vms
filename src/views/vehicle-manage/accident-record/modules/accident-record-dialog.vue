@@ -101,6 +101,8 @@
 </template>
 
 <script setup lang="tsx">
+  import { normalizeNullableNumber } from '@/utils/form/normalize'
+
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import { cloneDeep } from 'lodash-es'
@@ -567,12 +569,6 @@
       accidentLatitude: hasCoordinate ? accidentLatitude : null,
       attachments: payload.attachments ?? []
     })
-  }
-
-  const normalizeNullableNumber = (value: unknown): number | null => {
-    if (value === null || value === undefined || value === '') return null
-    const numberValue = Number(value)
-    return Number.isFinite(numberValue) ? numberValue : null
   }
 
   const handleSubmit = async (): Promise<boolean> => {

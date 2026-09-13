@@ -125,6 +125,7 @@
 </template>
 
 <script setup lang="ts">
+  import { normalizeNullableText } from '@/utils/form/normalize'
   import ArtSectionCard from '@/components/core/surfaces/art-section-card/index.vue'
   import dayjs from 'dayjs'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
@@ -340,7 +341,7 @@
       const { data } = await transitionVehicleReminderWorkOrder({
         workOrderId: state.workOrder.id,
         nextStatus: form.data.nextStatus as WorkOrderStatus,
-        resolution: form.data.resolution.trim() || null
+        resolution: normalizeNullableText(form.data.resolution)
       })
       if (!data) return false
       state.workOrder = data

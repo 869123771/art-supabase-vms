@@ -129,6 +129,8 @@
 </template>
 
 <script setup lang="ts">
+  import { createDateTimeFormatter } from '@/utils/ui/format'
+
   import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
   import ArtEmptyState from '@/components/core/feedback/art-empty-state/index.vue'
   import type { UnwrapNestedRefs } from 'vue'
@@ -139,7 +141,6 @@
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import ArtAsyncState from '@/components/core/feedback/art-async-state/index.vue'
   import { analyzeVehicleHealthByAi } from '@vms/api'
-  import { formatWithDayjs } from '@/utils/time'
 
   defineOptions({ name: 'VehicleHealthAdvisorDrawer' })
 
@@ -271,9 +272,7 @@
   function signalIcon(severity: Severity): string {
     return severity === 'critical' ? 'ri:alarm-warning-line' : 'ri:error-warning-line'
   }
-  function formatTime(value: string): string {
-    return formatWithDayjs(value, 'YYYY-MM-DD HH:mm:ss') || '-'
-  }
+  const formatTime = createDateTimeFormatter({ format: 'YYYY-MM-DD HH:mm:ss', emptyText: '-' })
 
   defineExpose({ handleOpen })
 </script>

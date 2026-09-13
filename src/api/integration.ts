@@ -1,3 +1,4 @@
+import { normalizeNullableText } from '@/utils/form/normalize'
 import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
 import type { ApiRequestOptions } from '@/types/api/request'
@@ -60,7 +61,7 @@ export async function fetchVmsCarrierReferences(
         supabase.rpc('tms_list_carrier_options_secure', {
           p_exclude_id: excludeId || null,
           p_include_disabled: includeDisabled,
-          p_keyword: String(companyName || carrierCode || '').trim() || null,
+          p_keyword: normalizeNullableText(String(companyName || carrierCode || '')),
           p_ids: ids?.length ? ids : null,
           p_max_rows: maxRows
         }),
@@ -81,7 +82,7 @@ export async function fetchVmsDriverReferences(
       withRequestOptions(
         supabase.rpc('tms_list_driver_options_secure', {
           p_carrier_id: carrierId || null,
-          p_driver_name: String(driverName ?? '').trim() || null,
+          p_driver_name: normalizeNullableText(String(driverName ?? '')),
           p_driver_type: driverType || null,
           p_ids: ids?.length ? ids : null,
           p_include_disabled: includeDisabled,
@@ -102,7 +103,7 @@ export async function fetchVmsHrEmployeeReferences(
     () =>
       withRequestOptions(
         supabase.rpc('vms_list_hr_employee_options_secure', {
-          p_keyword: String(params.keyword ?? '').trim() || null,
+          p_keyword: normalizeNullableText(String(params.keyword ?? '')),
           p_max_rows: params.maxRows ?? 100
         }),
         options

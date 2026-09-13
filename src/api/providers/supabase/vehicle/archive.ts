@@ -1,3 +1,4 @@
+import { normalizeNullableText } from '@/utils/form/normalize'
 import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
 import type { ApiRequestOptions } from '@/types/api/request'
@@ -42,11 +43,11 @@ const createVehicleArchiveRpcParams = (
     p_to: to,
     p_record_id: params.recordId || null,
     p_carrier_id: params.carrierId || null,
-    p_plate_no: String(params.plateNo ?? '').trim() || null,
-    p_company_name: String(params.companyName ?? '').trim() || null,
+    p_plate_no: normalizeNullableText(String(params.plateNo ?? '')),
+    p_company_name: normalizeNullableText(String(params.companyName ?? '')),
     p_vehicle_type: params.vehicleType || null,
-    p_manufacturer: String(params.manufacturer ?? '').trim() || null,
-    p_vin: String(params.vin ?? '').trim() || null,
+    p_manufacturer: normalizeNullableText(String(params.manufacturer ?? '')),
+    p_vin: normalizeNullableText(String(params.vin ?? '')),
     p_operation_status: params.operationStatus || null,
     p_audit_status: params.auditStatus || null,
     p_audit_statuses: params.auditStatuses?.length ? params.auditStatuses : null,
@@ -165,8 +166,8 @@ export async function fetchVehicleArchiveOptions(
       withRequestOptions(
         supabase.rpc('vms_list_vehicle_archive_options_secure', {
           p_carrier_id: carrierId || null,
-          p_plate_no: String(plateNo ?? '').trim() || null,
-          p_company_name: String(companyName ?? '').trim() || null,
+          p_plate_no: normalizeNullableText(String(plateNo ?? '')),
+          p_company_name: normalizeNullableText(String(companyName ?? '')),
           p_ids: null,
           p_max_rows: 200
         }),

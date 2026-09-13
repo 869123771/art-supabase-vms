@@ -1,3 +1,4 @@
+import { normalizeNullableText } from '@/utils/form/normalize'
 import { useSupabase } from '@/hooks'
 
 const { supabase, responseHandle } = useSupabase()
@@ -25,7 +26,7 @@ export async function fetchFleetHealthWorkspace(
   const result = await responseHandle<FleetHealthWorkspaceResult>(
     () =>
       supabase.rpc('vms_get_fleet_health_workspace', {
-        p_keyword: params.keyword?.trim() || null,
+        p_keyword: normalizeNullableText(params.keyword),
         p_risk_level: params.riskLevel || null,
         p_from: from,
         p_to: to

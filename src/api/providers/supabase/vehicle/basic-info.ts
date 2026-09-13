@@ -1,3 +1,4 @@
+import { normalizeNullableText } from '@/utils/form/normalize'
 import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
 import type { ApiRequestOptions } from '@/types/api/request'
@@ -121,9 +122,9 @@ const createSupplierRpcParams = (
   return {
     p_from: from,
     p_to: Math.max(requestedTo ?? 9, from),
-    p_supplier_name: String(params.supplierName ?? '').trim() || null,
-    p_contact_person: String(params.contactPerson ?? '').trim() || null,
-    p_contact_phone: String(params.contactPhone ?? '').trim() || null,
+    p_supplier_name: normalizeNullableText(String(params.supplierName ?? '')),
+    p_contact_person: normalizeNullableText(String(params.contactPerson ?? '')),
+    p_contact_phone: normalizeNullableText(String(params.contactPhone ?? '')),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }
