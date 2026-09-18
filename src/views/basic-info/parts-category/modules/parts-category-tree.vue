@@ -40,26 +40,18 @@
               <ElTag size="small" type="info">{{ data.categoryCode }}</ElTag>
             </div>
             <div class="actions" :class="{ 'is-current': currentId === data.id }">
-              <ElButton
-                size="small"
-                circle
-                type="primary"
-                aria-label="新增子类别"
-                title="新增子类别"
+              <ArtIconButton
+                class="size-6.5! text-base!"
+                icon="ri:add-line"
+                label="新增子类别"
                 @click.stop="handleAddChild(data)"
-              >
-                <ArtSvgIcon icon="ri:add-line" />
-              </ElButton>
-              <ElButton
-                size="small"
-                circle
-                type="success"
-                aria-label="编辑类别"
-                title="编辑类别"
+              />
+              <ArtIconButton
+                class="size-6.5! text-base!"
+                icon="ri:pencil-line"
+                label="编辑类别"
                 @click.stop="handleEdit(data)"
-              >
-                <ArtSvgIcon icon="ri:pencil-line" />
-              </ElButton>
+              />
               <ElPopconfirm
                 title="确定删除该类别及其子类别吗？"
                 confirm-button-text="删除"
@@ -67,16 +59,13 @@
                 @confirm="handleDelete(data)"
               >
                 <template #reference>
-                  <ElButton
-                    size="small"
-                    circle
-                    type="danger"
-                    aria-label="删除类别"
-                    title="删除类别"
+                  <ArtIconButton
+                    class="size-6.5! text-base!"
+                    icon="ri:delete-bin-5-line"
+                    tone="danger"
+                    label="删除类别"
                     @click.stop
-                  >
-                    <ArtSvgIcon icon="ri:delete-bin-5-line" />
-                  </ElButton>
+                  />
                 </template>
               </ElPopconfirm>
             </div>
@@ -92,6 +81,7 @@
 <script setup lang="ts">
   import { debounce } from 'lodash-es'
   import type { ElTree } from 'element-plus'
+  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import TreeUtils from '@/utils/tree'
   import { deletePartsCategory, fetchPartsCategoryTree } from '@vms/api'
   import PartsCategoryDialog from './parts-category-dialog.vue'
