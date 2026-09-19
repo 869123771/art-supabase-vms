@@ -94,7 +94,6 @@ export async function fetchVehicleInsuranceDetail(id: string) {
   return await responseHandle<VehicleInsurance | null>(
     () => supabase.rpc('vms_get_vehicle_insurance_secure', { p_id: id }),
     {
-      ignoreCheck: true,
       showErrorMessage: true
     }
   )
@@ -213,7 +212,6 @@ export async function fetchVehicleInspectionDetail(id: string) {
   return await responseHandle<VehicleInspection | null>(
     () => supabase.rpc('vms_get_vehicle_inspection_secure', { p_id: id }),
     {
-      ignoreCheck: true,
       showErrorMessage: true
     }
   )
@@ -335,7 +333,6 @@ export async function fetchVehicleRoutineInspectionDetail(id: string) {
   return await responseHandle<VehicleRoutineInspectionRecord | null>(
     () => supabase.rpc('vms_get_vehicle_routine_inspection_secure', { p_id: id }),
     {
-      ignoreCheck: true,
       showErrorMessage: true
     }
   )

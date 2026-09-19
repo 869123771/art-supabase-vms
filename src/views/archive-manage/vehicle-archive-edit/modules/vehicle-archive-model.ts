@@ -1,3 +1,5 @@
+import { omitNonEditableFieldGroups, omitWriteMetadata } from '@/utils/field-permission'
+
 export type VehicleArchive = Api.Vms.ArchiveManage.VehicleArchive
 
 export type VehicleArchiveForm = VehicleArchive & {
@@ -151,32 +153,25 @@ export function createInitialVehicleArchiveForm(): VehicleArchiveForm {
 export function sanitizeVehicleArchivePayload(
   params: VehicleArchiveForm
 ): VehicleArchiveWritePayload {
-  const {
-    id,
-    tenantId,
-    createBy,
-    createTime,
-    updateBy,
-    updateTime,
-    auditBy,
-    auditTime,
-    auditStatus,
-    auditRemark,
-    carrier,
-    primaryDriver,
-    secondaryDriver,
-    primaryDriverName,
-    primaryDriverPhone,
-    secondaryDriverName,
-    secondaryDriverPhone,
-    driverOneName,
-    driverOnePhone,
-    driverTwoName,
-    driverTwoPhone,
-    fieldAccess,
-    isRecordOwner,
-    ...formPayload
-  } = params
+  const { id, fieldAccess } = params
+  const formPayload = omitWriteMetadata(params, [
+    'id',
+    'auditBy',
+    'auditTime',
+    'auditStatus',
+    'auditRemark',
+    'carrier',
+    'primaryDriver',
+    'secondaryDriver',
+    'primaryDriverName',
+    'primaryDriverPhone',
+    'secondaryDriverName',
+    'secondaryDriverPhone',
+    'driverOneName',
+    'driverOnePhone',
+    'driverTwoName',
+    'driverTwoPhone'
+  ])
   const payload: Record<string, unknown> = {
     ...formPayload,
     attachments: formPayload.attachments ?? [],
@@ -186,39 +181,14 @@ export function sanitizeVehicleArchivePayload(
     supportPhoto: formPayload.supportPhoto ?? false
   }
 
-  void tenantId
-  void createBy
-  void createTime
-  void updateBy
-  void updateTime
-  void auditBy
-  void auditTime
-  void auditStatus
-  void auditRemark
-  void carrier
-  void primaryDriver
-  void secondaryDriver
-  void primaryDriverName
-  void primaryDriverPhone
-  void secondaryDriverName
-  void secondaryDriverPhone
-  void driverOneName
-  void driverOnePhone
-  void driverTwoName
-  void driverTwoPhone
-  void isRecordOwner
-
-  if (id) {
-    Object.entries(SENSITIVE_PAYLOAD_KEYS).forEach(([field, keys]) => {
-      if (fieldAccess?.[field as Api.Vms.ArchiveManage.VehicleArchiveFieldKey] === 'edit') return
-      keys.forEach((key) => delete payload[key])
-    })
-  }
+  const editablePayload = id
+    ? omitNonEditableFieldGroups(payload, fieldAccess, SENSITIVE_PAYLOAD_KEYS)
+    : payload
 
   return {
     ...(id ? { id } : {}),
     ...Object.fromEntries(
-      Object.entries(payload).map(([key, value]) => [key, value === '' ? null : value])
+      Object.entries(editablePayload).map(([key, value]) => [key, value === '' ? null : value])
     )
   }
 }

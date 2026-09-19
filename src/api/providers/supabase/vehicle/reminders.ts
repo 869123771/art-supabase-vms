@@ -78,7 +78,6 @@ const fetchReminderCount = async (
   if (configure) query = configure(query)
 
   const result = await responseHandle<never[]>(() => withRequestOptions(query, options), {
-    ignoreCheck: true,
     showErrorMessage: true
   })
   return result.total ?? 0
@@ -147,7 +146,6 @@ export async function fetchVehicleReminderViewList(
   const result = await responseHandle<VehicleReminderRow[]>(
     () => withRequestOptions(filteredQuery, options),
     {
-      ignoreCheck: true,
       showErrorMessage: true
     }
   )
@@ -169,7 +167,7 @@ export async function fetchVehicleReminderViewList(
           rows.map((row) => row.id)
         )
         .order('update_time', { ascending: false }),
-    { ignoreCheck: true, showErrorMessage: true }
+    { showErrorMessage: true }
   )
   const workOrderMap = new Map(
     (workOrders ?? []).map((workOrder) => [

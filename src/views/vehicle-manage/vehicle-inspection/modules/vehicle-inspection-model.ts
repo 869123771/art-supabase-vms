@@ -1,4 +1,4 @@
-import { canEditField } from '@/utils/field-permission'
+import { omitNonEditableFieldGroups, omitWriteMetadata } from '@/utils/field-permission'
 
 export type VehicleInspection = Api.Vms.VehicleManage.VehicleInspection
 export type VehicleInspectionFieldKey = Api.Vms.VehicleManage.VehicleInspectionFieldKey
@@ -20,31 +20,8 @@ const SENSITIVE_PAYLOAD_KEYS: Record<VehicleInspectionFieldKey, SensitivePayload
 }
 
 export function sanitizeVehicleInspectionPayload(params: VehicleInspection): VehicleInspection {
-  const {
-    tenantId,
-    createBy,
-    createTime,
-    updateBy,
-    updateTime,
-    fieldAccess,
-    isRecordOwner,
-    ...payload
-  } = params
-  const result: VehicleInspection = payload
-
-  void tenantId
-  void createBy
-  void createTime
-  void updateBy
-  void updateTime
-  void isRecordOwner
-
-  if (params.id) {
-    Object.entries(SENSITIVE_PAYLOAD_KEYS).forEach(([field, keys]) => {
-      if (canEditField(fieldAccess, field as VehicleInspectionFieldKey)) return
-      keys.forEach((key) => delete result[key])
-    })
-  }
-
-  return result
+  const payload = omitWriteMetadata(params)
+  return params.id
+    ? omitNonEditableFieldGroups(payload, params.fieldAccess, SENSITIVE_PAYLOAD_KEYS)
+    : payload
 }

@@ -103,7 +103,7 @@ export async function exportVehicleArchiveList(
 export async function fetchVehicleArchiveDetail(id: string) {
   return await responseHandle<VehicleArchive | null>(
     () => supabase.rpc('vms_get_vehicle_archive_secure', { p_id: id }),
-    { ignoreCheck: true, showErrorMessage: true }
+    { showErrorMessage: true }
   )
 }
 
@@ -137,7 +137,7 @@ export async function editVehicleArchive(
 export async function fetchVehicleArchiveDeletePreview(id: string) {
   return await responseHandle<VehicleArchiveDeletePreview>(
     () => supabase.rpc('vms_get_vehicle_archive_delete_preview_secure', { p_id: id }),
-    { ignoreCheck: true, showErrorMessage: true }
+    { showErrorMessage: true }
   )
 }
 
@@ -174,7 +174,6 @@ export async function fetchVehicleArchiveOptions(
         options
       ),
     {
-      ignoreCheck: true,
       showErrorMessage: true
     }
   )
@@ -191,7 +190,7 @@ export async function fetchVehicleReminderCompanyOptions() {
             .not('company_name', 'is', null)
             .neq('company_name', '')
             .order('company_name', { ascending: true }),
-        { ignoreCheck: true, showErrorMessage: true }
+        { showErrorMessage: true }
       )
     )
   )
@@ -342,7 +341,6 @@ export async function fetchInsuranceCompanyOptions(_params?: unknown, options?: 
   return await responseHandle<Api.Vms.VehicleManage.InsuranceCompanyOption[]>(
     () => withRequestOptions(query, options),
     {
-      ignoreCheck: true,
       showErrorMessage: true
     }
   )

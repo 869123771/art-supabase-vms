@@ -36,7 +36,6 @@ export async function fetchInsuranceCompanyList(
 
   query = applyFilters(query, filters, { skipEmpty: true, camelToSnake: true })
   return await responseHandle(() => withRequestOptions(query, options), {
-    ignoreCheck: true,
     showErrorMessage: true
   })
 }
@@ -64,7 +63,6 @@ export async function exportInsuranceCompanyList(
   }
 
   return await responseHandle(() => query, {
-    ignoreCheck: true,
     showErrorMessage: true
   })
 }
@@ -235,7 +233,6 @@ export async function fetchPartsCategoryList(
   query = applyFilters(query, filters, { skipEmpty: true, camelToSnake: true })
 
   return await responseHandle(() => withRequestOptions(query, options), {
-    ignoreCheck: true,
     showErrorMessage: true
   })
 }
@@ -256,7 +253,6 @@ export async function fetchPartsCategoryTree(
   }
 
   return await responseHandle<PartsCategory[]>(() => withRequestOptions(query, options), {
-    ignoreCheck: true,
     showErrorMessage: true
   })
 }
@@ -289,7 +285,6 @@ export async function exportPartsCategoryList(
   }
 
   return await responseHandle(() => query, {
-    ignoreCheck: true,
     showErrorMessage: true
   })
 }
@@ -378,7 +373,6 @@ export async function fetchPartsList(params: PartsSearchParams, options?: ApiReq
 
   query = applyFilters(query, filters, { skipEmpty: true, camelToSnake: true })
   const result = await responseHandle<Parts[]>(() => withRequestOptions(query, options), {
-    ignoreCheck: true,
     showErrorMessage: true
   })
   return { ...result, data: await enrichPartsWithSupplierNames(result.data ?? [], options) }
@@ -403,7 +397,6 @@ export async function exportPartsList(
   }
 
   const result = await responseHandle<Parts[]>(() => query, {
-    ignoreCheck: true,
     showErrorMessage: true
   })
   return { ...result, data: await enrichPartsWithSupplierNames(result.data ?? []) }

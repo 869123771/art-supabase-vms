@@ -239,7 +239,6 @@ export async function fetchVehicleAccidentDetail(id: string) {
   return await responseHandle<VehicleAccidentRecord | null>(
     () => supabase.rpc('vms_get_vehicle_accident_secure', { p_id: id }),
     {
-      ignoreCheck: true,
       showErrorMessage: true
     }
   )
