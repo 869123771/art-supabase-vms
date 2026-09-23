@@ -43,7 +43,7 @@
             title="上传附件"
             :show-file-list="false"
             :show-tip="false"
-            @upload-success="handleAttachmentUpload"
+            @resource-change="handleAttachmentUpload"
           />
         </div>
         <ArtTable
@@ -350,7 +350,9 @@
     })
   }
 
-  const handleAttachmentUpload = (resource: Api.DataCenter.Resources.ResourceListItem): void => {
+  const handleAttachmentUpload = (resources: Api.DataCenter.Resources.ResourceListItem[]): void => {
+    const resource = resources[0]
+    if (!resource) return
     if (!resource.url) return
     const fileName = resource.originName || resource.objectName || '附件'
     form.data.attachments = [
@@ -362,7 +364,7 @@
         fileSize: resource.sizeInfo
       }
     ]
-    ElMessage.success('附件上传成功')
+    ElMessage.success('附件已添加')
   }
 
   const removeAttachment = async (row: Attachment): Promise<void> => {

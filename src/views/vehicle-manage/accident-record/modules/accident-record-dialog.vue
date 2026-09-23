@@ -87,7 +87,7 @@
               title="选择上传文件"
               :show-file-list="false"
               :show-tip="false"
-              @upload-success="handleAttachmentFileChange"
+              @resource-change="handleAttachmentFileChange"
             />
             <div v-if="attachment.data.fileName" class="accident-attachment-dialog__file">
               <span>{{ attachment.data.fileName }}</span>
@@ -521,8 +521,10 @@
   }
 
   const handleAttachmentFileChange = (
-    resource: Api.DataCenter.Resources.ResourceListItem
+    resources: Api.DataCenter.Resources.ResourceListItem[]
   ): void => {
+    const resource = resources[0]
+    if (!resource) return
     if (!resource.url) return
     const fileName = resource.originName || resource.objectName || '附件'
     attachment.data.file = resource.url
@@ -532,7 +534,7 @@
     attachment.data.fileSize = resource.sizeInfo
     if (!attachment.data.name) attachment.data.name = fileName
     attachmentFormRef.value?.clearValidate()
-    ElMessage.success('附件上传成功')
+    ElMessage.success('附件已选择')
   }
 
   const handleAttachmentConfirm = async (): Promise<boolean> => {
