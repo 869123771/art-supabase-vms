@@ -342,7 +342,7 @@
   }
 
   const handleOpen = async (row?: Parts): Promise<void> => {
-    await Promise.all([resetForm(), partNumber.loadRule()])
+    await resetForm()
     const isEdit = !!row?.id
     if (isEdit) {
       replaceForm({
@@ -354,6 +354,15 @@
     await dialogRef.value?.handleOpen(row, {
       title: isEdit ? '编辑零部件' : '新增零部件',
       contentMaxHeight: '68vh',
+      loading: true,
+      loadingText: '正在加载编号规则…',
+      onOpen: async (_openData, api) => {
+        try {
+          await partNumber.loadRule()
+        } finally {
+          api.setLoading(false)
+        }
+      },
       onConfirm: handleSubmit,
       onReset: () => void resetForm()
     })

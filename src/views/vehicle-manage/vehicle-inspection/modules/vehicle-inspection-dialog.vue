@@ -341,12 +341,21 @@
   }
 
   const handleOpen = async (row?: VehicleInspection): Promise<void> => {
-    await Promise.all([resetForm(), inspectionNumber.loadRule()])
+    await resetForm()
     if (row?.id) replaceForm(row)
 
     await dialogRef.value?.handleOpen(row, {
       title: row?.id ? '编辑车辆年检' : '新增车辆年检',
       contentMaxHeight: '72vh',
+      loading: true,
+      loadingText: '正在加载编号规则…',
+      onOpen: async (_openData, api) => {
+        try {
+          await inspectionNumber.loadRule()
+        } finally {
+          api.setLoading(false)
+        }
+      },
       onConfirm: handleSubmit,
       onReset: () => void resetForm()
     })

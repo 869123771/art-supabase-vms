@@ -532,12 +532,21 @@
   }
 
   const handleOpen = async (row?: RoutineInspection): Promise<void> => {
-    await Promise.all([resetForm(), routineNumber.loadRule()])
+    await resetForm()
     if (row?.id) replaceForm(row)
 
     await dialogRef.value?.handleOpen(row, {
       title: row?.id ? '编辑例检记录' : '新增例检记录',
       contentMaxHeight: '74vh',
+      loading: true,
+      loadingText: '正在加载编号规则…',
+      onOpen: async (_openData, api) => {
+        try {
+          await routineNumber.loadRule()
+        } finally {
+          api.setLoading(false)
+        }
+      },
       onConfirm: handleSubmit,
       onReset: () => void resetForm()
     })

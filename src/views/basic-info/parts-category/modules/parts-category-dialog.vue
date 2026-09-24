@@ -210,7 +210,7 @@
   }
 
   const handleOpen = async (row?: PartsCategory, parent?: PartsCategory): Promise<void> => {
-    await Promise.all([resetForm(), categoryNumber.loadRule()])
+    await resetForm()
     const isEdit = !!row?.id
 
     if (isEdit) {
@@ -224,6 +224,15 @@
 
     await dialogRef.value?.handleOpen(row, {
       title: isEdit ? '编辑零部件类别' : parent?.id ? '新增子类别' : '新增零部件类别',
+      loading: true,
+      loadingText: '正在加载编号规则…',
+      onOpen: async (_openData, api) => {
+        try {
+          await categoryNumber.loadRule()
+        } finally {
+          api.setLoading(false)
+        }
+      },
       onConfirm: handleSubmit,
       onReset: () => void resetForm()
     })

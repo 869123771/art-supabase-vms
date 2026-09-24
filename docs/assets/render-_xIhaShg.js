@@ -1,1 +1,0 @@
-import{gn as e}from"./dist-HWNp19Kg.js";import{t}from"./attachment-link-B7ZOTlgo.js";var n=n=>e(t,{file:n});export{n as t};

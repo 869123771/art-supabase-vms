@@ -629,12 +629,21 @@
   }
 
   const handleOpen = async (row?: MaintenanceRecord): Promise<void> => {
-    await Promise.all([resetForm(), maintenanceNumber.loadRule()])
+    await resetForm()
     if (row?.id) replaceForm(row)
 
     await dialogRef.value?.handleOpen(row, {
       title: row?.id ? '编辑维修保养记录' : '新增维修保养记录',
       contentMaxHeight: '74vh',
+      loading: true,
+      loadingText: '正在加载编号规则…',
+      onOpen: async (_openData, api) => {
+        try {
+          await maintenanceNumber.loadRule()
+        } finally {
+          api.setLoading(false)
+        }
+      },
       onConfirm: handleSubmit,
       onReset: () => void resetForm()
     })
