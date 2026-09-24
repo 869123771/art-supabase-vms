@@ -182,6 +182,7 @@
         prop: 'vehicleIdentity',
         label: '车辆档案',
         minWidth: 240,
+        link: { permission: 'VehicleQuery:View', onClick: openDetail },
         formatter: (row) => renderVehicleIdentity(row)
       },
       { prop: 'companyName', label: '所属公司', minWidth: 170, showOverflowTooltip: true },

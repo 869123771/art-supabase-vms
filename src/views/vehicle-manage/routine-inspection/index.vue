@@ -200,7 +200,12 @@
       { type: 'globalIndex', label: '序号', width: 64 },
       { prop: 'companyName', label: '所属公司', minWidth: 170 },
       { prop: 'plateNo', label: '车牌号', width: 108 },
-      { prop: 'routineInspectionNo', label: '例检编号', minWidth: 160 },
+      {
+        prop: 'routineInspectionNo',
+        label: '例检编号',
+        minWidth: 160,
+        link: { permission: 'VehicleRoutineInspection:View', onClick: viewDetail }
+      },
       {
         prop: 'inspectionType',
         label: '例检类型',

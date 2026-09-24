@@ -43,6 +43,7 @@
             title="上传附件"
             :show-file-list="false"
             :show-tip="false"
+            inline
             @resource-change="handleAttachmentUpload"
           />
         </div>
@@ -81,8 +82,8 @@
   import type { ColumnOption } from '@/types'
   import { addVehicleInspection, editVehicleInspection, fetchVehicleArchiveList } from '@vms/api'
   import { pageInfoHandler } from '@/utils/table/tableUtils'
-  import { downloadAttachment, getFileExtension } from '@/utils/file'
-  import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
+  import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
+  import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canEditField, canViewField } from '@/utils/field-permission'
   import {
     EDITABLE_VEHICLE_INSPECTION_ACCESS,
@@ -241,7 +242,7 @@
 
   const attachmentColumns = computed<ColumnOption<Attachment>[]>(() => [
     { type: 'globalIndex', label: '序号', width: 56 },
-    { prop: 'name', label: '附件名称', minWidth: 180, formatter: renderAttachmentLink },
+    { prop: 'name', label: '附件名称', minWidth: 180, link: attachmentTableLink },
     {
       prop: 'fileType',
       label: '格式类型',
@@ -252,9 +253,10 @@
     {
       prop: 'operation',
       label: '操作',
-      width: canEditDocuments.value ? 96 : 64,
+      width: canEditDocuments.value ? 120 : 80,
       formatter: (row) => (
         <div class="flex items-center">
+          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
           <ArtIconButton icon="ri:download-2-line" onClick={() => downloadAttachment(row)} />
           {canEditDocuments.value ? (
             <ArtIconButton
@@ -396,10 +398,22 @@
 
     &__section-header {
       display: flex;
-      gap: 12px;
+      gap: var(--art-space-3);
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: var(--art-space-3);
+
+      :deep(.art-section-title) {
+        width: auto;
+        margin: 0;
+      }
+    }
+
+    @media (width <= 680px) {
+      &__section-header {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
     }
   }
 </style>

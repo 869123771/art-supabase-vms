@@ -224,7 +224,12 @@
         width: 120,
         dict: { code: 'vehiclePartType', display: 'auto' }
       },
-      { prop: 'partName', label: '零部件名称', minWidth: 170 },
+      {
+        prop: 'partName',
+        label: '零部件名称',
+        minWidth: 170,
+        link: { permission: 'VehiclePartUsage:View', onClick: viewDetail }
+      },
       { prop: 'categoryName', label: '类别', minWidth: 130 },
       { prop: 'brand', label: '品牌', width: 110 },
       { prop: 'model', label: '型号', minWidth: 130 },

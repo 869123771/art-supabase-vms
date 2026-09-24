@@ -25,6 +25,7 @@
             title="上传附件"
             :show-file-list="false"
             :show-tip="false"
+            inline
             @resource-change="handleAttachmentUpload"
           />
         </div>
@@ -60,8 +61,8 @@
     fetchInsuranceCompanyOptions,
     fetchVehicleArchiveOptions
   } from '@vms/api'
-  import { downloadAttachment, getFileExtension } from '@/utils/file'
-  import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
+  import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
+  import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canEditField, canViewField } from '@/utils/field-permission'
   import {
     EDITABLE_VEHICLE_INSURANCE_ACCESS,
@@ -290,7 +291,7 @@
 
   const attachmentColumns = computed<ColumnOption<Attachment>[]>(() => [
     { type: 'globalIndex', label: '序号', width: 72 },
-    { prop: 'name', label: '附件名称', minWidth: 220, formatter: renderAttachmentLink },
+    { prop: 'name', label: '附件名称', minWidth: 220, link: attachmentTableLink },
     {
       prop: 'fileType',
       label: '格式类型',
@@ -298,25 +299,24 @@
       dict: { code: 'FILE_EXTENSION_LABEL_MAP', display: 'text' }
     },
     { prop: 'fileSize', label: '附件大小', width: 120 },
-    ...(canEditInsuranceField('documents')
-      ? [
-          {
-            prop: 'operation',
-            label: '操作',
-            width: 96,
-            formatter: (row) => (
-              <div class="flex items-center">
-                <ArtIconButton icon="ri:download-2-line" onClick={() => downloadAttachment(row)} />
-                <ArtIconButton
-                  icon="ri:delete-bin-5-line"
-                  tone="danger"
-                  onClick={() => void removeAttachment(row)}
-                />
-              </div>
-            )
-          } as ColumnOption<Attachment>
-        ]
-      : [])
+    {
+      prop: 'operation',
+      label: '操作',
+      width: canEditInsuranceField('documents') ? 120 : 80,
+      formatter: (row) => (
+        <div class="flex items-center">
+          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
+          <ArtIconButton icon="ri:download-2-line" onClick={() => downloadAttachment(row)} />
+          {canEditInsuranceField('documents') ? (
+            <ArtIconButton
+              icon="ri:delete-bin-5-line"
+              tone="danger"
+              onClick={() => void removeAttachment(row)}
+            />
+          ) : null}
+        </div>
+      )
+    }
   ])
 
   const getResponseData = <TRecord,>(result: unknown): TRecord[] => {
@@ -465,10 +465,22 @@
 
     &__section-header {
       display: flex;
-      gap: 12px;
+      gap: var(--art-space-3);
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: var(--art-space-3);
+
+      :deep(.art-section-title) {
+        width: auto;
+        margin: 0;
+      }
+    }
+
+    @media (width <= 680px) {
+      &__section-header {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
     }
   }
 </style>

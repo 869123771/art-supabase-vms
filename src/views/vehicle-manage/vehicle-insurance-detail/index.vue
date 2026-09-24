@@ -75,8 +75,8 @@
   import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import { fetchVehicleInsuranceDetail } from '@vms/api'
-  import { downloadAttachment } from '@/utils/file'
-  import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
+  import { downloadAttachment, viewAttachment } from '@/utils/file'
+  import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canViewField, formatSensitiveNumberWithAffix } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehicleInsuranceDetail' })
@@ -169,7 +169,7 @@
 
   const attachmentColumns: ColumnOption<Attachment>[] = [
     { type: 'globalIndex', label: '序号', width: 80 },
-    { prop: 'name', label: '附件名称', minWidth: 240, formatter: renderAttachmentLink },
+    { prop: 'name', label: '附件名称', minWidth: 240, link: attachmentTableLink },
     {
       prop: 'fileType',
       label: '格式类型',
@@ -180,9 +180,10 @@
     {
       prop: 'operation',
       label: '操作',
-      width: 64,
+      width: 80,
       formatter: (row) => (
         <div class="flex items-center">
+          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
           <ArtIconButton icon="ri:download-2-line" onClick={() => downloadAttachment(row)} />
         </div>
       )

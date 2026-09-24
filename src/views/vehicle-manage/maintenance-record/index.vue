@@ -195,7 +195,12 @@
       { type: 'selection', width: 50, fixed: 'left', reserveSelection: true },
       { type: 'globalIndex', label: '序号', width: 72 },
       { prop: 'companyName', label: '所属公司', minWidth: 150 },
-      { prop: 'plateNo', label: '车牌号', width: 120 },
+      {
+        prop: 'plateNo',
+        label: '车牌号',
+        width: 120,
+        link: { permission: 'VehicleMaintenance:View', onClick: viewDetail }
+      },
       ...(canViewField(effectiveFieldAccess.value, 'maintenanceIdentifiers')
         ? [{ prop: 'maintenanceNo', label: '维修单号', minWidth: 150 }]
         : []),

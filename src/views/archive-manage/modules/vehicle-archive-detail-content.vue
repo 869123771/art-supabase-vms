@@ -138,7 +138,7 @@
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import WorkflowBusinessHistory from '@/components/business/workflow-business-history/index.vue'
   import ArtUploadImage from '@/components/core/forms/art-upload-image/index.vue'
@@ -147,7 +147,7 @@
   import { fetchVehicleArchiveDetail } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
   import { viewAttachment } from '@/utils/file'
-  import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
+  import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canViewField } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehicleArchiveDetailContent' })
@@ -371,7 +371,7 @@
       prop: 'name',
       label: '档案附件名称',
       minWidth: 220,
-      formatter: renderAttachmentLink
+      link: attachmentTableLink
     },
     {
       prop: 'fileType',
@@ -383,10 +383,10 @@
     {
       prop: 'operation',
       label: '操作',
-      width: 120,
+      width: 64,
       formatter: (row) => (
-        <div>
-          <ArtButtonTable type="view" onClick={() => viewAttachment(row)} />
+        <div class="flex items-center">
+          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
         </div>
       )
     }

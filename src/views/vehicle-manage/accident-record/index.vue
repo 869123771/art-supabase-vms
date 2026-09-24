@@ -199,7 +199,12 @@
       { type: 'selection', width: 50, fixed: 'left', reserveSelection: true },
       { type: 'globalIndex', label: '序号', width: 72 },
       { prop: 'companyName', label: '所属公司', minWidth: 150 },
-      { prop: 'plateNo', label: '车牌号', width: 120 },
+      {
+        prop: 'plateNo',
+        label: '车牌号',
+        width: 120,
+        link: { permission: 'VehicleAccident:View', onClick: viewDetail }
+      },
       ...(canViewField(effectiveFieldAccess.value, 'driverContact')
         ? [
             { prop: 'driverName', label: '驾驶员', width: 120 },

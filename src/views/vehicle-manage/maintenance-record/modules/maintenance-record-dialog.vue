@@ -126,8 +126,8 @@
   import type { ColumnOption } from '@/types'
   import { addVehicleMaintenance, editVehicleMaintenance, fetchVehicleArchiveList } from '@vms/api'
   import { pageInfoHandler } from '@/utils/table/tableUtils'
-  import { downloadAttachment, getFileExtension } from '@/utils/file'
-  import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
+  import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
+  import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { useUserStore } from '@/store/modules/user'
   import { canEditField, canViewField } from '@/utils/field-permission'
   import {
@@ -461,7 +461,7 @@
 
   const attachmentColumns = computed<ColumnOption<Attachment>[]>(() => [
     { type: 'globalIndex', label: '序号', width: 56 },
-    { prop: 'name', label: '附件名称', minWidth: 180, formatter: renderAttachmentLink },
+    { prop: 'name', label: '附件名称', minWidth: 180, link: attachmentTableLink },
     {
       prop: 'fileType',
       label: '格式类型',
@@ -472,9 +472,10 @@
     {
       prop: 'operation',
       label: '操作',
-      width: 96,
+      width: 120,
       formatter: (row) => (
         <div class="flex items-center">
+          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
           <ArtIconButton icon="ri:download-2-line" onClick={() => downloadAttachment(row)} />
           {canEditDocuments.value ? (
             <ArtIconButton

@@ -100,9 +100,10 @@
               </ArtSectionTitle>
               <ArtUploadFile
                 title="上传附件"
-                :disabled="!canEditArchiveField('documents')"
+                :disabled="!canManageArchiveAttachments"
                 :show-file-list="false"
                 :show-tip="false"
+                inline
                 @resource-change="handleAttachmentUpload"
               />
             </div>
@@ -140,10 +141,7 @@
     type FormItemOption
   } from '@/components/core/forms/art-form/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
-  import ArtButtonMore, {
-    type ButtonMoreItem
-  } from '@/components/core/forms/art-button-more/index.vue'
+  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import ArtUploadFile from '@/components/core/forms/art-upload-file/index.vue'
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import ArtUploadImage from '@/components/core/forms/art-upload-image/index.vue'
@@ -160,8 +158,9 @@
   } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
   import { useDocumentNumberRule } from '@/hooks/core/useDocumentNumberRule'
+  import { useAuth } from '@/hooks/core/useAuth'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
-  import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
+  import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canEditField, canViewField } from '@/utils/field-permission'
   import {
     createInitialVehicleArchiveForm,
@@ -235,6 +234,7 @@
 
   const route = useRoute()
   const router = useRouter()
+  const { hasAuth } = useAuth()
   const userStore = useUserStore()
   const { getDictMap } = storeToRefs(userStore)
   const page = reactive<PageGroup>({
@@ -300,6 +300,9 @@
     !isEdit.value || canViewField(form.fieldAccess, field)
   const canEditArchiveField = (field: Api.Vms.ArchiveManage.VehicleArchiveFieldKey): boolean =>
     !isEdit.value || canEditField(form.fieldAccess, field)
+  const canManageArchiveAttachments = computed(
+    () => canEditArchiveField('documents') && hasAuth(savePermission.value)
+  )
 
   const sensitiveFormFields: Partial<
     Record<keyof VehicleArchiveForm, Api.Vms.ArchiveManage.VehicleArchiveFieldKey>
@@ -894,7 +897,7 @@
       prop: 'name',
       label: '档案附件名称',
       minWidth: 220,
-      formatter: renderAttachmentLink
+      link: attachmentTableLink
     },
     {
       prop: 'fileType',
@@ -908,12 +911,19 @@
       label: '操作',
       width: 120,
       formatter: (row) => (
-        <div class="flex">
-          <ArtButtonTable type="view" onClick={() => viewAttachment(row)} />
-          {canEditArchiveField('documents') ? (
-            <ArtButtonMore
-              list={getAttachmentMoreActions()}
-              onClick={(item: ButtonMoreItem) => handleAttachmentMoreAction(item, row)}
+        <div class="flex items-center">
+          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
+          <ArtIconButton
+            icon="ri:download-2-line"
+            label="下载附件"
+            onClick={() => downloadAttachment(row)}
+          />
+          {canManageArchiveAttachments.value ? (
+            <ArtIconButton
+              icon="ri:delete-bin-5-line"
+              label="删除附件"
+              tone="danger"
+              onClick={() => void removeAttachment(row)}
             />
           ) : null}
         </div>
@@ -1031,31 +1041,6 @@
     }
   }
 
-  const getAttachmentMoreActions = (): ButtonMoreItem[] => [
-    {
-      key: 'download',
-      label: '下载',
-      icon: 'ri:download-2-line'
-    },
-    {
-      key: 'delete',
-      label: '删除',
-      icon: 'ri:delete-bin-5-line',
-      color: '#f56c6c'
-    }
-  ]
-
-  const handleAttachmentMoreAction = (item: ButtonMoreItem, row: ArchiveAttachment): void => {
-    if (item.key === 'download') {
-      downloadAttachment(row)
-      return
-    }
-
-    if (item.key === 'delete') {
-      void removeAttachment(row)
-    }
-  }
-
   const handleAttachmentUpload = (resources: Api.DataCenter.Resources.ResourceListItem[]): void => {
     const resource = resources[0]
     if (!resource) return
@@ -1072,6 +1057,7 @@
   }
 
   const removeAttachment = async (row: ArchiveAttachment): Promise<void> => {
+    if (!canManageArchiveAttachments.value) return
     try {
       await confirmAction(`确定删除附件“${row.name}”吗？`, '删除确认', {
         confirmButtonText: '删除',
@@ -1153,14 +1139,22 @@
 
     &__section-header {
       display: flex;
+      gap: var(--art-space-3);
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: var(--art-space-3);
     }
 
     &__section-title {
       flex: 1;
       margin: 0 !important;
+    }
+
+    @media (width <= 680px) {
+      &__section-header {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
     }
 
     &__certificate-panel {

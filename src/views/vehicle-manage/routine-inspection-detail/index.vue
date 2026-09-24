@@ -118,7 +118,7 @@
   import type { ColumnOption } from '@/types'
   import { fetchVehicleRoutineInspectionDetail } from '@vms/api'
   import { downloadAttachment, viewAttachment } from '@/utils/file'
-  import { renderAttachmentLink } from '@/components/core/media/art-file-viewer/render'
+  import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canViewField } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehicleRoutineInspectionDetail' })
@@ -170,7 +170,7 @@
 
   const attachmentColumns: ColumnOption<Attachment>[] = [
     { type: 'globalIndex', label: '序号', width: 56 },
-    { prop: 'name', label: '附件名称', minWidth: 180, formatter: renderAttachmentLink },
+    { prop: 'name', label: '附件名称', minWidth: 180, link: attachmentTableLink },
     {
       prop: 'fileType',
       label: '格式类型',
