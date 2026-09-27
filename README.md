@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Art Supabase VMS</h1>
+  <h1>亿企工场 VMS</h1>
   <p><strong>围绕“一车一档”的车辆全生命周期管理应用</strong></p>
   <p>统一车辆档案、证照合规、维修保养、事故违章、零部件、里程与风险提醒。</p>
 
@@ -16,7 +16,7 @@
 
 ## 项目定位
 
-Art Supabase VMS 是 Art Supabase Pro 的车辆管理业务应用。它以车辆档案为主线，聚合司机、证照、保险、年检、维修、事故、违章、例检、里程、零部件与设备信息，支持从建档审核到退役提醒的连续治理。
+亿企工场 VMS 是亿企工场的车辆管理业务应用。它以车辆档案为主线，聚合司机、证照、保险、年检、维修、事故、违章、例检、里程、零部件与设备信息，支持从建档审核到退役提醒的连续治理。
 
 本仓只维护 VMS 页面、业务 API、领域类型、车辆规则与专属 Edge Function。认证、租户、菜单、权限、布局、路由、公共组件、Store 和 Supabase 公共客户端由 [`art-supabase-pro`](https://gitee.com/wangyanghub/art-supabase-pro) 统一提供。
 

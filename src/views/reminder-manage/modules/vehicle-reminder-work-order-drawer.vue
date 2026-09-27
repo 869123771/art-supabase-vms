@@ -18,7 +18,7 @@
             </div>
             <ArtDictDisplay
               v-if="state.workOrder"
-              dict-code="vehicleReminderWorkOrderStatus"
+              dict-code="commonWorkOrderResolutionStatus"
               :value="state.workOrder.status"
               display="tag"
             />
@@ -298,7 +298,7 @@
   )
 
   function getUserStoreDictionary(): Api.DataCenter.DictListItem[] {
-    return getDictMap.value.vehicleReminderWorkOrderStatus ?? []
+    return getDictMap.value.commonWorkOrderResolutionStatus ?? []
   }
 
   function createInitialForm(): FormModel {

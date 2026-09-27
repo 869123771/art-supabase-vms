@@ -79,7 +79,7 @@ export const createReminderWorkOrderColumns = (
     prop: 'workOrderStatus',
     label: '处置状态',
     width: 112,
-    dict: { code: 'vehicleReminderWorkOrderStatus', display: 'auto' }
+    dict: { code: 'commonWorkOrderResolutionStatus', display: 'auto' }
   },
   {
     prop: 'operation',

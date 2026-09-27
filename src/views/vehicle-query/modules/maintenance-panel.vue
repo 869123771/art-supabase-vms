@@ -7,8 +7,12 @@
         placeholder="维修类型"
         style="width: 180px"
       >
-        <ElOption label="维修" value="repair" />
-        <ElOption label="保养" value="maintenance" />
+        <ElOption
+          v-for="option in maintenanceTypeOptions"
+          :key="option.value"
+          :label="option.label"
+          :value="option.value"
+        />
       </ElSelect>
     </template>
     <VehicleQueryTable :data="filteredRecords" :columns="columns" :loading="loading" />
@@ -16,6 +20,7 @@
 </template>
 
 <script setup lang="tsx">
+  import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
   import { ElOption, ElSelect } from 'element-plus'
   import type { ColumnOption } from '@/types'
   import { fetchVehicleMaintenanceList } from '@vms/api'
@@ -29,6 +34,8 @@
     mergeFieldAccessMaps,
     formatSensitiveNumberWithAffix
   } from '@/utils/field-permission'
+
+  const maintenanceTypeOptions = useDictionaryOptions('vehicleMaintenanceType')
 
   defineOptions({ name: 'VehicleQueryMaintenancePanel' })
 
