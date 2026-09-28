@@ -94,6 +94,29 @@ test('vehicle archive payload keeps sensitive fields with edit permission', () =
   assert.equal(payload.acCode, 'AC-001')
 })
 
+test('vehicle archive keeps the selected type and ownership while server fills its metrics', () => {
+  const form = createInitialVehicleArchiveForm()
+  assert.equal(form.vehicleOwnership, 'self_operated')
+
+  Object.assign(form, {
+    vehicleTypeProfileId: 'profile-1',
+    vehicleType: '半挂车',
+    vehicleOwnership: 'franchise',
+    specLengthM: 13,
+    volumeM3: 75,
+    loadTons: 30,
+    ownerId: 'legacy-owner'
+  })
+
+  const payload = sanitizeVehicleArchivePayload(form)
+  assert.equal(payload.vehicleTypeProfileId, 'profile-1')
+  assert.equal(payload.vehicleOwnership, 'franchise')
+  assert.equal('specLengthM' in payload, false)
+  assert.equal('volumeM3' in payload, false)
+  assert.equal('loadTons' in payload, false)
+  assert.equal('ownerId' in payload, false)
+})
+
 test('only rejected vehicle archives require resubmission after editing', () => {
   assert.equal(requiresVehicleArchiveResubmission('rejected'), true)
   assert.equal(requiresVehicleArchiveResubmission('pending'), false)

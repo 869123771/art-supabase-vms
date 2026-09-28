@@ -70,6 +70,11 @@ declare global {
           companyName?: string
           selfNo?: string
           vehicleType: string
+          vehicleTypeProfileId?: string | null
+          vehicleOwnership?: 'self_operated' | 'franchise' | 'third_party'
+          specLengthM?: number | null
+          volumeM3?: number | null
+          loadTons?: number | null
           originType?: string
           vin?: string
           manufacturer?: string

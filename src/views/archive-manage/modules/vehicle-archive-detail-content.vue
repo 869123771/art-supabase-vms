@@ -217,7 +217,14 @@
     { label: '车牌号', value: archive.value?.plateNo },
     { label: '所属公司', value: archive.value?.companyName },
     { label: '自编号', value: archive.value?.selfNo },
+    {
+      label: '车辆归属',
+      value: getDictLabel('vehicleOwnership', archive.value?.vehicleOwnership || 'self_operated')
+    },
     { label: '车型', value: getDictLabel('vehicleType', archive.value?.vehicleType) },
+    { label: '规格 / 车长', value: formatValue(archive.value?.specLengthM, ' 米') },
+    { label: '容积', value: formatValue(archive.value?.volumeM3, ' 立方米') },
+    { label: '载重', value: formatValue(archive.value?.loadTons, ' 吨') },
     { label: '国产/进口', value: getDictLabel('vehicleOriginType', archive.value?.originType) },
     ...(canViewArchiveField('vehicleIdentifiers')
       ? [{ label: '车架号（VIN）', value: archive.value?.vin }]

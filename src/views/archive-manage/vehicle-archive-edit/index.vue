@@ -28,7 +28,27 @@
             label-width="130px"
             :show-reset="false"
             :show-submit="false"
-          />
+          >
+            <template #vehicleType>
+              <ElButton
+                class="vehicle-archive-edit__type-trigger"
+                :class="{ 'is-selected': Boolean(form.vehicleTypeProfileId) }"
+                :disabled="page.saving || !hasAuth(savePermission)"
+                @click="openVehicleTypePicker"
+              >
+                <ArtSvgIcon icon="ri:truck-line" aria-hidden="true" />
+                <span class="vehicle-archive-edit__type-value">
+                  {{
+                    form.vehicleTypeProfileId
+                      ? `${form.vehicleType} · ${form.specLengthM ?? form.loadTons}${form.specLengthM == null ? ' 吨' : ' 米'}`
+                      : '请选择车型与规格'
+                  }}
+                </span>
+                <span class="vehicle-archive-edit__type-action">参选</span>
+                <ArtSvgIcon icon="ri:arrow-right-s-line" aria-hidden="true" />
+              </ElButton>
+            </template>
+          </ArtForm>
 
           <section class="vehicle-archive-edit__section vehicle-archive-edit__certificate-panel">
             <header class="vehicle-archive-edit__certificate-heading">
@@ -116,10 +136,14 @@
             />
           </section>
         </ElTabPane>
+        <ElTabPane label="车型" name="types" lazy>
+          <VehicleTypeTab />
+        </ElTabPane>
       </ElTabs>
     </div>
 
     <ArtStickyActionBar
+      v-if="page.activeTab !== 'types'"
       class="vehicle-archive-edit__footer"
       hint="带 * 的信息为必填项；提交前请确认车辆、证件与运营信息完整。"
     >
@@ -128,6 +152,7 @@
         {{ saveButtonLabel }}
       </ElButton>
     </ArtStickyActionBar>
+    <VehicleTypePicker ref="vehicleTypePickerRef" @selected="handleVehicleTypeSelected" />
   </ArtPageShell>
 </template>
 
@@ -145,6 +170,7 @@
   import ArtUploadFile from '@/components/core/forms/art-upload-file/index.vue'
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import ArtUploadImage from '@/components/core/forms/art-upload-image/index.vue'
+  import ArtSvgIcon from '@/components/core/base/art-svg-icon/index.vue'
   import type { ColumnOption } from '@/types'
   import {
     addVehicleArchive,
@@ -169,6 +195,9 @@
     type VehicleArchive,
     type VehicleArchiveForm
   } from './modules/vehicle-archive-model'
+  import VehicleTypeTab from './modules/vehicle-type-tab.vue'
+  import VehicleTypePicker from './modules/vehicle-type-picker.vue'
+  import type { VehicleTypeProfile } from './modules/vehicle-type-catalog'
 
   defineOptions({ name: 'VehicleArchiveEdit' })
 
@@ -177,7 +206,7 @@
   type ArchiveAttachment = Api.Vms.ArchiveManage.VehicleArchiveAttachment
   type CarrierOption = VmsCarrierReference
   type DriverOption = VmsDriverReference
-  type ArchiveTabName = 'basic' | 'body' | 'engine' | 'other'
+  type ArchiveTabName = 'basic' | 'body' | 'engine' | 'other' | 'types'
   type BooleanDictOption = Omit<Api.DataCenter.DictListItem, 'value'> & { value: boolean }
   type ImageKey =
     'vehiclePhotoUrl' | 'drivingLicenseFrontUrl' | 'drivingLicenseBackUrl' | 'operationLicenseUrl'
@@ -217,7 +246,7 @@
   }
 
   interface OptionGroup {
-    vehicleType: ComputedRef<Api.DataCenter.DictListItem[]>
+    vehicleOwnership: ComputedRef<Api.DataCenter.DictListItem[]>
     originType: ComputedRef<Api.DataCenter.DictListItem[]>
     color: ComputedRef<Api.DataCenter.DictListItem[]>
     businessType: ComputedRef<Api.DataCenter.DictListItem[]>
@@ -248,6 +277,13 @@
   const bodyFormRef = ref<FormExpose>()
   const engineFormRef = ref<FormExpose>()
   const otherFormRef = ref<FormExpose>()
+  const vehicleTypePickerRef = ref<{
+    handleOpen: (data: {
+      vehicleId?: string
+      carrierId?: string
+      selectedId?: string | null
+    }) => Promise<void>
+  }>()
   const formTabs: FormTab[] = [
     { name: 'basic', formRef: basicFormRef },
     { name: 'body', formRef: bodyFormRef },
@@ -271,7 +307,7 @@
   })
 
   const options: UnwrapNestedRefs<OptionGroup> = reactive<OptionGroup>({
-    vehicleType: computed(() => getDictMap.value.vehicleType ?? []),
+    vehicleOwnership: computed(() => getDictMap.value.vehicleOwnership ?? []),
     originType: computed(() => getDictMap.value.vehicleOriginType ?? []),
     color: computed(() => getDictMap.value.vehicleColor ?? []),
     businessType: computed(() => getDictMap.value.vehicleBusinessType ?? []),
@@ -315,7 +351,6 @@
     gearboxSerialNo: 'vehicleIdentifiers',
     engineNo: 'vehicleIdentifiers',
     licensePlateCode: 'vehicleIdentifiers',
-    ownerId: 'ownerIdentity',
     ownerName: 'ownerIdentity',
     ownerGender: 'ownerIdentity',
     idCardNo: 'ownerIdentity',
@@ -345,7 +380,15 @@
   const rules = computed<FormRules<VehicleArchiveForm>>(() => ({
     plateNo: [{ required: true, message: '请输入车牌号', trigger: 'blur' }],
     carrierId: [{ required: true, message: '请选择所属承运商', trigger: 'change' }],
-    vehicleType: [{ required: true, message: '请选择车型', trigger: 'change' }],
+    vehicleType: [
+      {
+        validator: (_rule, _value, callback) => {
+          if (form.vehicleTypeProfileId || (isEdit.value && form.vehicleType)) callback()
+          else callback(new Error('请参选已配置的车型规格'))
+        },
+        trigger: 'change'
+      }
+    ],
     vin: canEditArchiveField('vehicleIdentifiers')
       ? [{ required: true, message: '请输入车架号（VIN）', trigger: 'blur' }]
       : [],
@@ -362,14 +405,20 @@
     warrantyDuration: [{ required: true, message: '请输入整车包修时长', trigger: 'blur' }]
   }))
 
+  const derivedMetricInputProps = {
+    readonly: true,
+    placeholder: '参选车型后带入',
+    class: 'vehicle-archive-edit__derived-input'
+  }
+
   const basicItems = computed<FormItem[]>(() =>
     [
+      { label: '车辆身份与归属', key: 'identitySection', type: 'divider', span: 24 },
       { label: '车牌号', key: 'plateNo', type: 'input' },
       {
         label: '所属承运商',
         key: 'carrierId',
         type: 'select',
-        span: 16,
         api: fetchCarrierOptions,
         resultField: 'data',
         labelField: 'companyName',
@@ -390,6 +439,11 @@
             carrierCache.value = new Map((data ?? []).map((item) => [item.id, item]))
           },
           onChange: (value?: string) => {
+            form.vehicleTypeProfileId = null
+            form.vehicleType = ''
+            form.specLengthM = null
+            form.volumeM3 = null
+            form.loadTons = null
             if (!value) {
               form.companyName = ''
               form.primaryDriverId = null
@@ -431,10 +485,10 @@
         description: archiveNumber.description.value
       },
       {
-        label: '车型',
-        key: 'vehicleType',
-        type: 'select',
-        props: { options: options.vehicleType }
+        label: '车辆归属',
+        key: 'vehicleOwnership',
+        type: 'radioGroup',
+        props: { options: options.vehicleOwnership, optionType: 'button' }
       },
       {
         label: '国产/进口',
@@ -442,27 +496,35 @@
         type: 'radioGroup',
         props: { options: options.originType, optionType: 'button' }
       },
-      { label: '车架号（VIN）', key: 'vin', type: 'input' },
-      { label: '车辆厂商', key: 'manufacturer', type: 'input' },
-      { label: '厂牌型号', key: 'brandModel', type: 'input' },
-      { label: '营运证号', key: 'operationCertNo', type: 'input' },
-      { label: '购置证号', key: 'purchaseCertNo', type: 'input' },
-      { label: '登记证号', key: 'registrationCertNo', type: 'input' },
-      { label: '车身颜色', key: 'vehicleColor', type: 'select', props: { options: options.color } },
-      { label: '底盘号', key: 'chassisNo', type: 'input' },
-      { label: '空调号码', key: 'acCode', type: 'input' },
-      { label: '波箱系列号', key: 'gearboxSerialNo', type: 'input' },
-      { label: '登记日期', key: 'registerDate', type: 'date', props: dateProps },
-      { label: '发证日期', key: 'issueDate', type: 'date', props: dateProps },
-      { label: '购入开票日期', key: 'invoiceDate', type: 'date', props: dateProps },
-      { label: '启用日期', key: 'startUseDate', type: 'date', props: dateProps },
+      { label: '车型与运力', key: 'capacitySection', type: 'divider', span: 24 },
       {
-        label: '使用年限',
-        key: 'serviceYears',
-        type: 'number',
-        description: '单位：年',
-        props: numberProps
+        label: '车型',
+        key: 'vehicleType',
+        type: 'input',
+        span: 6
       },
+      {
+        label: '规格 / 车长（米）',
+        key: 'specLengthM',
+        type: 'input',
+        span: 6,
+        props: derivedMetricInputProps
+      },
+      {
+        label: '容积（立方米）',
+        key: 'volumeM3',
+        type: 'input',
+        span: 6,
+        props: derivedMetricInputProps
+      },
+      {
+        label: '载重（吨）',
+        key: 'loadTons',
+        type: 'input',
+        span: 6,
+        props: derivedMetricInputProps
+      },
+      { label: '吨位/座位', key: 'tonnageOrSeat', type: 'input' },
       {
         label: '核定乘员数',
         key: 'approvedPassengerCount',
@@ -471,6 +533,29 @@
         props: numberProps
       },
       { label: '座位数', key: 'seatCount', type: 'number', props: numberProps },
+      { label: '车辆识别与证照', key: 'documentsSection', type: 'divider', span: 24 },
+      { label: '车架号（VIN）', key: 'vin', type: 'input' },
+      { label: '车辆厂商', key: 'manufacturer', type: 'input' },
+      { label: '厂牌型号', key: 'brandModel', type: 'input' },
+      { label: '营运证号', key: 'operationCertNo', type: 'input' },
+      { label: '购置证号', key: 'purchaseCertNo', type: 'input' },
+      { label: '登记证号', key: 'registrationCertNo', type: 'input' },
+      {
+        label: '车身颜色',
+        key: 'vehicleColor',
+        type: 'select',
+        span: 12,
+        props: { options: options.color }
+      },
+      { label: '底盘号', key: 'chassisNo', type: 'input', span: 12 },
+      { label: '空调号码', key: 'acCode', type: 'input', span: 12 },
+      { label: '波箱系列号', key: 'gearboxSerialNo', type: 'input', span: 12 },
+      { label: '登记与使用', key: 'registrationSection', type: 'divider', span: 24 },
+      { label: '登记日期', key: 'registerDate', type: 'date', span: 6, props: dateProps },
+      { label: '发证日期', key: 'issueDate', type: 'date', span: 6, props: dateProps },
+      { label: '购入开票日期', key: 'invoiceDate', type: 'date', span: 6, props: dateProps },
+      { label: '启用日期', key: 'startUseDate', type: 'date', span: 6, props: dateProps },
+      { label: '营运配置', key: 'operationSection', type: 'divider', span: 24 },
       {
         label: '业务类型',
         key: 'businessType',
@@ -510,6 +595,14 @@
         type: 'radioGroup',
         props: { options: options.boolean }
       },
+      { label: '质保与备注', key: 'warrantySection', type: 'divider', span: 24 },
+      {
+        label: '使用年限',
+        key: 'serviceYears',
+        type: 'number',
+        description: '单位：年',
+        props: numberProps
+      },
       {
         label: '整车三包里程',
         key: 'threeGuaranteeMileage',
@@ -528,6 +621,7 @@
         label: '整车包修里程',
         key: 'warrantyMileage',
         type: 'number',
+        span: 12,
         description: '单位：公里',
         props: numberProps
       },
@@ -535,6 +629,7 @@
         label: '整车包修时长',
         key: 'warrantyDuration',
         type: 'number',
+        span: 12,
         description: '单位：个月',
         props: numberProps
       },
@@ -549,6 +644,7 @@
   )
 
   const bodyItems = computed<FormItem[]>(() => [
+    { label: '载质量', key: 'massSection', type: 'divider', span: 24 },
     {
       label: '满载总质量',
       key: 'grossMass',
@@ -576,6 +672,7 @@
         suffix: () => 'kg'
       }
     },
+    { label: '外廓与底盘', key: 'bodyDimensionsSection', type: 'divider', span: 24 },
     {
       label: '外廓长度',
       key: 'overallLength',
@@ -629,6 +726,7 @@
       label: '钢板弹簧数',
       key: 'leafSpringCount',
       type: 'number',
+      span: 12,
       props: numberProps,
       slots: {
         suffix: () => '片'
@@ -638,15 +736,18 @@
       label: '是否双层',
       key: 'isDoubleDeck',
       type: 'radioGroup',
+      span: 12,
       props: { options: options.boolean }
     }
   ])
 
   const engineItems = computed<FormItem[]>(() =>
     [
+      { label: '发动机身份', key: 'engineIdentitySection', type: 'divider', span: 24 },
       { label: '发动机号', key: 'engineNo', type: 'input' },
       { label: '发动机型号', key: 'engineModel', type: 'input' },
       { label: '燃油类型', key: 'fuelType', type: 'select', props: { options: options.fuelType } },
+      { label: '动力与排放', key: 'enginePerformanceSection', type: 'divider', span: 24 },
       {
         label: '发动机排量',
         key: 'displacement',
@@ -675,6 +776,7 @@
         label: '额定扭矩转速',
         key: 'ratedTorqueSpeed',
         type: 'number',
+        span: 12,
         props: numberProps,
         slots: {
           suffix: () => 'r/min'
@@ -684,6 +786,7 @@
         label: '发动机扭矩',
         key: 'engineTorque',
         type: 'number',
+        span: 12,
         props: numberProps,
         slots: {
           suffix: () => 'N-M'
@@ -694,6 +797,7 @@
 
   const otherItems = computed<FormItem[]>(() =>
     [
+      { label: '车主与联系', key: 'ownerContactSection', type: 'divider', span: 24 },
       { label: '车牌颜色', key: 'plateColor', type: 'select', props: { options: options.color } },
       {
         label: '运输行业',
@@ -707,14 +811,13 @@
         type: 'select',
         props: { options: options.operationType }
       },
-      { label: '业户ID', key: 'ownerId', type: 'input' },
       { label: '业户名称', key: 'ownerName', type: 'input' },
       { label: '业户联系电话', key: 'ownerPhone', type: 'input' },
       { label: '车载终端电话', key: 'terminalPhone', type: 'input' },
       { label: '车主性别', key: 'ownerGender', type: 'select', props: { options: options.gender } },
       { label: '身份证号码', key: 'idCardNo', type: 'input' },
       { label: '通讯地址', key: 'mailingAddress', type: 'input' },
-      { label: '吨位/座位', key: 'tonnageOrSeat', type: 'input' },
+      { label: '驾驶人员', key: 'driversSection', type: 'divider', span: 24 },
       {
         label: '主司机',
         key: 'primaryDriverId',
@@ -811,16 +914,17 @@
         type: 'input',
         props: { readonly: true }
       },
+      { label: '运营与设备', key: 'otherOperationsSection', type: 'divider', span: 24 },
       { label: '营运线路', key: 'operationRoute', type: 'input' },
       { label: '车籍地代码', key: 'licensePlateCode', type: 'input' },
-      { label: '服务开始时间', key: 'serviceStartTime', type: 'date', props: dateProps },
-      { label: '服务结束时间', key: 'serviceEndTime', type: 'date', props: dateProps },
       {
         label: '支持拍照',
         key: 'supportPhoto',
         type: 'radioGroup',
         props: { options: options.boolean }
-      }
+      },
+      { label: '服务开始时间', key: 'serviceStartTime', type: 'date', span: 12, props: dateProps },
+      { label: '服务结束时间', key: 'serviceEndTime', type: 'date', span: 12, props: dateProps }
     ].map(applyVehicleFieldAccess)
   )
 
@@ -939,10 +1043,27 @@
     page.loading = true
     page.error = null
     try {
+      const dictionaryCodes = [
+        'FILE_EXTENSION_LABEL_MAP',
+        'vehicleOwnership',
+        'vehicleOriginType',
+        'vehicleTypeCategory',
+        'vehicleColor',
+        'vehicleBusinessType',
+        'vehicleOperationStatus',
+        'vehiclePurchaseStatus',
+        'vehicleLevel',
+        'vehicleFuelType',
+        'vehicleEmissionStandard',
+        'vehicleTransportIndustry',
+        'vehicleOperationType',
+        'sex',
+        'commonBoolean'
+      ] as const
       await Promise.all([
         loadArchiveDetail(),
         archiveNumber.loadRule(),
-        userStore.ensureDictLoaded('FILE_EXTENSION_LABEL_MAP')
+        ...dictionaryCodes.map((code) => userStore.ensureDictLoaded(code))
       ])
       await nextTick()
       formTabs.forEach((tab) => tab.formRef.value?.clearValidate())
@@ -1041,6 +1162,27 @@
     }
   }
 
+  const openVehicleTypePicker = (): void => {
+    if (!form.carrierId) {
+      ElMessage.warning('请先选择所属承运商，再参选车型')
+      return
+    }
+    void vehicleTypePickerRef.value?.handleOpen({
+      vehicleId: isEdit.value ? String(route.params.id) : undefined,
+      carrierId: form.carrierId,
+      selectedId: form.vehicleTypeProfileId
+    })
+  }
+
+  const handleVehicleTypeSelected = (profile: VehicleTypeProfile): void => {
+    form.vehicleTypeProfileId = profile.id
+    form.vehicleType = profile.category
+    form.specLengthM = profile.lengthM
+    form.volumeM3 = profile.volumeM3
+    form.loadTons = profile.loadTons
+    basicFormRef.value?.clearValidate()
+  }
+
   const handleAttachmentUpload = (resources: Api.DataCenter.Resources.ResourceListItem[]): void => {
     const resource = resources[0]
     if (!resource) return
@@ -1110,14 +1252,18 @@
     }
 
     &__tabs {
-      padding: 0 20px 24px;
+      padding: 0 20px 20px;
 
       :deep(.el-tabs__header) {
-        margin-bottom: 22px;
+        margin-bottom: 14px;
+      }
+
+      :deep(.el-tab-pane > .art-form) {
+        padding-top: 8px;
       }
 
       :deep(.el-form-item) {
-        margin-bottom: 22px;
+        margin-bottom: 18px;
       }
     }
 
@@ -1125,6 +1271,65 @@
       flex: none;
       // Sticky 向上偏移时会压缩视觉间距，提前补偿以稳定保持 16px 卡片间隔。
       margin-top: calc(var(--art-space-4) + var(--art-sticky-offset));
+    }
+
+    &__type-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      font-weight: 400;
+      text-align: left;
+      background: var(--el-bg-color);
+      border-color: var(--el-border-color);
+
+      :deep(> span) {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+      }
+
+      :deep(.art-svg-icon:first-child) {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        color: var(--el-text-color-secondary);
+      }
+
+      &.is-selected {
+        background: var(--el-color-primary-light-9);
+        border-color: var(--el-color-primary-light-5);
+      }
+    }
+
+    :deep(.vehicle-archive-edit__derived-input .el-input__wrapper) {
+      background: var(--el-fill-color-extra-light);
+      box-shadow: 0 0 0 1px var(--el-border-color-light) inset;
+    }
+
+    &__type-value {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--el-text-color-placeholder);
+      text-align: left;
+      white-space: nowrap;
+
+      .is-selected & {
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+    }
+
+    &__type-action {
+      flex: none;
+      font-size: 12px;
+      color: var(--el-color-primary);
     }
 
     &__section {
