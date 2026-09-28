@@ -41,6 +41,7 @@
         <div class="maintenance-record-dialog__section-header">
           <ArtSectionTitle :show-line="false">项目清单</ArtSectionTitle>
           <ElButton v-if="canEditMaintenanceItems" type="primary" plain @click="addItem">
+            <template #icon><ArtSvgIcon icon="ri:add-line" /></template>
             新增
           </ElButton>
         </div>
@@ -57,6 +58,7 @@
         <div class="maintenance-record-dialog__section-header">
           <ArtSectionTitle :show-line="false">维修保养附件</ArtSectionTitle>
           <ElButton v-if="canEditDocuments" type="primary" plain @click="openAttachmentDialog">
+            <template #icon><ArtSvgIcon icon="ri:upload-2-line" /></template>
             上传
           </ElButton>
         </div>
@@ -472,19 +474,24 @@
     {
       prop: 'operation',
       label: '操作',
-      width: 120,
+      width: 144,
       formatter: (row) => (
-        <div class="flex items-center">
+        <>
           <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-          <ArtIconButton icon="ri:download-2-line" onClick={() => downloadAttachment(row)} />
+          <ArtIconButton
+            icon="ri:download-2-line"
+            label="下载附件"
+            onClick={() => downloadAttachment(row)}
+          />
           {canEditDocuments.value ? (
             <ArtIconButton
               icon="ri:delete-bin-5-line"
+              label="删除附件"
               tone="danger"
               onClick={() => void removeAttachment(row)}
             />
           ) : null}
-        </div>
+        </>
       )
     }
   ])

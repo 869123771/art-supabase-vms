@@ -1013,9 +1013,9 @@
     {
       prop: 'operation',
       label: '操作',
-      width: 120,
+      width: 144,
       formatter: (row) => (
-        <div class="flex items-center">
+        <>
           <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
           <ArtIconButton
             icon="ri:download-2-line"
@@ -1030,7 +1030,7 @@
               onClick={() => void removeAttachment(row)}
             />
           ) : null}
-        </div>
+        </>
       )
     }
   ]

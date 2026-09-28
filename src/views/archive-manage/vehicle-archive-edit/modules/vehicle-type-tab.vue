@@ -161,6 +161,7 @@
                   :disabled="saving"
                   @click="handleDelete"
                 >
+                  <template #icon><ArtSvgIcon icon="ri:delete-bin-line" /></template>
                   删除规格
                 </ElButton>
                 <ElButton
@@ -169,6 +170,9 @@
                   :loading="saving"
                   @click="handleSave"
                 >
+                  <template #icon>
+                    <ArtSvgIcon :icon="selectedId ? 'ri:save-3-line' : 'ri:add-line'" />
+                  </template>
                   {{ selectedId ? '保存更改' : '创建规格' }}
                 </ElButton>
               </template>
