@@ -48,9 +48,11 @@ AI 健康建议用于汇总现有档案、解释风险和辅助排查，不替�
 
 ## 车型规格与车辆档案
 
-车型分类来自 `vehicleTypeCategory` 字典；每个租户在 `vehicle_type_profile` 中维护车长、容积、载重、状态、排序和可选图片。车辆档案保存所选规格 ID，数据库在写入时校验规格处于同一租户且已启用，并带入车型分类和三项参数；表单不直接提交这些派生参数。车辆归属来自 `vehicleOwnership` 字典，默认自营。
+车型分类来自 `vehicleTypeCategory` 字典；每个租户在 `vehicle_type_profile` 中维护车长、容积、载重、状态、排序和可选图片。车长通常必填（按载重分类除外），容积与载重可留空。车辆档案保存所选规格 ID，数据库在写入时校验规格处于同一租户且已启用，并带入车型分类和三项参数；表单不直接提交这些派生参数。车辆归属来自 `vehicleOwnership` 字典，默认自营。
 
 列表、保存、删除分别调用 `vms_list_vehicle_type_profiles_secure`、`vms_save_vehicle_type_profile_secure`、`vms_delete_vehicle_type_profile_secure`。这三个 RPC 按车辆档案按钮权限和当前租户读取范围校验，支持平台全租户模式下显式选定目标租户。2026-09-27 已验证普通用户本租户读取与写入、伪造跨租户查询拒绝、数据库带入车型参数；浏览器完成新增、修改、删除规格及车辆参选带入流程。演示租户保留半挂车 13 米、高栏车 8 米两条启用规格。
+
+2026-09-28 将 `vehicle_type_profile.volume_m3`、`load_tons` 和保存 RPC 对应校验改为允许留空。先在事务内验证空值规格可保存并回滚，再确认两列均允许 `NULL`、保存函数只要求车型分类。车型参选仅展示已启用的现有规格；所选车长与同一规格记录中的容积、载重一起带入车辆档案。
 
 默认车型插画与 TMS 开单页共用同一套造型：本仓 `src/views/archive-manage/vehicle-archive-edit/modules/vehicle-type-art.vue` 与 TMS 的 `src/views/order-open/modules/vehicle-type-art.vue` 内容保持一致，以便两个模块各自独立构建。上传的规格图片只覆盖该规格的默认展示。
 

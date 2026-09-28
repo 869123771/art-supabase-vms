@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { assessVehicleHealth } from '../../supabase/functions/_shared/vehicle-health-rules'
+import { assessVehicleHealth } from '../../../../supabase/functions/_shared/vehicle-health-rules'
 
 const now = new Date('2026-08-05T08:00:00.000Z')
 

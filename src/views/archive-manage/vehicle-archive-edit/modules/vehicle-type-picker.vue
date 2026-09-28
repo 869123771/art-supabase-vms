@@ -34,7 +34,10 @@
         <div class="vehicle-type-picker__specifications">
           <div class="vehicle-type-picker__section-heading">
             <strong>{{ selectedCategory === '按载重' ? '选择载重' : '选择规格 / 车长' }}</strong>
-            <span>仅展示已启用的配置</span>
+            <span>
+              已展示全部
+              {{ categoryProfiles(selectedCategory).length }} 项启用规格，选择后自动带出容积和载重
+            </span>
           </div>
           <div
             v-if="categoryProfiles(selectedCategory).length"
@@ -47,6 +50,7 @@
               class="vehicle-type-picker__choice"
               :class="{ 'is-active': selectedId === profile.id }"
               :aria-pressed="selectedId === profile.id"
+              :aria-label="`${vehicleTypeProfileLabel(profile)}，容积${formatMetric(profile.volumeM3, '立方米')}，载重${formatMetric(profile.loadTons, '吨')}`"
               @click="selectedId = profile.id"
             >
               {{
@@ -302,8 +306,8 @@
     }
 
     &__choices {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
       gap: 8px;
     }
 

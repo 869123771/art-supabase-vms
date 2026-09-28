@@ -32,237 +32,289 @@
       empty-description="车型配置属于具体租户，选定租户后即可查看和维护。"
     />
     <ArtAsyncState v-else :loading="loading" :error="error" :min-height="360" @retry="loadProfiles">
-      <div class="vehicle-type-tab__layout">
-        <ArtSectionCard title="车型层级" subtitle="选择分类或具体规格">
-          <div class="vehicle-type-tab__tree">
-            <div v-for="category in categories" :key="category" class="min-w-0">
-              <button
-                type="button"
-                class="vehicle-type-tab__category"
-                :class="{ 'is-active': selectedCategory === category && !selectedId }"
-                :aria-current="selectedCategory === category && !selectedId ? 'true' : undefined"
-                @click="selectCategory(category)"
-              >
-                <VehicleTypeArt :category="category" />
-                <span>{{ category }}</span>
-                <small>{{ categoryProfiles(category).length }}</small>
-              </button>
-              <button
-                v-for="profile in categoryProfiles(category)"
-                :key="profile.id"
-                type="button"
-                class="vehicle-type-tab__profile"
-                :class="{ 'is-active': selectedId === profile.id }"
-                :aria-current="selectedId === profile.id ? 'true' : undefined"
-                @click="selectProfile(profile)"
-              >
-                <span class="truncate">{{ vehicleTypeProfileLabel(profile) }}</span>
-                <small>{{ profile.status === '1' ? '启用' : '禁用' }}</small>
-              </button>
-            </div>
-          </div>
-        </ArtSectionCard>
-
-        <div class="vehicle-type-tab__workspace">
-          <ArtSectionCard :title="selectedCategory" subtitle="已配置的车型规格">
-            <template #actions>
-              <ElButton
-                v-auth="'VehicleArchive:TypeAdd'"
-                type="primary"
-                plain
-                @click="selectCategory(selectedCategory, true)"
-              >
-                <ArtSvgIcon icon="ri:add-line" aria-hidden="true" />
-                新增规格
-              </ElButton>
-            </template>
-            <div class="vehicle-type-tab__spec-list">
-              <button
-                v-for="profile in categoryProfiles(selectedCategory)"
-                :key="profile.id"
-                type="button"
-                class="vehicle-type-tab__spec"
-                :class="{ 'is-active': selectedId === profile.id }"
-                :aria-pressed="selectedId === profile.id"
-                @click="selectProfile(profile)"
-              >
-                <span class="vehicle-type-tab__spec-heading">
-                  <strong>{{ vehicleTypeProfileLabel(profile) }}</strong>
-                  <ElTag
-                    :type="profile.status === '1' ? 'success' : 'info'"
-                    size="small"
-                    effect="light"
-                    round
-                  >
-                    {{ profile.status === '1' ? '启用' : '禁用' }}
-                  </ElTag>
-                </span>
-                <span>{{ profile.volumeM3 }} 立方米 · {{ profile.loadTons }} 吨</span>
-              </button>
-              <div
-                v-if="!categoryProfiles(selectedCategory).length"
-                class="vehicle-type-tab__spec-empty"
-              >
-                当前分类暂无规格，点击右上角新增。
-              </div>
-            </div>
-          </ArtSectionCard>
-
+      <ArtWorkspaceSplitter
+        class="vehicle-type-tab__layout"
+        :style="{ height: splitterHeight }"
+        primary-size="258px"
+        primary-min="218px"
+        primary-max="360px"
+        secondary-min="480px"
+        :breakpoint="TREE_STACK_BREAKPOINT"
+        stacked-primary-size="auto"
+        stacked-secondary-min-size="0px"
+      >
+        <template #primary>
           <ArtSectionCard
-            :title="selectedId ? '规格详情' : '新增车型规格'"
-            :subtitle="
-              selectedId ? '维护当前规格参数与展示信息' : `为${selectedCategory}配置新规格`
-            "
+            title="车型层级"
+            subtitle="展开分类后选择具体规格"
+            root-class="vehicle-type-tab__tree-card"
+            :show-scrollbar="false"
           >
             <template #actions>
-              <ElButton
-                v-if="selectedId"
-                v-auth="'VehicleArchive:TypeDelete'"
-                type="danger"
-                plain
-                :disabled="saving"
-                @click="handleDelete"
-              >
-                删除规格
-              </ElButton>
-              <ElButton
-                v-auth="selectedId ? 'VehicleArchive:TypeEdit' : 'VehicleArchive:TypeAdd'"
-                type="primary"
-                :loading="saving"
-                @click="handleSave"
-              >
-                {{ selectedId ? '保存更改' : '创建规格' }}
-              </ElButton>
+              <ArtIconButton
+                :icon="allExpanded ? 'ri:contract-up-down-line' : 'ri:expand-up-down-line'"
+                :label="allExpanded ? '全部收起车型分类' : '全部展开车型分类'"
+                :disabled="!expandableKeys.length"
+                @click="toggleAllExpanded"
+              />
             </template>
-            <div class="vehicle-type-tab__detail">
-              <div class="vehicle-type-tab__form">
-                <ArtForm
-                  ref="formRef"
-                  v-model="form"
-                  :items="formItems"
-                  :rules="rules"
-                  :span="12"
-                  :gutter="16"
-                  label-position="top"
-                  :disabled="!canEdit"
-                  :show-reset="false"
-                  :show-submit="false"
-                >
-                  <template #lengthM>
-                    <div class="vehicle-type-tab__metric-field">
-                      <div class="vehicle-type-tab__metric-input">
-                        <ElInputNumber
-                          v-model="form.lengthM"
-                          :min="0.01"
-                          :precision="2"
-                          :step="0.1"
-                          :controls="false"
-                          :disabled="!canEdit"
-                          placeholder="输入实际车长"
-                          aria-label="车长，单位米"
-                        />
-                        <span>米</span>
-                      </div>
-                      <div v-if="selectedCategory === '半挂车'" class="vehicle-type-tab__presets">
-                        <span>常用车长</span>
-                        <div>
-                          <ElButton
-                            v-for="value in SEMI_TRAILER_LENGTHS"
-                            :key="value"
-                            class="vehicle-type-tab__preset-button"
-                            :type="form.lengthM === value ? 'primary' : 'default'"
-                            :disabled="!canEdit"
-                            @click="applyPreset(value)"
-                          >
-                            {{ value }} 米
-                          </ElButton>
-                          <ElButton
-                            class="vehicle-type-tab__preset-button"
-                            :disabled="!canEdit"
-                            @click="form.lengthM = null"
-                          >
-                            其他 / 自定义
-                          </ElButton>
-                        </div>
-                      </div>
-                    </div>
-                  </template>
-                  <template #loadTons>
-                    <div class="vehicle-type-tab__metric-field">
-                      <div class="vehicle-type-tab__metric-input">
-                        <ElInputNumber
-                          v-model="form.loadTons"
-                          :min="0.01"
-                          :precision="2"
-                          :step="0.1"
-                          :controls="false"
-                          :disabled="!canEdit"
-                          placeholder="输入实际载重"
-                          aria-label="载重，单位吨"
-                        />
-                        <span>吨</span>
-                      </div>
-                      <div v-if="selectedCategory === '按载重'" class="vehicle-type-tab__presets">
-                        <span>常用载重</span>
-                        <div>
-                          <ElButton
-                            v-for="value in LOAD_CAPACITY_PRESETS"
-                            :key="value"
-                            class="vehicle-type-tab__preset-button"
-                            :type="form.loadTons === value ? 'primary' : 'default'"
-                            :disabled="!canEdit"
-                            @click="applyPreset(value)"
-                          >
-                            {{ value }} 吨
-                          </ElButton>
-                          <ElButton
-                            class="vehicle-type-tab__preset-button"
-                            :disabled="!canEdit"
-                            @click="form.loadTons = null"
-                          >
-                            其他 / 自定义
-                          </ElButton>
-                        </div>
-                      </div>
-                    </div>
-                  </template>
-                </ArtForm>
-              </div>
-
-              <aside class="vehicle-type-tab__visual">
-                <div class="vehicle-type-tab__visual-heading">
-                  <strong>车型图片</strong>
-                  <span>参选弹窗展示</span>
-                </div>
-                <div class="vehicle-type-tab__preview">
-                  <ElImage v-if="form.imageUrl" :src="form.imageUrl" fit="contain" />
-                  <VehicleTypeArt v-else :category="selectedCategory" />
-                </div>
-                <p>未上传时使用这套共用车型插画。</p>
-                <ArtUploadImage
-                  v-model="form.imageUrl"
-                  title="上传自定义车型图片"
-                  :size="88"
-                  :limit="1"
-                  :readonly="!canEdit"
-                />
-              </aside>
+            <div class="vehicle-type-tab__tree-viewport" :style="{ height: stackedTreeHeight }">
+              <ElAutoResizer>
+                <template #default="{ height }">
+                  <ElTreeV2
+                    ref="treeRef"
+                    :data="treeNodes"
+                    :props="{ value: 'key', label: 'label', children: 'children' }"
+                    :height="height"
+                    :item-size="40"
+                    :default-expanded-keys="expandedKeys"
+                    highlight-current
+                    @node-click="handleTreeNodeClick"
+                    @node-expand="handleTreeNodeExpand"
+                    @node-collapse="handleTreeNodeCollapse"
+                  >
+                    <template #default="{ data }">
+                      <span class="vehicle-type-tab__node">
+                        <VehicleTypeArt v-if="!data.profile" :category="data.category" />
+                        <span class="vehicle-type-tab__node-label" :title="data.label">{{
+                          data.label
+                        }}</span>
+                        <small class="vehicle-type-tab__node-meta">
+                          {{
+                            data.profile
+                              ? data.profile.status === '1'
+                                ? '启用'
+                                : '禁用'
+                              : (data.children?.length ?? 0)
+                          }}
+                        </small>
+                      </span>
+                    </template>
+                  </ElTreeV2>
+                </template>
+              </ElAutoResizer>
             </div>
           </ArtSectionCard>
-        </div>
-      </div>
+        </template>
+
+        <template #default>
+          <div ref="rightWorkspaceRef" class="vehicle-type-tab__workspace">
+            <ArtSectionCard :title="selectedCategory" subtitle="已配置的车型规格">
+              <template #actions>
+                <ElButton
+                  v-auth="'VehicleArchive:TypeAdd'"
+                  type="primary"
+                  plain
+                  @click="selectCategory(selectedCategory, true)"
+                >
+                  <ArtSvgIcon icon="ri:add-line" aria-hidden="true" />
+                  新增规格
+                </ElButton>
+              </template>
+              <div class="vehicle-type-tab__spec-list">
+                <button
+                  v-for="profile in categoryProfiles(selectedCategory)"
+                  :key="profile.id"
+                  type="button"
+                  class="vehicle-type-tab__spec"
+                  :class="{ 'is-active': selectedId === profile.id }"
+                  :aria-pressed="selectedId === profile.id"
+                  @click="selectProfile(profile)"
+                >
+                  <span class="vehicle-type-tab__spec-heading">
+                    <strong>{{ vehicleTypeProfileLabel(profile) }}</strong>
+                    <ElTag
+                      :type="profile.status === '1' ? 'success' : 'info'"
+                      size="small"
+                      effect="light"
+                      round
+                    >
+                      {{ profile.status === '1' ? '启用' : '禁用' }}
+                    </ElTag>
+                  </span>
+                  <span>
+                    容积 {{ profile.volumeM3 == null ? '未配置' : `${profile.volumeM3} 立方米` }} ·
+                    载重 {{ profile.loadTons == null ? '未配置' : `${profile.loadTons} 吨` }}
+                  </span>
+                </button>
+                <div
+                  v-if="!categoryProfiles(selectedCategory).length"
+                  class="vehicle-type-tab__spec-empty"
+                >
+                  当前分类暂无规格，点击右上角新增。
+                </div>
+              </div>
+            </ArtSectionCard>
+
+            <ArtSectionCard
+              :title="selectedId ? '规格详情' : '新增车型规格'"
+              :subtitle="
+                selectedId ? '维护当前规格参数与展示信息' : `为${selectedCategory}配置新规格`
+              "
+            >
+              <template #actions>
+                <ElButton
+                  v-if="selectedId"
+                  v-auth="'VehicleArchive:TypeDelete'"
+                  type="danger"
+                  plain
+                  :disabled="saving"
+                  @click="handleDelete"
+                >
+                  删除规格
+                </ElButton>
+                <ElButton
+                  v-auth="selectedId ? 'VehicleArchive:TypeEdit' : 'VehicleArchive:TypeAdd'"
+                  type="primary"
+                  :loading="saving"
+                  @click="handleSave"
+                >
+                  {{ selectedId ? '保存更改' : '创建规格' }}
+                </ElButton>
+              </template>
+              <div class="vehicle-type-tab__detail">
+                <div class="vehicle-type-tab__form">
+                  <ArtForm
+                    ref="formRef"
+                    v-model="form"
+                    :items="formItems"
+                    :rules="rules"
+                    :span="12"
+                    :gutter="16"
+                    label-position="top"
+                    :disabled="!canEdit"
+                    :show-reset="false"
+                    :show-submit="false"
+                  >
+                    <template #lengthM>
+                      <div class="vehicle-type-tab__metric-field">
+                        <div class="vehicle-type-tab__metric-input">
+                          <ElInputNumber
+                            v-model="form.lengthM"
+                            :min="0.01"
+                            :precision="2"
+                            :step="0.1"
+                            :controls="false"
+                            :disabled="!canEdit"
+                            placeholder="输入实际车长"
+                            aria-label="车长，单位米"
+                          />
+                          <span>米</span>
+                        </div>
+                        <div v-if="selectedCategory === '半挂车'" class="vehicle-type-tab__presets">
+                          <span>常用车长</span>
+                          <div>
+                            <ElButton
+                              v-for="value in SEMI_TRAILER_LENGTHS"
+                              :key="value"
+                              class="vehicle-type-tab__preset-button"
+                              :type="form.lengthM === value ? 'primary' : 'default'"
+                              :disabled="!canEdit"
+                              @click="applyPreset(value)"
+                            >
+                              {{ value }} 米
+                            </ElButton>
+                            <ElButton
+                              class="vehicle-type-tab__preset-button"
+                              :disabled="!canEdit"
+                              @click="form.lengthM = null"
+                            >
+                              其他 / 自定义
+                            </ElButton>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                    <template #loadTons>
+                      <div class="vehicle-type-tab__metric-field">
+                        <div class="vehicle-type-tab__metric-input">
+                          <ElInputNumber
+                            v-model="form.loadTons"
+                            :min="0.01"
+                            :precision="2"
+                            :step="0.1"
+                            :controls="false"
+                            :disabled="!canEdit"
+                            placeholder="输入实际载重"
+                            aria-label="载重，单位吨"
+                          />
+                          <span>吨</span>
+                        </div>
+                        <div v-if="selectedCategory === '按载重'" class="vehicle-type-tab__presets">
+                          <span>常用载重</span>
+                          <div>
+                            <ElButton
+                              v-for="value in LOAD_CAPACITY_PRESETS"
+                              :key="value"
+                              class="vehicle-type-tab__preset-button"
+                              :type="form.loadTons === value ? 'primary' : 'default'"
+                              :disabled="!canEdit"
+                              @click="applyPreset(value)"
+                            >
+                              {{ value }} 吨
+                            </ElButton>
+                            <ElButton
+                              class="vehicle-type-tab__preset-button"
+                              :disabled="!canEdit"
+                              @click="form.loadTons = null"
+                            >
+                              其他 / 自定义
+                            </ElButton>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </ArtForm>
+                </div>
+
+                <aside class="vehicle-type-tab__visual">
+                  <div class="vehicle-type-tab__visual-heading">
+                    <strong>车型图片</strong>
+                    <span>参选弹窗展示</span>
+                  </div>
+                  <div class="vehicle-type-tab__preview">
+                    <ElImage v-if="form.imageUrl" :src="form.imageUrl" fit="contain" />
+                    <VehicleTypeArt v-else :category="selectedCategory" />
+                  </div>
+                  <p>未上传时使用这套共用车型插画。</p>
+                  <ArtUploadImage
+                    v-model="form.imageUrl"
+                    title="上传自定义车型图片"
+                    :size="88"
+                    :limit="1"
+                    :readonly="!canEdit"
+                  />
+                </aside>
+              </div>
+            </ArtSectionCard>
+          </div>
+        </template>
+      </ArtWorkspaceSplitter>
     </ArtAsyncState>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ElButton, ElImage, ElInputNumber, ElOption, ElSelect, ElTag } from 'element-plus'
+  import {
+    ElButton,
+    ElImage,
+    ElInputNumber,
+    ElOption,
+    ElSelect,
+    ElTag,
+    ElTreeV2,
+    type TreeV2Instance
+  } from 'element-plus'
+  import { ElAutoResizer } from 'element-plus/es/components/table-v2/index.mjs'
+  import { useElementSize, useWindowSize } from '@vueuse/core'
   import type { FormRules } from 'element-plus'
   import ArtAsyncState from '@/components/core/feedback/art-async-state/index.vue'
   import ArtSectionCard from '@/components/core/surfaces/art-section-card/index.vue'
+  import ArtWorkspaceSplitter from '@/components/core/layouts/art-workspace-splitter/index.vue'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import ArtUploadImage from '@/components/core/forms/art-upload-image/index.vue'
   import ArtSvgIcon from '@/components/core/base/art-svg-icon/index.vue'
+  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import VehicleTypeArt from './vehicle-type-art.vue'
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import { useAuth } from '@/hooks/core/useAuth'
@@ -295,6 +347,14 @@
     imageUrl: string
   }
 
+  interface VehicleTypeTreeNode {
+    key: string
+    label: string
+    category: VehicleTypeCategory
+    profile?: VehicleTypeProfile
+    children?: VehicleTypeTreeNode[]
+  }
+
   const emit = defineEmits<{ changed: [] }>()
   const { confirmAction } = useArtFeedback()
   const { hasAuth } = useAuth()
@@ -309,10 +369,16 @@
   const selectedCategory = ref<VehicleTypeCategory>('半挂车')
   const selectedId = ref<string>()
   const profiles = ref<VehicleTypeProfile[]>([])
+  const expandedKeys = ref<string[]>([])
   const loading = ref(false)
   const saving = ref(false)
   const error = ref<Error | null>(null)
   const formRef = ref<InstanceType<typeof ArtForm>>()
+  const treeRef = ref<TreeV2Instance>()
+  const rightWorkspaceRef = ref<HTMLElement>()
+  const TREE_STACK_BREAKPOINT = 1099
+  const { width: viewportWidth, height: viewportHeight } = useWindowSize()
+  const { height: rightWorkspaceHeight } = useElementSize(rightWorkspaceRef)
 
   const initialForm = (): ProfileForm => ({
     category: '半挂车',
@@ -336,13 +402,80 @@
       .filter((profile) => profile.category === category)
       .sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id))
 
+  const categoryNodeKey = (category: VehicleTypeCategory): string => `category:${category}`
+  const profileNodeKey = (id: string): string => `profile:${id}`
+  const treeNodes = computed<VehicleTypeTreeNode[]>(() =>
+    categories.value.map((category) => ({
+      key: categoryNodeKey(category),
+      label: category,
+      category,
+      children: categoryProfiles(category).map((profile) => ({
+        key: profileNodeKey(profile.id),
+        label: vehicleTypeProfileLabel(profile),
+        category,
+        profile
+      }))
+    }))
+  )
+  const expandableKeys = computed(() =>
+    treeNodes.value.filter((node) => node.children?.length).map((node) => node.key)
+  )
+  const allExpanded = computed(
+    () =>
+      expandableKeys.value.length > 0 &&
+      expandableKeys.value.every((key) => expandedKeys.value.includes(key))
+  )
+  const visibleNodeCount = computed(
+    () =>
+      treeNodes.value.length +
+      treeNodes.value.reduce(
+        (count, node) =>
+          count + (expandedKeys.value.includes(node.key) ? (node.children?.length ?? 0) : 0),
+        0
+      )
+  )
+  const treeContentHeight = computed(() => Math.max(40, visibleNodeCount.value * 40) + 8)
+  const treeScrollMaxHeight = computed(() =>
+    Math.min(600, Math.max(280, viewportHeight.value - 390))
+  )
+  const stackedTreeHeight = computed(() =>
+    viewportWidth.value <= TREE_STACK_BREAKPOINT
+      ? `${Math.min(treeContentHeight.value, treeScrollMaxHeight.value)}px`
+      : undefined
+  )
+  const splitterHeight = computed(() =>
+    viewportWidth.value <= TREE_STACK_BREAKPOINT || !rightWorkspaceHeight.value
+      ? undefined
+      : `${Math.ceil(rightWorkspaceHeight.value)}px`
+  )
+
+  const expandCategory = (category: VehicleTypeCategory): void => {
+    const key = categoryNodeKey(category)
+    if (expandedKeys.value.includes(key)) return
+    expandedKeys.value = [...expandedKeys.value, key]
+    treeRef.value?.setExpandedKeys(expandedKeys.value)
+  }
+
+  const toggleAllExpanded = (): void => {
+    expandedKeys.value = allExpanded.value ? [] : expandableKeys.value
+    treeRef.value?.setExpandedKeys(expandedKeys.value)
+  }
+
+  const handleTreeNodeExpand = (data: Record<string, unknown>): void => {
+    if (typeof data.key === 'string' && !expandedKeys.value.includes(data.key))
+      expandedKeys.value = [...expandedKeys.value, data.key]
+  }
+
+  const handleTreeNodeCollapse = (data: Record<string, unknown>): void => {
+    if (typeof data.key === 'string')
+      expandedKeys.value = expandedKeys.value.filter((key) => key !== data.key)
+  }
+
   const rules = computed<FormRules<ProfileForm>>(() => ({
     lengthM:
       selectedCategory.value === '按载重'
         ? []
         : [{ required: true, message: '请输入车长', trigger: 'change' }],
-    loadTons: [{ required: true, message: '请输入载重', trigger: 'change' }],
-    volumeM3: [{ required: true, message: '请输入容积', trigger: 'change' }],
     remark: [{ max: 500, message: '备注不能超过 500 个字符', trigger: 'blur' }]
   }))
 
@@ -406,7 +539,21 @@
       category,
       sort: Math.max(0, ...categoryProfiles(category).map((profile) => profile.sort)) + 10
     })
-    void nextTick(() => formRef.value?.clearValidate())
+    void nextTick(() => {
+      formRef.value?.clearValidate()
+      treeRef.value?.setCurrentKey(categoryNodeKey(category))
+    })
+  }
+
+  const handleTreeNodeClick = (data: Record<string, unknown>): void => {
+    if (typeof data.key !== 'string') return
+    const node = treeNodes.value.find((item) => item.key === data.key)
+    if (node) {
+      selectCategory(node.category, true)
+      return
+    }
+    const profile = profiles.value.find((item) => profileNodeKey(item.id) === data.key)
+    if (profile) selectProfile(profile)
   }
 
   const applyPreset = (value: number): void => {
@@ -429,7 +576,11 @@
       remark: profile.remark || '',
       imageUrl: profile.imageUrl || ''
     })
-    void nextTick(() => formRef.value?.clearValidate())
+    void nextTick(() => {
+      formRef.value?.clearValidate()
+      expandCategory(profile.category)
+      treeRef.value?.setCurrentKey(profileNodeKey(profile.id))
+    })
   }
 
   const loadProfiles = async (): Promise<void> => {
@@ -563,11 +714,23 @@
     }
 
     &__layout {
-      display: grid;
-      grid-template-columns: minmax(218px, 258px) minmax(0, 1fr);
-      gap: 16px;
-      align-items: start;
+      width: 100%;
       min-width: 0;
+      height: auto;
+      overflow: visible;
+
+      :deep(.el-splitter-panel) {
+        min-width: 0;
+      }
+
+      :deep(.art-workspace-splitter__primary),
+      :deep(.art-workspace-splitter__secondary) {
+        overflow: visible;
+      }
+
+      :deep(.art-workspace-splitter__secondary) {
+        height: auto;
+      }
     }
 
     &__workspace {
@@ -576,65 +739,59 @@
       min-width: 0;
     }
 
-    &__tree {
-      display: grid;
-      gap: 4px;
+    &__tree-card {
+      --vehicle-tree-inline-padding: var(--art-section-padding);
+
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding-right: 0;
+
+      :deep(.art-section-card__header) {
+        flex: none;
+        padding-right: var(--vehicle-tree-inline-padding);
+      }
+
+      :deep(.art-section-card__body) {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        min-height: 0;
+      }
     }
 
-    &__category,
-    &__profile {
+    &__tree-viewport {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    &__node {
       display: flex;
       gap: 8px;
       align-items: center;
       width: 100%;
       min-width: 0;
-      min-height: 40px;
-      padding: 7px 10px;
-      color: var(--el-text-color-primary);
-      text-align: left;
-      cursor: pointer;
-      background: transparent;
-      border: 0;
-      border-radius: var(--art-control-radius);
-      transition:
-        background-color var(--art-motion-fast) ease,
-        color var(--art-motion-fast) ease;
+      padding-right: calc(var(--vehicle-tree-inline-padding) + 8px);
 
       :deep(.vehicle-type-art) {
         flex: none;
         width: 36px;
         height: 26px;
       }
-
-      span {
-        flex: 1;
-        min-width: 0;
-      }
-
-      small {
-        color: var(--el-text-color-secondary);
-      }
-
-      &:hover {
-        background: var(--el-color-primary-light-9);
-      }
-
-      &.is-active {
-        font-weight: 600;
-        color: var(--theme-color);
-        background: var(--el-color-primary-light-8);
-      }
-
-      &:focus-visible {
-        outline: 2px solid var(--theme-color);
-        outline-offset: 2px;
-      }
     }
 
-    &__profile {
-      min-height: 30px;
-      padding: 5px 8px 5px 55px;
-      font-size: 12px;
+    &__node-label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__node-meta {
+      flex: none;
+      font-size: 11px;
       color: var(--el-text-color-secondary);
     }
 
@@ -852,7 +1009,7 @@
       color: var(--el-text-color-secondary);
     }
 
-    @media (width <= 1080px) {
+    @media (width <= 1200px) {
       &__detail {
         grid-template-columns: minmax(0, 1fr);
       }
@@ -872,63 +1029,9 @@
       }
     }
 
-    @media (width <= 800px) {
-      &__layout {
-        grid-template-columns: minmax(0, 1fr);
-      }
-
-      &__tree {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        align-items: start;
-      }
-
-      &__tree > div {
-        min-width: 0;
-        padding: 4px;
-        background: var(--el-bg-color);
-        border: 1px solid var(--el-border-color-lighter);
-        border-radius: var(--art-control-radius);
-      }
-
-      &__profile {
-        width: calc(100% - 12px);
-        padding-left: 8px;
-        margin-left: 12px;
-        border-left: 2px solid var(--el-border-color-light);
-
-        &.is-active {
-          border-left-color: var(--theme-color);
-        }
-      }
-    }
-
-    @media (width <= 600px) {
-      &__tree {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      &__category {
-        gap: 5px;
-        min-height: 34px;
-        padding: 4px 6px;
-        font-size: 12px;
-
-        :deep(.vehicle-type-art) {
-          width: 28px;
-          height: 22px;
-        }
-
-        span {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
-
-      &__profile {
-        min-height: 28px;
-        font-size: 11px;
+    @media (width <= 640px) {
+      &__tree-card {
+        --vehicle-tree-inline-padding: var(--art-space-4);
       }
     }
 
