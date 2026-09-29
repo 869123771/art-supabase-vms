@@ -135,6 +135,7 @@
   interface OpenData {
     vehicleId?: string
     carrierId?: string
+    tenantId?: string
     selectedId?: string | null
   }
 
@@ -175,7 +176,8 @@
     try {
       const result = await fetchVehicleTypeProfiles({
         vehicleId: openData.value.vehicleId,
-        carrierId: openData.value.carrierId
+        carrierId: openData.value.carrierId,
+        tenantId: openData.value.tenantId
       })
       if (result.error) throw result.error
       profiles.value = result.data ?? []

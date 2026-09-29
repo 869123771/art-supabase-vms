@@ -35,6 +35,16 @@
             <template #empty><VehicleDataSourceEmptyActions source="vehicle" /></template>
           </ArtTableSingleSelect>
         </template>
+        <template #driverId>
+          <VmsDriverSelect
+            :model-value="form.data.driverId"
+            :vehicle-id="form.data.vehicleId"
+            :driver-name="form.data.driverName"
+            :driver-phone="form.data.driverPhone"
+            :disabled="!canEditAccidentField('driverContact')"
+            @change="handleDriverChange"
+          />
+        </template>
         <template #accidentLocation>
           <ArtAddressPicker
             v-model:address-detail="form.data.accidentLocation"
@@ -109,7 +119,6 @@
   import { cloneDeep } from 'lodash-es'
   import type { FormRules } from 'element-plus'
   import { ElButton, ElMessage } from 'element-plus'
-  import { storeToRefs } from 'pinia'
   import ArtDialog from '@/components/core/dialogs/art-dialog/index.vue'
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtUploadFile from '@/components/core/forms/art-upload-file/index.vue'
@@ -118,6 +127,7 @@
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import ArtTableSingleSelect from '@/components/core/forms/art-data-select/table-single.vue'
   import VehicleDataSourceEmptyActions from '../../../components/vehicle-data-source-empty-actions.vue'
+  import VmsDriverSelect from '../../../components/vms-driver-select.vue'
   import type {
     DataSelectColumn,
     DataSelectRecord
@@ -126,11 +136,16 @@
   import ArtTable from '@/components/core/tables/art-table/index.vue'
   import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
-  import { addVehicleAccident, editVehicleAccident, fetchVehicleArchiveList } from '@vms/api'
+  import {
+    addVehicleAccident,
+    editVehicleAccident,
+    fetchVehicleArchiveList,
+    type VmsDriverReference
+  } from '@vms/api'
   import { pageInfoHandler } from '@/utils/table/tableUtils'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
-  import { useUserStore } from '@/store/modules/user'
+  import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
   import { canEditField, canViewField } from '@/utils/field-permission'
   import {
     EDITABLE_VEHICLE_ACCIDENT_ACCESS,
@@ -178,7 +193,13 @@
   }
 
   const emit = defineEmits<Emits>()
-  const { getDictMap } = storeToRefs(useUserStore())
+  const responsibilityOptions = useDictionaryOptions('vehicleAccidentResponsibility')
+  const accidentSourceOptions = useDictionaryOptions('vehicleAccidentDataSource')
+  const booleanOptions = useDictionaryOptions<boolean>('commonBoolean', (value) => value === 'true')
+  const processedOptions = useDictionaryOptions<boolean>(
+    'vehicleRecordProcessed',
+    (value) => value === 'true'
+  )
   const dialogRef = ref<ArtDialogExpose<AccidentRecord | undefined>>()
   const attachmentDialogRef = ref<ArtDialogExpose<void>>()
   const formRef = ref<FormExpose>()
@@ -190,6 +211,7 @@
     plateNo: '',
     companyName: '',
     driverName: '',
+    driverId: null,
     driverPhone: '',
     accidentTime: '',
     accidentLocation: '',
@@ -218,7 +240,7 @@
   const canViewDocuments = computed(() => canViewAccidentField('documents'))
   const canEditDocuments = computed(() => canEditAccidentField('documents'))
 
-  const DRIVER_FIELDS = new Set(['driverName', 'driverPhone'])
+  const DRIVER_FIELDS = new Set(['driverId', 'driverName', 'driverPhone'])
   const LOCATION_FIELDS = new Set(['accidentLocation'])
   const NARRATIVE_FIELDS = new Set(['accidentSummary', 'remark'])
   const LOSS_FIELDS = new Set(['economicLoss', 'companyBearAmount'])
@@ -264,15 +286,13 @@
         { label: '所属公司', key: 'companyName', type: 'input', props: { disabled: true } },
         {
           label: '驾驶员',
-          key: 'driverName',
-          type: 'input',
-          props: { maxlength: 50, placeholder: '选择车辆后自动带出，可按实际情况修改' }
+          key: 'driverId'
         },
         {
           label: '联系方式',
           key: 'driverPhone',
           type: 'input',
-          props: { maxlength: 30, placeholder: '选择车辆后自动带出，可按实际情况修改' }
+          props: { maxlength: 30, placeholder: '参选司机后自动带出，可按实际情况修改' }
         },
         { label: '事故时间', key: 'accidentTime', type: 'date', props: dateTimeProps },
         {
@@ -295,7 +315,7 @@
           label: '责任类型',
           key: 'responsibilityType',
           type: 'select',
-          props: { options: getDictMap.value.vehicleAccidentResponsibility ?? [] }
+          props: { options: responsibilityOptions }
         },
         {
           label: '责任比例',
@@ -333,7 +353,7 @@
           label: '数据来源',
           key: 'dataSource',
           type: 'select',
-          props: { options: getDictMap.value.vehicleAccidentDataSource ?? [] }
+          props: { options: accidentSourceOptions }
         },
         {
           label: '备注',
@@ -445,17 +465,9 @@
     }
   ])
 
-  const getBooleanDictOptions = () =>
-    (getDictMap.value.commonBoolean ?? []).map((item) => ({
-      ...item,
-      value: item.value === 'true'
-    }))
+  const getBooleanDictOptions = () => booleanOptions
 
-  const getProcessedDictOptions = () =>
-    (getDictMap.value.vehicleRecordProcessed ?? []).map((item) => ({
-      ...item,
-      value: item.value === 'true'
-    }))
+  const getProcessedDictOptions = () => processedOptions
 
   const fetchVehicleSelectData = async (params: {
     page: number
@@ -478,9 +490,17 @@
       vehicleId: vehicle?.id ?? null,
       plateNo: vehicle?.plateNo ?? '',
       companyName: vehicle?.companyName ?? '',
+      driverId: vehicle?.primaryDriverId ?? null,
       driverName: vehicle?.primaryDriver?.driverName || vehicle?.driverOneName || '',
       driverPhone: vehicle?.primaryDriver?.phone || vehicle?.driverOnePhone || ''
     })
+  }
+
+  const handleDriverChange = (driver: VmsDriverReference | null): void => {
+    form.data.driverId = driver?.id ?? null
+    form.data.driverName = driver?.driverName ?? ''
+    form.data.driverPhone =
+      driver && canViewField(driver.fieldAccess, 'contactPhone') ? (driver.phone ?? '') : ''
   }
 
   const handleLocationChange = (location: AddressLocationPayload): void => {

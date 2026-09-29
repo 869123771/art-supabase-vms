@@ -15,6 +15,7 @@ export const EDITABLE_VEHICLE_ROUTINE_INSPECTION_ACCESS: Api.Vms.VehicleManage.V
 type SensitivePayloadKey =
   | 'inspector'
   | 'driverName'
+  | 'driverId'
   | 'checkResult'
   | 'checkCondition'
   | 'handlingMethod'
@@ -22,7 +23,7 @@ type SensitivePayloadKey =
   | 'attachments'
 
 const SENSITIVE_PAYLOAD_KEYS: Record<VehicleRoutineInspectionFieldKey, SensitivePayloadKey[]> = {
-  responsiblePeople: ['inspector', 'driverName'],
+  responsiblePeople: ['inspector', 'driverName', 'driverId'],
   inspectionFindings: ['checkResult', 'checkCondition'],
   remediationDetails: ['handlingMethod', 'remark'],
   documents: ['attachments']

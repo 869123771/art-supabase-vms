@@ -9,7 +9,7 @@
   >
     <ArtPageHeader
       class="vehicle-archive-edit__header"
-      :title="isEdit ? '编辑车辆档案' : '新增车辆档案'"
+      :title="isEdit ? '编辑车辆档案' : isCopy ? '复制车辆档案' : '新增车辆档案'"
       :subtitle="pageSubtitle"
       show-back
       @back="goBack"
@@ -17,7 +17,7 @@
 
     <div ref="pageRef" class="vehicle-archive-edit__content">
       <ElTabs v-model="page.activeTab" class="vehicle-archive-edit__tabs art-card-xs">
-        <ElTabPane label="基础信息" name="basic">
+        <ElTabPane v-if="hasAuth('VehicleArchive:TabBasic')" label="基础信息" name="basic">
           <ArtForm
             ref="basicFormRef"
             v-model="form"
@@ -59,20 +59,35 @@
               <span>{{ certificateFilledCount }}/{{ visibleCertificateItems.length }} 已完成</span>
             </header>
             <div class="vehicle-archive-edit__images">
-              <ArtUploadImage
+              <div
                 v-for="item in visibleCertificateItems"
                 :key="item.key"
-                v-model="form[item.key]"
-                :title="item.label"
-                :size="120"
-                :limit="1"
-                :readonly="item.key !== 'vehiclePhotoUrl' && !canEditArchiveField('documents')"
-              />
+                class="vehicle-archive-edit__certificate-item"
+              >
+                <ArtUploadImage
+                  v-model="form[item.key]"
+                  :title="item.label"
+                  :size="120"
+                  :limit="1"
+                  :readonly="item.key !== 'vehiclePhotoUrl' && !canEditArchiveField('documents')"
+                />
+                <ElButton
+                  v-if="item.key === 'drivingLicenseFrontUrl' || item.key === 'operationLicenseUrl'"
+                  v-auth="'VehicleArchive:Ocr'"
+                  size="small"
+                  plain
+                  :loading="ocrBusyKey === item.key"
+                  :disabled="!form[item.key]"
+                  @click="recognizeCertificate(item.key)"
+                >
+                  智能识别
+                </ElButton>
+              </div>
             </div>
           </section>
         </ElTabPane>
 
-        <ElTabPane label="车身参数" name="body">
+        <ElTabPane v-if="hasAuth('VehicleArchive:TabBody')" label="车身参数" name="body">
           <ArtForm
             ref="bodyFormRef"
             v-model="form"
@@ -86,7 +101,7 @@
           />
         </ElTabPane>
 
-        <ElTabPane label="发动机参数" name="engine">
+        <ElTabPane v-if="hasAuth('VehicleArchive:TabEngine')" label="发动机参数" name="engine">
           <ArtForm
             ref="engineFormRef"
             v-model="form"
@@ -100,7 +115,7 @@
           />
         </ElTabPane>
 
-        <ElTabPane label="其他信息" name="other">
+        <ElTabPane v-if="hasAuth('VehicleArchive:TabOther')" label="其他信息" name="other">
           <ArtForm
             ref="otherFormRef"
             v-model="form"
@@ -136,14 +151,19 @@
             />
           </section>
         </ElTabPane>
-        <ElTabPane label="车型" name="types" lazy>
+        <ElTabPane v-if="hasAuth('VehicleArchive:TabTypes')" label="车型" name="types" lazy>
           <VehicleTypeTab />
         </ElTabPane>
       </ElTabs>
+      <ArtEmptyState
+        v-if="!availableTabNames.length"
+        title="暂无可访问的页签"
+        description="请联系管理员在角色权限中授权车辆档案页签。"
+      />
     </div>
 
     <ArtStickyActionBar
-      v-if="page.activeTab !== 'types'"
+      v-if="availableTabNames.length && page.activeTab !== 'types'"
       class="vehicle-archive-edit__footer"
       hint="带 * 的信息为必填项；提交前请确认车辆、证件与运营信息完整。"
     >
@@ -153,6 +173,49 @@
       </ElButton>
     </ArtStickyActionBar>
     <VehicleTypePicker ref="vehicleTypePickerRef" @selected="handleVehicleTypeSelected" />
+    <ArtDialog ref="ocrReviewDialogRef" size="lg">
+      <div class="vehicle-archive-edit__ocr-review">
+        <p>{{ ocrResult?.summary }}</p>
+        <ElAlert
+          v-if="ocrResult?.warnings.length"
+          type="warning"
+          :title="ocrResult.warnings.join('；')"
+          show-icon
+          :closable="false"
+        />
+        <ArtTable
+          :data="ocrReviewRows"
+          :columns="ocrReviewColumns"
+          :pagination="false"
+          :show-table-header="false"
+          :height="Math.min(56 + ocrReviewRows.length * 44, 460)"
+          empty-height="140px"
+        />
+        <p class="vehicle-archive-edit__ocr-note">
+          识别结果需人工核对。车型需参选具体规格，经营范围仅在匹配现有选项时填入；已填写字段默认保留。
+          <template v-if="ocrDocumentType === 'operation_license'">
+            运输证核发日期不会覆盖行驶证发证日期。
+          </template>
+        </p>
+      </div>
+      <template #footer>
+        <div class="vehicle-archive-edit__ocr-actions">
+          <ElCheckbox v-if="userStore.isPlatformSuper" v-model="ocrReplaceExisting">
+            覆盖已填写字段
+          </ElCheckbox>
+          <span v-else>当前账号可查看识别结果，自动填入需平台管理员操作。</span>
+          <ElButton @click="ocrReviewDialogRef?.handleClose()">关闭</ElButton>
+          <ElButton
+            v-if="userStore.isPlatformSuper && hasAuth(savePermission)"
+            type="primary"
+            :disabled="!ocrReviewRows.length"
+            @click="applyOcrResult"
+          >
+            填入表单
+          </ElButton>
+        </div>
+      </template>
+    </ArtDialog>
   </ArtPageShell>
 </template>
 
@@ -160,7 +223,10 @@
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, Ref, UnwrapNestedRefs } from 'vue'
   import type { FormRules } from 'element-plus'
-  import { ElButton, ElMessage, ElTabPane, ElTabs } from 'element-plus'
+  import { ElAlert, ElButton, ElCheckbox, ElMessage, ElTabPane, ElTabs } from 'element-plus'
+  import ArtDialog from '@/components/core/dialogs/art-dialog/index.vue'
+  import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
+  import ArtEmptyState from '@/components/core/feedback/art-empty-state/index.vue'
   import ArtForm, {
     type FormItem,
     type FormItemOption
@@ -174,20 +240,25 @@
   import type { ColumnOption } from '@/types'
   import {
     addVehicleArchive,
+    analyzeVehicleDocumentByAi,
     editVehicleArchive,
     fetchCarrierOptions,
     fetchDriverOptions,
     fetchVehicleArchiveDetail,
     submitVehicleArchiveForApproval,
     type VmsCarrierReference,
-    type VmsDriverReference
+    type VmsDriverReference,
+    type VehicleDocumentOcrType,
+    type VehicleDocumentOcrResult
   } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
+  import { useTenantScopeStore } from '@/store/modules/tenantScope'
   import { useDocumentNumberRule } from '@/hooks/core/useDocumentNumberRule'
   import { useAuth } from '@/hooks/core/useAuth'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canEditField, canViewField } from '@/utils/field-permission'
+  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
   import {
     createInitialVehicleArchiveForm,
     requiresVehicleArchiveResubmission,
@@ -265,6 +336,7 @@
   const router = useRouter()
   const { hasAuth } = useAuth()
   const userStore = useUserStore()
+  const tenantScopeStore = useTenantScopeStore()
   const { getDictMap } = storeToRefs(userStore)
   const page = reactive<PageGroup>({
     activeTab: 'basic',
@@ -281,19 +353,44 @@
     handleOpen: (data: {
       vehicleId?: string
       carrierId?: string
+      tenantId?: string
       selectedId?: string | null
     }) => Promise<void>
   }>()
+  const ocrReviewDialogRef = ref<ArtDialogExpose<VehicleDocumentOcrResult>>()
+  const ocrResult = ref<VehicleDocumentOcrResult | null>(null)
+  const ocrDocumentType = ref<VehicleDocumentOcrType>('driving_license')
+  const ocrBusyKey = ref<ImageKey | null>(null)
+  const ocrReplaceExisting = ref(false)
   const formTabs: FormTab[] = [
     { name: 'basic', formRef: basicFormRef },
     { name: 'body', formRef: bodyFormRef },
     { name: 'engine', formRef: engineFormRef },
     { name: 'other', formRef: otherFormRef }
   ]
-  const carrierCache = ref(new Map<string, CarrierOption>())
+  const tabPermissions: Record<ArchiveTabName, string> = {
+    basic: 'VehicleArchive:TabBasic',
+    body: 'VehicleArchive:TabBody',
+    engine: 'VehicleArchive:TabEngine',
+    other: 'VehicleArchive:TabOther',
+    types: 'VehicleArchive:TabTypes'
+  }
+  const availableTabNames = computed<ArchiveTabName[]>(() =>
+    (Object.keys(tabPermissions) as ArchiveTabName[]).filter((name) =>
+      hasAuth(tabPermissions[name])
+    )
+  )
+  watch(
+    availableTabNames,
+    (names) => {
+      if (!names.includes(page.activeTab)) page.activeTab = names[0] ?? 'basic'
+    },
+    { immediate: true }
+  )
   const driverCache = ref(new Map<string, DriverOption>())
 
   const isEdit = computed(() => typeof route.params.id === 'string' && route.params.id.length > 0)
+  const isCopy = computed(() => !isEdit.value && typeof route.query.copyFrom === 'string')
   const savePermission = computed(() =>
     isEdit.value ? 'VehicleArchive:Edit' : 'VehicleArchive:Add'
   )
@@ -379,7 +476,10 @@
 
   const rules = computed<FormRules<VehicleArchiveForm>>(() => ({
     plateNo: [{ required: true, message: '请输入车牌号', trigger: 'blur' }],
-    carrierId: [{ required: true, message: '请选择所属承运商', trigger: 'change' }],
+    tenantId:
+      tenantScopeStore.isAllTenants && !isEdit.value
+        ? [{ required: true, message: '请选择所属租户', trigger: 'change' }]
+        : [],
     vehicleType: [
       {
         validator: (_rule, _value, callback) => {
@@ -389,20 +489,11 @@
         trigger: 'change'
       }
     ],
-    vin: canEditArchiveField('vehicleIdentifiers')
-      ? [{ required: true, message: '请输入车架号（VIN）', trigger: 'blur' }]
-      : [],
     registerDate: [{ required: true, message: '请选择登记日期', trigger: 'change' }],
     issueDate: [{ required: true, message: '请选择发证日期', trigger: 'change' }],
     invoiceDate: [{ required: true, message: '请选择购入开票日期', trigger: 'change' }],
     startUseDate: [{ required: true, message: '请选择启用日期', trigger: 'change' }],
-    serviceYears: [{ required: true, message: '请输入使用年限', trigger: 'blur' }],
-    approvedPassengerCount: [{ required: true, message: '请输入核定乘员数', trigger: 'blur' }],
-    operationStatus: [{ required: true, message: '请选择营运状态', trigger: 'change' }],
-    threeGuaranteeMileage: [{ required: true, message: '请输入整车三包里程', trigger: 'blur' }],
-    threeGuaranteeDuration: [{ required: true, message: '请输入整车三包时长', trigger: 'blur' }],
-    warrantyMileage: [{ required: true, message: '请输入整车包修里程', trigger: 'blur' }],
-    warrantyDuration: [{ required: true, message: '请输入整车包修时长', trigger: 'blur' }]
+    operationStatus: [{ required: true, message: '请选择营运状态', trigger: 'change' }]
   }))
 
   const derivedMetricInputProps = {
@@ -415,6 +506,33 @@
     [
       { label: '车辆身份与归属', key: 'identitySection', type: 'divider', span: 24 },
       { label: '车牌号', key: 'plateNo', type: 'input' },
+      ...(tenantScopeStore.isAllTenants && !isEdit.value
+        ? [
+            {
+              label: '所属租户',
+              key: 'tenantId',
+              type: 'select' as const,
+              props: {
+                options: tenantScopeStore.tenantOptions.map((tenant) => ({
+                  label: tenant.tenantName,
+                  value: tenant.id
+                })),
+                filterable: true,
+                placeholder: '请选择车辆档案所属租户',
+                onChange: (tenantId: string) => {
+                  form.companyName =
+                    tenantScopeStore.tenantOptions.find((tenant) => tenant.id === tenantId)
+                      ?.tenantName ?? ''
+                  form.carrierId = null
+                  form.vehicleTypeProfileId = null
+                  form.vehicleType = ''
+                  form.primaryDriverId = null
+                  form.secondaryDriverId = null
+                }
+              }
+            }
+          ]
+        : []),
       {
         label: '所属承运商',
         key: 'carrierId',
@@ -432,20 +550,9 @@
         props: {
           filterable: true,
           clearable: true,
-          placeholder: '请选择所属承运商',
-          onVisibleChange: async (visible: boolean) => {
-            if (!visible) return
-            const { data } = await fetchCarrierOptions()
-            carrierCache.value = new Map((data ?? []).map((item) => [item.id, item]))
-          },
+          placeholder: '请选择所属承运商（选填）',
           onChange: (value?: string) => {
-            form.vehicleTypeProfileId = null
-            form.vehicleType = ''
-            form.specLengthM = null
-            form.volumeM3 = null
-            form.loadTons = null
             if (!value) {
-              form.companyName = ''
               form.primaryDriverId = null
               form.primaryDriver = null
               form.primaryDriverName = ''
@@ -456,10 +563,6 @@
               form.secondaryDriverPhone = ''
               driverCache.value = new Map()
               return
-            }
-            const carrier = carrierCache.value.get(value)
-            if (carrier) {
-              form.companyName = carrier.companyName
             }
             form.primaryDriverId = null
             form.primaryDriver = null
@@ -495,6 +598,24 @@
         key: 'originType',
         type: 'radioGroup',
         props: { options: options.originType, optionType: 'button' }
+      },
+      {
+        label: '营运状态',
+        key: 'operationStatus',
+        type: 'select',
+        props: { options: options.operationStatus }
+      },
+      {
+        label: '是否新能源车',
+        key: 'isNewEnergy',
+        type: 'radioGroup',
+        props: { options: options.boolean }
+      },
+      {
+        label: '车身颜色',
+        key: 'vehicleColor',
+        type: 'select',
+        props: { options: options.color }
       },
       { label: '车型与运力', key: 'capacitySection', type: 'divider', span: 24 },
       {
@@ -540,13 +661,6 @@
       { label: '营运证号', key: 'operationCertNo', type: 'input' },
       { label: '购置证号', key: 'purchaseCertNo', type: 'input' },
       { label: '登记证号', key: 'registrationCertNo', type: 'input' },
-      {
-        label: '车身颜色',
-        key: 'vehicleColor',
-        type: 'select',
-        span: 12,
-        props: { options: options.color }
-      },
       { label: '底盘号', key: 'chassisNo', type: 'input', span: 12 },
       { label: '空调号码', key: 'acCode', type: 'input', span: 12 },
       { label: '波箱系列号', key: 'gearboxSerialNo', type: 'input', span: 12 },
@@ -568,12 +682,6 @@
         type: 'radioGroup',
         props: { options: options.boolean }
       },
-      {
-        label: '营运状态',
-        key: 'operationStatus',
-        type: 'select',
-        props: { options: options.operationStatus }
-      },
       { label: '营运状态变更', key: 'operationStatusChangeDate', type: 'date', props: dateProps },
       {
         label: '购置状态',
@@ -588,12 +696,6 @@
         key: 'vehicleLevel',
         type: 'select',
         props: { options: options.vehicleLevel }
-      },
-      {
-        label: '是否新能源车',
-        key: 'isNewEnergy',
-        type: 'radioGroup',
-        props: { options: options.boolean }
       },
       { label: '质保与备注', key: 'warrantySection', type: 'divider', span: 24 },
       {
@@ -995,6 +1097,107 @@
     () => visibleCertificateItems.value.filter((item) => Boolean(form[item.key])).length
   )
 
+  type OcrField = keyof VehicleDocumentOcrResult['document']
+  interface OcrReviewRow {
+    field: OcrField
+    label: string
+    current: string
+    recognized: string
+  }
+  const ocrFieldLabels: Record<OcrField, string> = {
+    plateNo: '车牌号',
+    vin: '车架号（VIN）',
+    engineNo: '发动机号',
+    vehicleType: '车型',
+    brandModel: '厂牌型号',
+    ownerName: '所有人',
+    registerDate: '登记日期',
+    issueDate: '发证日期',
+    operationCertNo: '营运证号',
+    operationType: '经营范围'
+  }
+  const ocrFieldAccess: Partial<Record<OcrField, Api.Vms.ArchiveManage.VehicleArchiveFieldKey>> = {
+    vin: 'vehicleIdentifiers',
+    engineNo: 'vehicleIdentifiers',
+    operationCertNo: 'vehicleIdentifiers',
+    ownerName: 'ownerIdentity'
+  }
+  const ocrReviewRows = computed<OcrReviewRow[]>(() =>
+    (Object.keys(ocrFieldLabels) as OcrField[])
+      .filter((field) => {
+        const access = ocrFieldAccess[field]
+        const mismatchedDate =
+          ocrDocumentType.value === 'operation_license' &&
+          (field === 'registerDate' || field === 'issueDate')
+        return (
+          !mismatchedDate &&
+          (!access || canViewArchiveField(access)) &&
+          Boolean(ocrResult.value?.document[field])
+        )
+      })
+      .map((field) => ({
+        field,
+        label: ocrFieldLabels[field],
+        current: String(form[field] ?? ''),
+        recognized: String(ocrResult.value?.document[field] ?? '')
+      }))
+  )
+  const ocrReviewColumns: ColumnOption<OcrReviewRow>[] = [
+    { prop: 'label', label: '表单字段', width: 140 },
+    { prop: 'current', label: '当前内容', minWidth: 170 },
+    { prop: 'recognized', label: '识别内容', minWidth: 200 }
+  ]
+
+  const recognizeCertificate = async (
+    key: 'drivingLicenseFrontUrl' | 'operationLicenseUrl'
+  ): Promise<void> => {
+    const url = form[key]
+    if (!url || !hasAuth('VehicleArchive:Ocr')) return
+    ocrBusyKey.value = key
+    try {
+      const { data, error } = await analyzeVehicleDocumentByAi(
+        url,
+        key === 'drivingLicenseFrontUrl' ? 'driving_license' : 'operation_license',
+        tenantScopeStore.selectedTenantId
+      )
+      if (error) throw error
+      if (!data) throw new Error('未获取到证照识别结果')
+      ocrDocumentType.value =
+        key === 'drivingLicenseFrontUrl' ? 'driving_license' : 'operation_license'
+      ocrResult.value = data
+      ocrReplaceExisting.value = false
+      await ocrReviewDialogRef.value?.handleOpen(data, { title: '车辆证照识别结果' })
+    } catch (error) {
+      ElMessage.error(getFriendlySupabaseErrorMessage(error, '车辆证照识别失败'))
+    } finally {
+      ocrBusyKey.value = null
+    }
+  }
+
+  const applyOcrResult = (): void => {
+    if (!userStore.isPlatformSuper || !hasAuth(savePermission.value) || !ocrResult.value) return
+    const editableForm = form as unknown as Record<string, unknown>
+    let applied = 0
+    for (const row of ocrReviewRows.value) {
+      if (row.field === 'vehicleType') continue
+      const access = ocrFieldAccess[row.field]
+      if (access && !canEditArchiveField(access)) continue
+      if (!ocrReplaceExisting.value && editableForm[row.field]) continue
+      const value =
+        row.field === 'operationType'
+          ? options.operationType.find(
+              (option) => option.value === row.recognized || option.label === row.recognized
+            )?.value
+          : row.recognized
+      if (!value) continue
+      editableForm[row.field] = value
+      applied += 1
+    }
+    if (applied) form.aiArtifactId = ocrResult.value.artifactId
+    ElMessage.success(applied ? `已填入 ${applied} 个字段，请核对后保存` : '没有需要填入的字段')
+    ocrReviewDialogRef.value?.handleClose()
+  }
+
   const attachmentColumns: ColumnOption<ArchiveAttachment>[] = [
     { type: 'globalIndex', label: '序号', width: 80 },
     {
@@ -1043,6 +1246,7 @@
     page.loading = true
     page.error = null
     try {
+      await tenantScopeStore.loadTenantOptions()
       const dictionaryCodes = [
         'FILE_EXTENSION_LABEL_MAP',
         'vehicleOwnership',
@@ -1075,7 +1279,38 @@
   }
 
   const loadArchiveDetail = async (): Promise<void> => {
-    if (!isEdit.value) return
+    if (!isEdit.value) {
+      if (isCopy.value) {
+        if (!hasAuth('VehicleArchive:Copy') || !hasAuth('VehicleArchive:Add')) {
+          throw new Error('没有复制车辆档案的权限')
+        }
+        const { data } = await fetchVehicleArchiveDetail(String(route.query.copyFrom))
+        if (!data) throw new Error('源车辆档案不存在或无权访问')
+        replaceForm({
+          ...createInitialForm(),
+          ...data,
+          id: undefined,
+          plateNo: '',
+          selfNo: '',
+          vin: '',
+          chassisNo: '',
+          engineNo: '',
+          drivingLicenseFrontUrl: '',
+          drivingLicenseBackUrl: '',
+          operationLicenseUrl: '',
+          attachments: [],
+          auditStatus: 'pending',
+          auditRemark: ''
+        })
+        return
+      }
+      form.companyName =
+        tenantScopeStore.selectedTenant?.tenantName ??
+        userStore.getUserInfo.tenant?.tenantName ??
+        ''
+      form.tenantId = tenantScopeStore.effectiveTenantId ?? undefined
+      return
+    }
     const id = String(route.params.id)
     const { data } = await fetchVehicleArchiveDetail(id)
     if (!data) throw new Error('车辆档案不存在或无权访问')
@@ -1088,10 +1323,6 @@
       delete form[key as keyof VehicleArchive]
     })
     Object.assign(form, nextForm)
-    if (nextForm.carrier?.id) {
-      carrierCache.value.set(nextForm.carrier.id, nextForm.carrier)
-      form.companyName = nextForm.carrier.companyName
-    }
     if (nextForm.primaryDriver?.id) {
       driverCache.value.set(nextForm.primaryDriver.id, nextForm.primaryDriver)
       form.primaryDriverName = nextForm.primaryDriver.driverName
@@ -1119,7 +1350,7 @@
   }
 
   const validateForms = async (): Promise<boolean> => {
-    for (const tab of formTabs) {
+    for (const tab of formTabs.filter((item) => availableTabNames.value.includes(item.name))) {
       try {
         await tab.formRef.value?.validate()
       } catch {
@@ -1163,13 +1394,10 @@
   }
 
   const openVehicleTypePicker = (): void => {
-    if (!form.carrierId) {
-      ElMessage.warning('请先选择所属承运商，再参选车型')
-      return
-    }
     void vehicleTypePickerRef.value?.handleOpen({
       vehicleId: isEdit.value ? String(route.params.id) : undefined,
-      carrierId: form.carrierId,
+      carrierId: form.carrierId ?? undefined,
+      tenantId: form.tenantId,
       selectedId: form.vehicleTypeProfileId
     })
   }
@@ -1401,6 +1629,44 @@
       grid-template-columns: repeat(4, minmax(120px, 1fr));
       gap: 16px;
       justify-items: center;
+    }
+
+    &__certificate-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    &__ocr-review {
+      display: grid;
+      gap: 14px;
+      padding: 8px 16px 16px;
+
+      > p {
+        margin: 0;
+        color: var(--el-text-color-regular);
+      }
+    }
+
+    &__ocr-note {
+      font-size: 12px;
+      color: var(--el-text-color-secondary) !important;
+    }
+
+    &__ocr-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+
+      > span {
+        flex: 1;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
     }
 
     :deep(.el-tabs__content) {

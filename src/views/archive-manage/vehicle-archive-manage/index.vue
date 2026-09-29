@@ -16,20 +16,103 @@
       </template>
     </BusinessWorkspaceHeader>
 
-    <ArtTableQuery
-      ref="tableQueryRef"
-      v-model="table.searchQuery"
-      :search-items="table.searchItems"
-      :api-fn="fetchTableData"
-      :columns-factory="table.columnsFactory"
-      :header-actions="table.headerActions"
-      header-actions-placement="workspace"
-      :search-bar-props="table.searchBarProps"
-      :table-props="table.props"
-      :immediate="table.immediate"
-      :on-success="handleTableSuccess"
-      focusable
-    />
+    <div class="vehicle-archive-manage__workspace">
+      <ArtSectionCard
+        class="vehicle-archive-manage__navigation"
+        title="车辆分类"
+        subtitle="按车辆归属和车型筛选"
+        aria-label="按车辆归属和车型筛选"
+        :show-scrollbar="false"
+        body-class="vehicle-archive-manage__navigation-body"
+        :loading="navigationLoading"
+        loading-mode="mask"
+        :error="navigationError"
+        error-title="车辆分类加载失败"
+        :empty="!navigationLoading && !navigationError && !navigationRows.length"
+        empty-title="暂无车辆档案"
+        empty-description="新增车辆档案后，会按车辆归属和车型显示在这里。"
+        :min-height="0"
+        @retry="loadNavigation"
+      >
+        <template #actions>
+          <ArtTreeExpandToggle
+            :tree="navigationTreeRef"
+            :data="navigationTree"
+            node-key="key"
+            label="车辆分类"
+            :default-expanded="navigationRows.length < 24"
+          />
+          <ArtIconButton icon="ri:refresh-line" label="刷新车辆分类" @click="loadNavigation" />
+        </template>
+
+        <ElInput
+          v-model="navigationKeyword"
+          clearable
+          placeholder="搜索归属或车型"
+          aria-label="搜索车辆分类"
+        >
+          <template #prefix><ArtSvgIcon icon="ri:search-line" /></template>
+        </ElInput>
+
+        <button
+          type="button"
+          class="vehicle-archive-manage__navigation-all"
+          :class="{ 'is-current': navigationKey === 'all' }"
+          @click="handleNavigationClick()"
+        >
+          <span class="vehicle-archive-manage__navigation-icon" aria-hidden="true">
+            <ArtSvgIcon icon="ri:apps-2-line" />
+          </span>
+          <span class="vehicle-archive-manage__navigation-copy">
+            <strong>全部车辆</strong>
+            <small>{{ navigationRows.length }} 辆车</small>
+          </span>
+          <ArtSvgIcon v-if="navigationKey === 'all'" icon="ri:check-line" aria-hidden="true" />
+        </button>
+
+        <ElScrollbar class="vehicle-archive-manage__navigation-scroll">
+          <ElTree
+            ref="navigationTreeRef"
+            :data="navigationTree"
+            node-key="key"
+            :default-expand-all="navigationRows.length < 24"
+            highlight-current
+            :expand-on-click-node="false"
+            :current-node-key="navigationKey === 'all' ? undefined : navigationKey"
+            :filter-node-method="filterNavigationNode"
+            @node-click="handleNavigationClick"
+          >
+            <template #default="{ data }">
+              <span class="vehicle-archive-manage__navigation-node">
+                <ArtSvgIcon
+                  class="vehicle-archive-manage__navigation-node-icon"
+                  :icon="data.vehicleType ? 'ri:truck-line' : 'ri:folder-3-line'"
+                  aria-hidden="true"
+                />
+                <span :title="data.label">{{ data.label }}</span>
+                <small :aria-label="`${data.count} 辆车`">{{ data.count }}</small>
+              </span>
+            </template>
+          </ElTree>
+        </ElScrollbar>
+      </ArtSectionCard>
+
+      <ArtTableQuery
+        ref="tableQueryRef"
+        v-model="table.searchQuery"
+        :search-items="table.searchItems"
+        :api-fn="fetchTableData"
+        :columns-factory="table.columnsFactory"
+        :header-actions="table.headerActions"
+        header-actions-placement="workspace"
+        :search-bar-props="table.searchBarProps"
+        :table-props="table.props"
+        :immediate="table.immediate"
+        :on-success="handleTableSuccess"
+        focus-scope-selector=".vehicle-archive-manage__workspace"
+        focusable
+      />
+    </div>
 
     <MasterDataDeleteGuard ref="deleteGuardRef" @cleared="handleDeleteGuardCleared" />
     <WorkflowBusinessHistoryDrawer ref="approvalHistoryRef" />
@@ -40,7 +123,11 @@
   import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage, ElTree } from 'element-plus'
+  import { groupBy } from 'lodash-es'
+  import ArtSectionCard from '@/components/core/surfaces/art-section-card/index.vue'
+  import ArtTreeExpandToggle from '@/components/core/widget/art-tree-expand-toggle/index.vue'
+  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import { RouterLink } from 'vue-router'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import ArtButtonMore, {
@@ -61,6 +148,9 @@
     exportVehicleArchiveList,
     fetchCarrierOptions,
     fetchVehicleArchiveList,
+    fetchVehicleArchiveNavigation,
+    importVehicleArchives,
+    type VehicleArchiveNavigationItem,
     type VmsCarrierReference
   } from '@vms/api'
   import MasterDataDeleteGuard, {
@@ -69,6 +159,8 @@
   import WorkflowBusinessHistoryDrawer from '@/components/business/workflow-business-history/workflow-business-history-drawer.vue'
   import type { WorkflowBusinessHistoryDrawerExpose } from '@/components/business/workflow-business-history/types'
   import { useUserStore } from '@/store/modules/user'
+  import { useTenantScopeStore } from '@/store/modules/tenantScope'
+  import { useAuth } from '@/hooks/core/useAuth'
   import BusinessTableWorkspaceActions from '@/components/business/business-table-workspace-actions/index.vue'
   import BusinessWorkspaceHeader, {
     type BusinessWorkspaceMetric
@@ -78,6 +170,7 @@
   defineOptions({ name: 'VehicleArchiveManage' })
 
   const { confirmAction } = useArtFeedback()
+  const { hasAllAuth } = useAuth()
 
   type VehicleArchive = Api.Vms.ArchiveManage.VehicleArchive
   type CarrierOption = VmsCarrierReference
@@ -109,6 +202,7 @@
   const router = useRouter()
   const route = useRoute()
   const userStore = useUserStore()
+  const tenantScopeStore = useTenantScopeStore()
   const { getDictMap } = storeToRefs(userStore)
   const tableQueryRef = ref<ArtTableQueryExpose>()
   const deleteGuardRef = ref<MasterDataDeleteGuardExpose>()
@@ -119,6 +213,103 @@
     total: 0,
     rows: []
   })
+  interface NavigationNode {
+    key: string
+    label: string
+    count: number
+    ownership?: string
+    vehicleType?: string
+    children?: NavigationNode[]
+    searchText?: string
+  }
+  const navigationRows = ref<VehicleArchiveNavigationItem[]>([])
+  const navigationTreeRef = ref<InstanceType<typeof ElTree>>()
+  const navigationKeyword = ref('')
+  const navigationLoading = ref(false)
+  const navigationError = shallowRef<Error | null>(null)
+  const navigationKey = ref('all')
+  const selectedNavigation = ref<Pick<NavigationNode, 'ownership' | 'vehicleType'>>({})
+  const navigationIds = computed(() =>
+    navigationRows.value
+      .filter(
+        (row) =>
+          (!selectedNavigation.value.ownership ||
+            (row.vehicleOwnership || 'unassigned') === selectedNavigation.value.ownership) &&
+          (!selectedNavigation.value.vehicleType ||
+            (row.vehicleType || 'unassigned') === selectedNavigation.value.vehicleType)
+      )
+      .map((row) => row.id)
+  )
+  const navigationTree = computed<NavigationNode[]>(() =>
+    Object.entries(
+      groupBy(navigationRows.value, (row) => row.vehicleOwnership || 'unassigned')
+    ).map(([ownership, rows]) => {
+      const label =
+        getDictMap.value.vehicleOwnership?.find((item) => item.value === ownership)?.label ??
+        (ownership === 'unassigned' ? '归属未设置' : ownership)
+      const children = Object.entries(groupBy(rows, (row) => row.vehicleType || 'unassigned')).map(
+        ([vehicleType, typeRows]) => {
+          const typeLabel =
+            getDictMap.value.vehicleType?.find((item) => item.value === vehicleType)?.label ??
+            (vehicleType === 'unassigned' ? '车型未设置' : vehicleType)
+          return {
+            key: `type:${ownership}:${vehicleType}`,
+            label: typeLabel,
+            count: typeRows.length,
+            ownership,
+            vehicleType,
+            searchText: `${label} ${typeLabel}`
+          }
+        }
+      )
+      return {
+        key: `ownership:${ownership}`,
+        label,
+        count: rows.length,
+        ownership,
+        children,
+        searchText: `${label} ${children.map((child) => child.label).join(' ')}`
+      }
+    })
+  )
+
+  const filterNavigationNode = (keyword: string, node: Record<string, unknown>): boolean =>
+    !keyword ||
+    String(node.searchText ?? '')
+      .toLocaleLowerCase()
+      .includes(keyword.toLocaleLowerCase())
+
+  watch(navigationKeyword, (keyword) => navigationTreeRef.value?.filter(keyword.trim()))
+  watch(
+    navigationTree,
+    async () => {
+      await nextTick()
+      navigationTreeRef.value?.filter(navigationKeyword.value.trim())
+    },
+    { flush: 'post' }
+  )
+
+  const loadNavigation = async (): Promise<void> => {
+    navigationLoading.value = true
+    navigationError.value = null
+    try {
+      const result = await fetchVehicleArchiveNavigation()
+      if (result.error) throw result.error
+      navigationRows.value = result.data ?? []
+    } catch (error) {
+      navigationError.value = error instanceof Error ? error : new Error('车辆分类加载失败')
+    } finally {
+      navigationLoading.value = false
+    }
+  }
+
+  const handleNavigationClick = (node?: NavigationNode): void => {
+    navigationKey.value = node?.key ?? 'all'
+    selectedNavigation.value = { ownership: node?.ownership, vehicleType: node?.vehicleType }
+    if (!node) navigationTreeRef.value?.setCurrentKey(undefined)
+    tableQueryRef.value?.clearSelection()
+    void tableQueryRef.value?.refreshContext()
+  }
   const listFieldAccess = ref<Api.Vms.ArchiveManage.VehicleArchiveFieldAccessMap>({})
   const effectiveFieldAccess = computed(() =>
     mergeFieldAccessMaps(listFieldAccess.value, ...overview.rows.map((row) => row.fieldAccess))
@@ -168,7 +359,7 @@
     ...(canViewField(effectiveFieldAccess.value, 'vehicleIdentifiers')
       ? [
           { key: 'chassisNo', title: '底盘号' },
-          { key: 'vin', title: '车架号（VIN）', required: true }
+          { key: 'vin', title: '车架号（VIN）' }
         ]
       : []),
     { key: 'operationStatus', title: '营运状态' },
@@ -176,6 +367,64 @@
     { key: 'createTime', title: '创建时间' },
     { key: 'createBy', title: '创建人' }
   ])
+
+  const archiveImportColumns = computed<ArtTableQueryExcelColumn[]>(() => [
+    ...(tenantScopeStore.isAllTenants
+      ? [{ key: 'tenantCode', title: '所属租户编码', required: true }]
+      : []),
+    { key: 'plateNo', title: '车牌号', required: true },
+    { key: 'vehicleType', title: '车型', required: true },
+    { key: 'vehicleOwnership', title: '车辆归属' },
+    { key: 'manufacturer', title: '车辆厂商' },
+    { key: 'vin', title: '车架号（VIN）' },
+    { key: 'operationStatus', title: '营运状态' }
+  ])
+
+  const normalizeImportDictionaryValue = (code: string, value: unknown): string => {
+    const text = String(value ?? '').trim()
+    return (
+      getDictMap.value[code]?.find((item) => item.label === text || item.value === text)?.value ??
+      text
+    )
+  }
+
+  const parseImportRows = async (rows: Array<Record<string, unknown>>) => {
+    await Promise.all(
+      ['vehicleType', 'vehicleOwnership', 'vehicleOperationStatus'].map((code) =>
+        userStore.ensureDictLoaded(code)
+      )
+    )
+    if (tenantScopeStore.isAllTenants) await tenantScopeStore.loadTenantOptions()
+    if (rows.length > 500) throw new Error('一次最多导入 500 条车辆档案')
+    return rows.map((row, index) => {
+      const read = (key: string, title: string) => String(row[title] ?? row[key] ?? '').trim()
+      const plateNo = read('plateNo', '车牌号')
+      const vehicleType = read('vehicleType', '车型')
+      if (!plateNo || !vehicleType) throw new Error(`第 ${index + 2} 行缺少车牌号或车型`)
+      const tenantCode = read('tenantCode', '所属租户编码')
+      const tenantId = tenantScopeStore.isAllTenants
+        ? tenantScopeStore.tenantOptions.find((tenant) => tenant.tenantCode === tenantCode)?.id
+        : tenantScopeStore.effectiveTenantId
+      if (!tenantId) throw new Error(`第 ${index + 2} 行所属租户编码无效`)
+      return {
+        tenantId,
+        plateNo,
+        vehicleType: normalizeImportDictionaryValue('vehicleType', vehicleType),
+        vehicleOwnership:
+          normalizeImportDictionaryValue(
+            'vehicleOwnership',
+            read('vehicleOwnership', '车辆归属')
+          ) || null,
+        manufacturer: read('manufacturer', '车辆厂商') || null,
+        vin: read('vin', '车架号（VIN）') || null,
+        operationStatus:
+          normalizeImportDictionaryValue(
+            'vehicleOperationStatus',
+            read('operationStatus', '营运状态')
+          ) || 'operating'
+      }
+    })
+  }
 
   const withSelectedCarrierOption = async (result: unknown) => {
     const carrierResult = result as Awaited<ReturnType<typeof fetchCarrierOptions>>
@@ -266,15 +515,44 @@
         permission: 'VehicleArchive:Add',
         onClick: () => openCreatePage()
       },
+      ...(hasAllAuth(['VehicleArchive:Import', 'VehicleArchive:Add'])
+        ? [
+            {
+              type: 'import' as const,
+              permission: 'VehicleArchive:Import',
+              importColumns: archiveImportColumns.value,
+              importTransformer: parseImportRows,
+              importApi: async (rows: Array<Record<string, unknown>>) => {
+                const result = await importVehicleArchives(rows)
+                if (result.error) throw result.error
+                await loadNavigation()
+              },
+              onImportSuccess: (rows: Array<Record<string, unknown>>) => {
+                ElMessage.success(`成功导入 ${rows.length} 条车辆档案`)
+              },
+              onImportError: (error: Error) => {
+                ElMessage.error(getFriendlySupabaseErrorMessage(error, '车辆档案导入失败'))
+              }
+            }
+          ]
+        : []),
       {
         type: 'export',
+        permission: 'VehicleArchive:Export',
         exportFilename: '车辆档案',
         exportSheetName: '车辆档案',
         exportColumns: () => archiveExcelColumns.value,
         exportApi: async ({ selectedIds, searchParams, maxRows }) => {
+          if (navigationKey.value !== 'all' && !navigationIds.value.length) {
+            return { data: [], total: 0, fieldAccess: listFieldAccess.value }
+          }
           const result = await exportVehicleArchiveList({
             ...(searchParams as SearchParams),
-            ids: selectedIds.map(String),
+            ids: selectedIds.length
+              ? selectedIds.map(String)
+              : navigationKey.value === 'all'
+                ? undefined
+                : navigationIds.value,
             maxRows
           })
           syncVehicleFieldAccess(result)
@@ -342,7 +620,7 @@
       }
     ],
     searchBarProps: {
-      span: 6,
+      span: 8,
       labelWidth: 90
     },
     props: {
@@ -354,6 +632,13 @@
   })
 
   onMounted(async () => {
+    await tenantScopeStore.loadTenantOptions()
+    await Promise.all(
+      ['vehicleOwnership', 'vehicleType', 'vehicleOperationStatus', 'vehicleAuditStatus'].map(
+        (code) => userStore.ensureDictLoaded(code)
+      )
+    )
+    await loadNavigation()
     if (!initialCarrierId && !initialRecordId) return
     await nextTick()
     await tableQueryRef.value?.getData()
@@ -374,15 +659,22 @@
     { flush: 'post' }
   )
 
-  onActivated(() => void tableQueryRef.value?.getData())
+  onActivated(() => {
+    void loadNavigation()
+    void tableQueryRef.value?.getData()
+  })
 
   const fetchTableData = async (params: TableParams) => {
+    if (navigationKey.value !== 'all' && !navigationIds.value.length) {
+      return { data: [], total: 0, fieldAccess: listFieldAccess.value }
+    }
     const { from, to } = pageInfoHandler({
       current: params.current,
       size: params.size
     })
     const result = await fetchVehicleArchiveList({
       ...params,
+      ids: navigationKey.value === 'all' ? undefined : navigationIds.value,
       from,
       to
     })
@@ -451,6 +743,11 @@
     void router.push(`/vms/vehicle-archive-edit/${row.id}`)
   }
 
+  const openCopyPage = (row: VehicleArchive): void => {
+    if (!row.id) return
+    void router.push({ path: '/vms/vehicle-archive-edit', query: { copyFrom: row.id } })
+  }
+
   const getMoreActions = (): ButtonMoreItem[] => [
     {
       key: 'view',
@@ -458,6 +755,9 @@
       icon: 'ri:eye-line',
       auth: 'VehicleArchive:View'
     },
+    ...(hasAllAuth(['VehicleArchive:Copy', 'VehicleArchive:Add'])
+      ? [{ key: 'copy', label: '复制', icon: 'ri:file-copy-line', auth: 'VehicleArchive:Copy' }]
+      : []),
     {
       key: 'approvalHistory',
       label: '审批记录',
@@ -476,6 +776,10 @@
   const handleMoreAction = (item: ButtonMoreItem, row: VehicleArchive): void => {
     if (item.key === 'view') {
       openDetailPage(row)
+      return
+    }
+    if (item.key === 'copy') {
+      openCopyPage(row)
       return
     }
     if (item.key === 'approvalHistory') {
@@ -517,6 +821,7 @@
       })
       await deleteVehicleArchive(row.id)
       await tableQueryRef.value?.refreshRemove()
+      await loadNavigation()
     } catch (error) {
       if (error === 'cancel' || error === 'close') return
       ElMessage.error(getFriendlySupabaseErrorMessage(error, '删除失败'))
@@ -525,6 +830,7 @@
 
   const handleDeleteGuardCleared = (): void => {
     void tableQueryRef.value?.getData()
+    void loadNavigation()
   }
 </script>
 
@@ -532,6 +838,157 @@
   .vehicle-archive-manage {
     gap: 12px;
     min-width: 0;
+
+    &__workspace {
+      display: grid;
+      flex: 1;
+      grid-template-columns: minmax(248px, 264px) minmax(0, 1fr);
+      gap: 12px;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    &__navigation {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+
+      :deep(.vehicle-archive-manage__navigation-body) {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 0;
+      }
+
+      :deep(.el-tree) {
+        --el-tree-node-hover-bg-color: color-mix(
+          in srgb,
+          var(--theme-color) 7%,
+          var(--default-box-color)
+        );
+
+        background: transparent;
+      }
+
+      :deep(.el-tree-node__content) {
+        min-height: 42px;
+        padding-right: 7px;
+        margin-bottom: 2px;
+        border-radius: var(--el-border-radius-base);
+      }
+
+      :deep(.el-tree-node__content:focus-visible) {
+        outline: 2px solid var(--theme-color);
+        outline-offset: -2px;
+      }
+
+      :deep(.el-tree-node.is-current > .el-tree-node__content) {
+        font-weight: 600;
+        color: var(--theme-color);
+        background: color-mix(in srgb, var(--theme-color) 10%, var(--default-box-color));
+        box-shadow: inset 3px 0 0 var(--theme-color);
+      }
+    }
+
+    &__navigation-scroll {
+      flex: 1;
+      min-height: 0;
+    }
+
+    &__navigation-all {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 18px;
+      gap: 9px;
+      align-items: center;
+      width: 100%;
+      min-height: 58px;
+      padding: 7px 9px;
+      font: inherit;
+      color: var(--el-text-color-regular);
+      text-align: left;
+      cursor: pointer;
+      background: var(--art-gray-100);
+      border: 1px solid transparent;
+      border-radius: var(--el-border-radius-base);
+
+      &:hover,
+      &.is-current {
+        background: color-mix(in srgb, var(--theme-color) 9%, var(--default-box-color));
+        border-color: color-mix(in srgb, var(--theme-color) 22%, transparent);
+      }
+
+      &.is-current {
+        box-shadow: inset 3px 0 0 var(--theme-color);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--theme-color);
+        outline-offset: 2px;
+      }
+    }
+
+    &__navigation-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      color: var(--theme-color);
+      background: var(--default-box-color);
+      border-radius: var(--el-border-radius-base);
+    }
+
+    &__navigation-copy {
+      display: grid;
+      min-width: 0;
+
+      strong {
+        font-size: 13px;
+        color: var(--el-text-color-primary);
+      }
+
+      small {
+        margin-top: 1px;
+        font-size: 11px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__navigation-node {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      width: 100%;
+      min-width: 0;
+
+      &-icon {
+        flex: none;
+        font-size: 16px;
+        color: var(--el-text-color-secondary);
+      }
+
+      span {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      small {
+        flex: none;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        color: var(--el-text-color-placeholder);
+      }
+    }
+
+    :deep(.art-table-query) {
+      min-width: 0;
+    }
 
     :deep(.vehicle-archive-manage__vehicle-cell),
     :deep(.vehicle-archive-manage__ownership) {
@@ -602,6 +1059,18 @@
 
       .art-button-table {
         margin-right: 0;
+      }
+    }
+  }
+
+  @media (width <= 900px) {
+    .vehicle-archive-manage {
+      &__workspace {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      &__navigation {
+        height: 260px;
       }
     }
   }

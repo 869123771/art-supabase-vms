@@ -1,7 +1,7 @@
 <template>
   <div class="vehicle-query-archive-panel">
     <ElTabs v-model="panel.activeTab">
-      <ElTabPane label="基础信息" name="basic">
+      <ElTabPane v-if="hasAuth('VehicleQuery:TabBasic')" label="基础信息" name="basic">
         <ArtPageSection title="基础信息">
           <ArtDescriptions :data="descriptionData" :items="basicDescriptionItems" />
         </ArtPageSection>
@@ -28,27 +28,34 @@
           </div>
         </ArtPageSection>
       </ElTabPane>
-      <ElTabPane label="车身参数" name="body">
+      <ElTabPane v-if="hasAuth('VehicleQuery:TabBody')" label="车身参数" name="body">
         <ArtPageSection title="车身参数">
           <ArtDescriptions :data="descriptionData" :items="bodyDescriptionItems" />
         </ArtPageSection>
       </ElTabPane>
-      <ElTabPane label="发动机参数" name="engine">
+      <ElTabPane v-if="hasAuth('VehicleQuery:TabEngine')" label="发动机参数" name="engine">
         <ArtPageSection title="发动机参数">
           <ArtDescriptions :data="descriptionData" :items="engineDescriptionItems" />
         </ArtPageSection>
       </ElTabPane>
-      <ElTabPane label="其他信息" name="other">
+      <ElTabPane v-if="hasAuth('VehicleQuery:TabOther')" label="其他信息" name="other">
         <ArtPageSection title="其他信息">
           <ArtDescriptions :data="descriptionData" :items="otherDescriptionItems" />
         </ArtPageSection>
       </ElTabPane>
     </ElTabs>
+    <ArtEmptyState
+      v-if="!availableTabNames.length"
+      title="暂无可访问的页签"
+      description="请联系管理员在角色权限中授权车辆查询页签。"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
   import { ElImage, ElTabPane, ElTabs } from 'element-plus'
+  import ArtEmptyState from '@/components/core/feedback/art-empty-state/index.vue'
+  import { useAuth } from '@/hooks/core/useAuth'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import type { InfoItem, VehicleArchive } from './types'
@@ -60,6 +67,7 @@
   const props = defineProps<{
     vehicle: VehicleArchive
   }>()
+  const { hasAuth } = useAuth()
 
   type ImageKey =
     'vehiclePhotoUrl' | 'drivingLicenseFrontUrl' | 'drivingLicenseBackUrl' | 'operationLicenseUrl'
@@ -67,6 +75,24 @@
   const panel = reactive({
     activeTab: 'basic'
   })
+  const tabPermissions = {
+    basic: 'VehicleQuery:TabBasic',
+    body: 'VehicleQuery:TabBody',
+    engine: 'VehicleQuery:TabEngine',
+    other: 'VehicleQuery:TabOther'
+  } as const
+  const availableTabNames = computed(() =>
+    Object.entries(tabPermissions)
+      .filter(([, code]) => hasAuth(code))
+      .map(([name]) => name)
+  )
+  watch(
+    availableTabNames,
+    (names) => {
+      if (!names.includes(panel.activeTab)) panel.activeTab = names[0] ?? 'basic'
+    },
+    { immediate: true }
+  )
   const descriptionData = Object.freeze({})
 
   const certificateItems: Array<{ key: ImageKey; label: string }> = [

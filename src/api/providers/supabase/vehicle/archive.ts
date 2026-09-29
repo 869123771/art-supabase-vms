@@ -28,6 +28,26 @@ interface SecureVehicleArchivePayload {
   fieldAccess?: Api.Vms.ArchiveManage.VehicleArchiveFieldAccessMap
 }
 
+export interface VehicleArchiveNavigationItem {
+  id: string
+  vehicleOwnership: string
+  vehicleType: string
+}
+
+export async function fetchVehicleArchiveNavigation(options?: ApiRequestOptions) {
+  return await responseHandle<VehicleArchiveNavigationItem[]>(
+    () => withRequestOptions(supabase.rpc('vms_list_vehicle_archive_navigation_secure'), options),
+    { showErrorMessage: false }
+  )
+}
+
+export async function importVehicleArchives(rows: VehicleArchiveWritePayload[]) {
+  return await responseHandle<number>(
+    () => supabase.rpc('vms_import_vehicle_archives_secure', { p_rows: keysToSnakeDeep(rows) }),
+    { showErrorMessage: false }
+  )
+}
+
 const startOfDay = (value?: string): string | null => (value ? `${value}T00:00:00` : null)
 const endOfDay = (value?: string): string | null => (value ? `${value}T23:59:59.999` : null)
 
@@ -59,7 +79,7 @@ const createVehicleArchiveRpcParams = (
 }
 
 export async function fetchVehicleArchiveList(
-  params: VehicleArchiveSearchParams,
+  params: VehicleArchiveSearchParams & { ids?: string[] },
   options?: ApiRequestOptions
 ) {
   const result = await responseHandle<SecureVehicleArchivePayload>(

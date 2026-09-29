@@ -42,7 +42,6 @@
 <script setup lang="tsx">
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
-  import { storeToRefs } from 'pinia'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import ArtButtonMore, {
     type ButtonMoreItem
@@ -62,7 +61,7 @@
     exportVehicleRoutineInspectionList,
     fetchVehicleRoutineInspectionList
   } from '@vms/api'
-  import { useUserStore } from '@/store/modules/user'
+  import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
   import { pageInfoHandler } from '@/utils/table/tableUtils'
   import { formatWithDayjs } from '@/utils/time'
   import RoutineInspectionDialog from './modules/routine-inspection-dialog.vue'
@@ -94,7 +93,8 @@
   const router = useRouter()
   const tableQueryRef = ref<ArtTableQueryExpose>()
   const dialogRef = ref<DialogExpose>()
-  const { getDictMap } = storeToRefs(useUserStore())
+  const inspectionTypeOptions = useDictionaryOptions('vehicleRoutineInspectionType')
+  const inspectionResultOptions = useDictionaryOptions('vehicleRoutineInspectionResult')
   const overview = reactive<{ total: number; rows: RoutineInspection[] }>({ total: 0, rows: [] })
   const listFieldAccess = ref<Api.Vms.VehicleManage.VehicleRoutineInspectionFieldAccessMap>({})
   const effectiveFieldAccess = computed(() =>
@@ -153,7 +153,7 @@
         label: '例检类型',
         key: 'inspectionType',
         type: 'select',
-        props: { options: getDictMap.value.vehicleRoutineInspectionType ?? [] }
+        props: { options: inspectionTypeOptions }
       },
       ...(canViewField(effectiveFieldAccess.value, 'inspectionFindings')
         ? [
@@ -161,7 +161,7 @@
               label: '检查结果',
               key: 'checkResult',
               type: 'select',
-              props: { options: getDictMap.value.vehicleRoutineInspectionResult ?? [] }
+              props: { options: inspectionResultOptions }
             }
           ]
         : []),

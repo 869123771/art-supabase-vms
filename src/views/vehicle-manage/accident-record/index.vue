@@ -42,7 +42,6 @@
 <script setup lang="tsx">
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
-  import { storeToRefs } from 'pinia'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import ArtButtonMore, {
     type ButtonMoreItem
@@ -64,7 +63,7 @@
   } from '@vms/api'
   import { pageInfoHandler } from '@/utils/table/tableUtils'
   import { formatWithDayjs } from '@/utils/time'
-  import { useUserStore } from '@/store/modules/user'
+  import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
   import AccidentRecordDialog from './modules/accident-record-dialog.vue'
   import BusinessWorkspaceHeader, {
     type BusinessWorkspaceMetric
@@ -94,7 +93,11 @@
   const router = useRouter()
   const tableQueryRef = ref<ArtTableQueryExpose>()
   const dialogRef = ref<DialogExpose>()
-  const { getDictMap } = storeToRefs(useUserStore())
+  const accidentSourceOptions = useDictionaryOptions('vehicleAccidentDataSource')
+  const processedOptions = useDictionaryOptions<boolean>(
+    'vehicleRecordProcessed',
+    (value) => value === 'true'
+  )
   const overview = reactive<{ total: number; rows: AccidentRecord[] }>({ total: 0, rows: [] })
   const listFieldAccess = ref<Api.Vms.VehicleManage.VehicleAccidentFieldAccessMap>({})
   const effectiveFieldAccess = computed(() =>
@@ -159,7 +162,7 @@
         label: '数据来源',
         key: 'dataSource',
         type: 'select',
-        props: { options: getDictMap.value.vehicleAccidentDataSource ?? [] }
+        props: { options: accidentSourceOptions }
       },
       { label: '事故时间', key: 'accidentTimeRange', type: 'date', props: dateRangeProps },
       { label: '创建时间', key: 'createTimeRange', type: 'date', props: dateRangeProps }
@@ -368,11 +371,7 @@
     }
   }
 
-  const getProcessedDictOptions = () =>
-    (getDictMap.value.vehicleRecordProcessed ?? []).map((item) => ({
-      ...item,
-      value: item.value === 'true'
-    }))
+  const getProcessedDictOptions = () => processedOptions
 </script>
 
 <style scoped lang="scss">

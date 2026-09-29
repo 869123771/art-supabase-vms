@@ -94,6 +94,26 @@ export async function fetchVmsDriverReferences(
   )
 }
 
+/** Driver choices for a specific VMS vehicle, scoped to that vehicle's tenant. */
+export async function fetchVmsVehicleDriverReferences(
+  vehicleId: string,
+  params: { driverName?: string; maxRows?: number } = {},
+  options?: ApiRequestOptions
+) {
+  return await responseHandle<VmsDriverReference[]>(
+    () =>
+      withRequestOptions(
+        supabase.rpc('vms_list_vehicle_driver_options_secure', {
+          p_vehicle_id: vehicleId,
+          p_driver_name: normalizeNullableText(String(params.driverName ?? '')),
+          p_max_rows: params.maxRows ?? 200
+        }),
+        options
+      ),
+    { showErrorMessage: true }
+  )
+}
+
 /** HR-owned read model exposed specifically for VMS use cases. */
 export async function fetchVmsHrEmployeeReferences(
   params: { keyword?: string; maxRows?: number } = {},

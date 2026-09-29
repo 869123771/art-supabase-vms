@@ -6,6 +6,7 @@ import { startWorkflow } from '@/api/workflow'
 export {
   fetchVmsCarrierReferences as fetchCarrierOptions,
   fetchVmsDriverReferences as fetchDriverOptions,
+  fetchVmsVehicleDriverReferences as fetchVehicleDriverOptions,
   fetchVmsHrEmployeeReferences as fetchHrEmployeeOptions
 } from '@vms/api/integration'
 export type {
@@ -51,6 +52,10 @@ export const importParts = vehicleApi.importParts
 export const fetchSupplierOptions = vehicleApi.fetchSupplierOptions
 
 export const fetchVehicleArchiveList = supabaseVehicleApi.fetchVehicleArchiveList
+export const fetchVehicleArchiveNavigation = supabaseVehicleApi.fetchVehicleArchiveNavigation
+export const importVehicleArchives = supabaseVehicleApi.importVehicleArchives
+export * from './modules/vehicle-document-ocr'
+export type { VehicleArchiveNavigationItem } from '@vms/api/providers/supabase/vehicle/archive'
 export const exportVehicleArchiveList = supabaseVehicleApi.exportVehicleArchiveList
 export const fetchVehicleArchiveDetail = supabaseVehicleApi.fetchVehicleArchiveDetail
 export const fetchVehicleTypeProfiles = supabaseVehicleApi.fetchVehicleTypeProfiles

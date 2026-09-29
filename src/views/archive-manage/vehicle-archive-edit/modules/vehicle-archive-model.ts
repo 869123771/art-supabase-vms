@@ -3,6 +3,7 @@ import { omitNonEditableFieldGroups, omitWriteMetadata } from '@/utils/field-per
 export type VehicleArchive = Api.Vms.ArchiveManage.VehicleArchive
 
 export type VehicleArchiveForm = VehicleArchive & {
+  aiArtifactId?: string | null
   primaryDriverName: string
   primaryDriverPhone: string
   secondaryDriverName: string

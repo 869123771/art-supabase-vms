@@ -35,6 +35,33 @@
             <template #empty><VehicleDataSourceEmptyActions source="vehicle" /></template>
           </ArtTableSingleSelect>
         </template>
+        <template #initiatorEmployeeId>
+          <ArtEmployeeSelect
+            :model-value="form.data.initiatorEmployeeId ?? undefined"
+            :selected-data="selectedInitiator"
+            :tenant-id="form.data.tenantId ?? tenantScopeStore.effectiveTenantId ?? undefined"
+            title="选择发起人"
+            placeholder="请选择发起人"
+            @change="handleInitiatorChange"
+          />
+        </template>
+        <template #mileageRecordId>
+          <ArtTableSingleSelect
+            :model-value="form.data.mileageRecordId ?? undefined"
+            :selected-data="selectedMileage"
+            :api-fn="fetchMileageSelectData"
+            :columns="mileageColumns"
+            row-key="id"
+            :label-key="formatMileageLabel"
+            title="关联行驶记录"
+            subtitle="选择该车的一次行程，列表将显示其司机、运单和里程。"
+            placeholder="选择行驶记录（选填）"
+            :disabled="!form.data.vehicleId"
+            show-pagination
+            clearable
+            @change="handleMileageChange"
+          />
+        </template>
       </ArtForm>
 
       <section v-if="canViewMaintenanceItems" class="maintenance-record-dialog__section">
@@ -110,7 +137,6 @@
   import { cloneDeep } from 'lodash-es'
   import type { FormRules } from 'element-plus'
   import { ElButton, ElInput, ElInputNumber, ElMessage } from 'element-plus'
-  import { storeToRefs } from 'pinia'
   import ArtDialog from '@/components/core/dialogs/art-dialog/index.vue'
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtUploadFile from '@/components/core/forms/art-upload-file/index.vue'
@@ -118,6 +144,8 @@
   import { useDocumentNumberRule } from '@/hooks/core/useDocumentNumberRule'
   import ArtTableSingleSelect from '@/components/core/forms/art-data-select/table-single.vue'
   import VehicleDataSourceEmptyActions from '../../../components/vehicle-data-source-empty-actions.vue'
+  import ArtEmployeeSelect from '@/components/business/art-employee-select/index.vue'
+  import type { EmployeeIntegrationItem } from '@/api/integration/employees'
   import type {
     DataSelectColumn,
     DataSelectRecord
@@ -126,11 +154,18 @@
   import ArtTable from '@/components/core/tables/art-table/index.vue'
   import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
-  import { addVehicleMaintenance, editVehicleMaintenance, fetchVehicleArchiveList } from '@vms/api'
+  import {
+    addVehicleMaintenance,
+    editVehicleMaintenance,
+    fetchVehicleArchiveList,
+    fetchVehicleMileageList
+  } from '@vms/api'
   import { pageInfoHandler } from '@/utils/table/tableUtils'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { useUserStore } from '@/store/modules/user'
+  import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
+  import { useTenantScopeStore } from '@/store/modules/tenantScope'
   import { canEditField, canViewField } from '@/utils/field-permission'
   import {
     EDITABLE_VEHICLE_MAINTENANCE_ACCESS,
@@ -179,7 +214,10 @@
   }
 
   const emit = defineEmits<Emits>()
-  const { getDictMap } = storeToRefs(useUserStore())
+  const userStore = useUserStore()
+  const tenantScopeStore = useTenantScopeStore()
+  const maintenanceTypeOptions = useDictionaryOptions('vehicleMaintenanceType')
+  const booleanOptions = useDictionaryOptions<boolean>('commonBoolean', (value) => value === 'true')
   const dialogRef = ref<ArtDialogExpose<MaintenanceRecord | undefined>>()
   const attachmentDialogRef = ref<ArtDialogExpose<void>>()
   const formRef = ref<FormExpose>()
@@ -197,12 +235,16 @@
 
   const createInitialForm = (): MaintenanceRecord => ({
     id: undefined,
+    tenantId: tenantScopeStore.effectiveTenantId ?? userStore.getUserInfo.tenantId,
     vehicleId: null,
     plateNo: '',
     companyName: '',
     maintenanceNo: '',
     maintenanceType: 'repair',
-    initiator: '',
+    initiator:
+      userStore.getUserInfo.hrEmployee?.employeeName ?? userStore.getUserInfo.nickName ?? '',
+    initiatorEmployeeId: userStore.getUserInfo.hrEmployeeId ?? null,
+    mileageRecordId: null,
     startTime: '',
     endTime: '',
     costAmount: null,
@@ -278,9 +320,10 @@
           label: '维修类型',
           key: 'maintenanceType',
           type: 'select',
-          props: { options: getDictMap.value.vehicleMaintenanceType ?? [] }
+          props: { options: maintenanceTypeOptions }
         },
-        { label: '发起人', key: 'initiator', type: 'input', props: { maxlength: 50 } },
+        { label: '发起人', key: 'initiatorEmployeeId' },
+        { label: '关联行驶记录', key: 'mileageRecordId', span: 24 },
         { label: '开始时间', key: 'startTime', type: 'date', props: dateTimeProps },
         { label: '结束时间', key: 'endTime', type: 'date', props: dateTimeProps },
         { label: '费用金额', key: 'costAmount', type: 'number', props: moneyProps },
@@ -356,6 +399,45 @@
       dict: { code: 'vehicleOperationStatus', display: 'auto' }
     }
   ]
+
+  const mileageColumns: DataSelectColumn[] = [
+    { prop: 'startTime', label: '发车时间', minWidth: 180 },
+    { prop: 'endTime', label: '收车时间', minWidth: 180 },
+    { prop: 'runningMileage', label: '行驶里程（KM）', width: 140 }
+  ]
+
+  const formatMileageLabel = (row: DataSelectRecord): string =>
+    `${String(row.startTime ?? '行程时间待补充')} · ${String(row.runningMileage ?? '--')} KM`
+
+  const selectedMileage = computed<Api.Vms.VehicleManage.VehicleMileageRecord[]>(() =>
+    form.data.mileageRecordId
+      ? [
+          {
+            id: form.data.mileageRecordId,
+            plateNo: form.data.plateNo,
+            startTime: form.data.tripStartTime ?? undefined,
+            endTime: form.data.tripEndTime,
+            runningMileage: form.data.drivingMileage
+          }
+        ]
+      : []
+  )
+
+  const fetchMileageSelectData = async (params: { page: number; pageSize: number }) => {
+    if (!form.data.vehicleId) return { data: [], total: 0 }
+    const { from, to } = pageInfoHandler({ current: params.page, size: params.pageSize })
+    const result = await fetchVehicleMileageList({ vehicleId: form.data.vehicleId, from, to })
+    if (result.error) throw result.error
+    return { data: result.data ?? [], total: result.total ?? 0 }
+  }
+
+  const handleMileageChange = (_value: unknown, rows: DataSelectRecord[]): void => {
+    const trip = rows[0] as Api.Vms.VehicleManage.VehicleMileageRecord | undefined
+    form.data.mileageRecordId = trip?.id ?? null
+    form.data.tripStartTime = trip?.startTime ?? null
+    form.data.tripEndTime = trip?.endTime ?? null
+    form.data.drivingMileage = trip?.runningMileage ?? null
+  }
 
   const itemColumns = computed<ColumnOption<MaintenanceItem>[]>(() => [
     { type: 'globalIndex', label: '序号', width: 56 },
@@ -496,11 +578,7 @@
     }
   ])
 
-  const getBooleanDictOptions = () =>
-    (getDictMap.value.commonBoolean ?? []).map((item) => ({
-      ...item,
-      value: item.value === 'true'
-    }))
+  const getBooleanDictOptions = () => booleanOptions
 
   const fetchVehicleSelectData = async (params: {
     page: number
@@ -519,9 +597,50 @@
 
   const handleVehicleChange = (_value: unknown, rows: DataSelectRecord[]): void => {
     const vehicle = rows[0] as VehicleArchive | undefined
+    const nextTenantId = vehicle?.tenantId ?? tenantScopeStore.effectiveTenantId ?? undefined
+    if (nextTenantId !== form.data.tenantId) {
+      form.data.initiatorEmployeeId =
+        nextTenantId === userStore.getUserInfo.tenantId
+          ? (userStore.getUserInfo.hrEmployeeId ?? null)
+          : null
+      form.data.initiator =
+        nextTenantId === userStore.getUserInfo.tenantId
+          ? (userStore.getUserInfo.hrEmployee?.employeeName ?? userStore.getUserInfo.nickName ?? '')
+          : ''
+    }
+    form.data.tenantId = nextTenantId
     form.data.vehicleId = vehicle?.id ?? null
     form.data.plateNo = vehicle?.plateNo ?? ''
     form.data.companyName = vehicle?.companyName ?? ''
+    form.data.mileageRecordId = null
+    form.data.tripStartTime = null
+    form.data.tripEndTime = null
+    form.data.drivingMileage = null
+  }
+
+  const selectedInitiator = computed<EmployeeIntegrationItem[]>(() =>
+    form.data.initiatorEmployeeId
+      ? [
+          {
+            id: form.data.initiatorEmployeeId,
+            tenantId: form.data.tenantId ?? userStore.getUserInfo.tenantId ?? '',
+            employeeName: form.data.initiator ?? '',
+            employeeNo:
+              form.data.initiatorEmployeeId === userStore.getUserInfo.hrEmployeeId
+                ? (userStore.getUserInfo.hrEmployee?.employeeNo ?? '')
+                : '',
+            employmentStatus: 'active'
+          }
+        ]
+      : []
+  )
+
+  const handleInitiatorChange = (
+    _id: string | undefined,
+    rows: EmployeeIntegrationItem[]
+  ): void => {
+    form.data.initiatorEmployeeId = rows[0]?.id ?? null
+    form.data.initiator = rows[0]?.employeeName ?? ''
   }
 
   const replaceForm = (data: MaintenanceRecord): void => {

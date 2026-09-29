@@ -321,6 +321,7 @@ declare global {
           inspectionTime: string
           inspector?: string
           driverName?: string
+          driverId?: string | null
           checkCondition?: string
           checkResult?: VehicleRoutineInspectionResult | string
           handlingMethod?: string
@@ -436,6 +437,7 @@ declare global {
           plateNo: string
           companyName?: string
           driverName?: string
+          driverId?: string | null
           driverPhone?: string
           accidentTime: string
           accidentLocation?: string
@@ -498,6 +500,15 @@ declare global {
           maintenanceNo: string
           maintenanceType: VehicleMaintenanceType | string
           initiator?: string
+          initiatorEmployeeId?: string | null
+          mileageRecordId?: string | null
+          tripStartTime?: string | null
+          tripEndTime?: string | null
+          driverName?: string | null
+          waybillNo?: string | null
+          departureMileage?: number | string | null
+          arrivalMileage?: number | string | null
+          drivingMileage?: number | string | null
           startTime: string
           endTime?: string | null
           costAmount?: number | string | null

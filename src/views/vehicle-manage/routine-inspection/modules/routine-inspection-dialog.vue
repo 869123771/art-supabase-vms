@@ -35,6 +35,15 @@
             <template #empty><VehicleDataSourceEmptyActions source="vehicle" /></template>
           </ArtTableSingleSelect>
         </template>
+        <template #driverId>
+          <VmsDriverSelect
+            :model-value="form.data.driverId"
+            :vehicle-id="form.data.vehicleId"
+            :driver-name="form.data.driverName"
+            :disabled="!canEditField(currentFieldAccess, 'responsiblePeople')"
+            @change="handleDriverChange"
+          />
+        </template>
       </ArtForm>
 
       <section
@@ -101,11 +110,12 @@
   import { cloneDeep } from 'lodash-es'
   import type { FormRules } from 'element-plus'
   import { ElButton, ElMessage } from 'element-plus'
-  import { storeToRefs } from 'pinia'
   import ArtDialog from '@/components/core/dialogs/art-dialog/index.vue'
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtTableSingleSelect from '@/components/core/forms/art-data-select/table-single.vue'
   import VehicleDataSourceEmptyActions from '../../../components/vehicle-data-source-empty-actions.vue'
+  import VmsDriverSelect from '../../../components/vms-driver-select.vue'
+  import type { VmsDriverReference } from '@vms/api'
   import type {
     DataSelectColumn,
     DataSelectRecord
@@ -122,7 +132,7 @@
     editVehicleRoutineInspection,
     fetchVehicleArchiveList
   } from '@vms/api'
-  import { useUserStore } from '@/store/modules/user'
+  import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { pageInfoHandler } from '@/utils/table/tableUtils'
@@ -172,7 +182,8 @@
   }
 
   const emit = defineEmits<Emits>()
-  const { getDictMap } = storeToRefs(useUserStore())
+  const inspectionTypeOptions = useDictionaryOptions('vehicleRoutineInspectionType')
+  const inspectionResultOptions = useDictionaryOptions('vehicleRoutineInspectionResult')
   const dialogRef = ref<ArtDialogExpose<RoutineInspection | undefined>>()
   const attachmentDialogRef = ref<ArtDialogExpose<void>>()
   const formRef = ref<FormExpose>()
@@ -192,6 +203,7 @@
     inspectionTime: '',
     inspector: '',
     driverName: '',
+    driverId: null,
     checkCondition: '',
     checkResult: 'qualified',
     handlingMethod: '',
@@ -235,7 +247,7 @@
         label: '例检类型',
         key: 'inspectionType',
         type: 'select',
-        props: { options: getDictMap.value.vehicleRoutineInspectionType ?? [] }
+        props: { options: inspectionTypeOptions }
       },
       { label: '例检时间', key: 'inspectionTime', type: 'date', props: dateTimeProps },
       ...(canViewField(currentFieldAccess.value, 'responsiblePeople')
@@ -251,12 +263,7 @@
             },
             {
               label: '驾驶员',
-              key: 'driverName',
-              type: 'input',
-              props: {
-                maxlength: 50,
-                disabled: !canEditField(currentFieldAccess.value, 'responsiblePeople')
-              }
+              key: 'driverId'
             }
           ]
         : []),
@@ -267,7 +274,7 @@
               key: 'checkResult',
               type: 'select',
               props: {
-                options: getDictMap.value.vehicleRoutineInspectionResult ?? [],
+                options: inspectionResultOptions,
                 disabled: !canEditField(currentFieldAccess.value, 'inspectionFindings')
               }
             },
@@ -418,6 +425,13 @@
     form.data.vehicleId = vehicle?.id ?? null
     form.data.plateNo = vehicle?.plateNo ?? ''
     form.data.companyName = vehicle?.companyName ?? ''
+    form.data.driverId = null
+    form.data.driverName = ''
+  }
+
+  const handleDriverChange = (driver: VmsDriverReference | null): void => {
+    form.data.driverId = driver?.id ?? null
+    form.data.driverName = driver?.driverName ?? ''
   }
 
   const replaceForm = (data: RoutineInspection): void => {

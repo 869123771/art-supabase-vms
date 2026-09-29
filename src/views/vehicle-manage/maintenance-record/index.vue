@@ -42,7 +42,6 @@
 <script setup lang="tsx">
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
-  import { storeToRefs } from 'pinia'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import ArtButtonMore, {
     type ButtonMoreItem
@@ -64,7 +63,7 @@
   } from '@vms/api'
   import { pageInfoHandler } from '@/utils/table/tableUtils'
   import { formatWithDayjs } from '@/utils/time'
-  import { useUserStore } from '@/store/modules/user'
+  import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
   import MaintenanceRecordDialog from './modules/maintenance-record-dialog.vue'
   import BusinessWorkspaceHeader, {
     type BusinessWorkspaceMetric
@@ -98,7 +97,7 @@
   const router = useRouter()
   const tableQueryRef = ref<ArtTableQueryExpose>()
   const dialogRef = ref<DialogExpose>()
-  const { getDictMap } = storeToRefs(useUserStore())
+  const maintenanceTypeOptions = useDictionaryOptions('vehicleMaintenanceType')
   const overview = reactive<{ total: number; rows: MaintenanceRecord[] }>({ total: 0, rows: [] })
   const listFieldAccess = ref<Api.Vms.VehicleManage.VehicleMaintenanceFieldAccessMap>({})
   const effectiveFieldAccess = computed(() =>
@@ -160,7 +159,7 @@
         label: '维修类型',
         key: 'maintenanceType',
         type: 'select',
-        props: { options: getDictMap.value.vehicleMaintenanceType ?? [] }
+        props: { options: maintenanceTypeOptions }
       },
       { label: '创建时间', key: 'createTimeRange', type: 'date', props: dateRangeProps }
     ]),
@@ -211,6 +210,35 @@
         dict: { code: 'vehicleMaintenanceType', display: 'auto' }
       },
       { prop: 'initiator', label: '发起人', width: 120 },
+      {
+        prop: 'tripStartTime',
+        label: '行驶时间',
+        minWidth: 290,
+        formatter: (row) => formatDrivingTime(row)
+      },
+      { prop: 'driverName', label: '司机', width: 110 },
+      { prop: 'waybillNo', label: '运单号', minWidth: 150 },
+      {
+        prop: 'departureMileage',
+        label: '发车里程（KM）',
+        width: 145,
+        align: 'right',
+        formatter: (row) => formatMileage(row.departureMileage)
+      },
+      {
+        prop: 'arrivalMileage',
+        label: '收车里程（KM）',
+        width: 145,
+        align: 'right',
+        formatter: (row) => formatMileage(row.arrivalMileage)
+      },
+      {
+        prop: 'drivingMileage',
+        label: '行驶里程（KM）',
+        width: 145,
+        align: 'right',
+        formatter: (row) => formatMileage(row.drivingMileage)
+      },
       {
         prop: 'startTime',
         label: '开始时间',
@@ -272,6 +300,12 @@
       : []),
     { key: 'maintenanceType', title: '维修类型' },
     { key: 'initiator', title: '发起人' },
+    { key: 'tripStartTime', title: '行驶时间' },
+    { key: 'driverName', title: '司机' },
+    { key: 'waybillNo', title: '运单号' },
+    { key: 'departureMileage', title: '发车里程（KM）' },
+    { key: 'arrivalMileage', title: '收车里程（KM）' },
+    { key: 'drivingMileage', title: '行驶里程（KM）' },
     { key: 'startTime', title: '开始时间' },
     { key: 'endTime', title: '结束时间' },
     ...(canViewField(effectiveFieldAccess.value, 'totalCost')
@@ -344,6 +378,18 @@
 
   const formatMoney = (value?: number | string | null): string => {
     return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
+  }
+
+  const formatMileage = (value?: number | string | null): string =>
+    formatSensitiveNumberWithAffix(value, { suffix: ' KM' })
+
+  const formatDrivingTime = (row: MaintenanceRecord): string => {
+    if (!row.tripStartTime) return '--'
+    if (row.tripStartTime === '***') return '***'
+    const start = formatWithDayjs(row.tripStartTime)
+    const end =
+      row.tripEndTime && row.tripEndTime !== '***' ? formatWithDayjs(row.tripEndTime) : '--'
+    return `${start} ~ ${end}`
   }
 </script>
 

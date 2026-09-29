@@ -14,6 +14,7 @@ export const EDITABLE_VEHICLE_ACCIDENT_ACCESS: Api.Vms.VehicleManage.VehicleAcci
 
 type SensitivePayloadKey =
   | 'driverName'
+  | 'driverId'
   | 'driverPhone'
   | 'accidentLocation'
   | 'accidentLongitude'
@@ -25,7 +26,7 @@ type SensitivePayloadKey =
   | 'attachments'
 
 const SENSITIVE_PAYLOAD_KEYS: Record<VehicleAccidentFieldKey, SensitivePayloadKey[]> = {
-  driverContact: ['driverName', 'driverPhone'],
+  driverContact: ['driverName', 'driverId', 'driverPhone'],
   accidentLocation: ['accidentLocation', 'accidentLongitude', 'accidentLatitude'],
   accidentNarrative: ['accidentSummary', 'remark'],
   lossAmounts: ['companyBearAmount', 'economicLoss'],

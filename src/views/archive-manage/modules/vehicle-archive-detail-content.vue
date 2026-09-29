@@ -44,13 +44,41 @@
               </div>
             </div>
             <p>{{ archive?.companyName || '--' }}</p>
+            <dl
+              v-if="archive"
+              class="vehicle-archive-detail__header-specs"
+              aria-label="车型和运力参数"
+            >
+              <div>
+                <dt>车型</dt>
+                <dd>
+                  <ArtDictDisplay
+                    dict-code="vehicleType"
+                    :value="archive.vehicleType"
+                    display="text"
+                  />
+                </dd>
+              </div>
+              <div>
+                <dt>车长</dt>
+                <dd>{{ formatValue(archive.specLengthM, ' 米') }}</dd>
+              </div>
+              <div>
+                <dt>容积</dt>
+                <dd>{{ formatValue(archive.volumeM3, ' 立方米') }}</dd>
+              </div>
+              <div>
+                <dt>载重</dt>
+                <dd>{{ formatValue(archive.loadTons, ' 吨') }}</dd>
+              </div>
+            </dl>
           </div>
         </div>
       </template>
     </ArtPageHeader>
 
     <ElTabs v-model="activeTab" class="vehicle-archive-detail__tabs art-card-xs">
-      <ElTabPane label="基础信息" name="basic">
+      <ElTabPane v-if="hasAuth('VehicleArchive:TabBasic')" label="基础信息" name="basic">
         <InfoDescriptions :items="basicInfoItems" />
         <section
           v-if="canViewArchiveField('documents')"
@@ -100,15 +128,15 @@
         </section>
       </ElTabPane>
 
-      <ElTabPane label="车身参数" name="body">
+      <ElTabPane v-if="hasAuth('VehicleArchive:TabBody')" label="车身参数" name="body">
         <InfoDescriptions :items="bodyInfoItems" />
       </ElTabPane>
 
-      <ElTabPane label="发动机参数" name="engine">
+      <ElTabPane v-if="hasAuth('VehicleArchive:TabEngine')" label="发动机参数" name="engine">
         <InfoDescriptions :items="engineInfoItems" />
       </ElTabPane>
 
-      <ElTabPane label="其他信息" name="other">
+      <ElTabPane v-if="hasAuth('VehicleArchive:TabOther')" label="其他信息" name="other">
         <InfoDescriptions :items="otherInfoItems" />
         <section v-if="canViewArchiveField('documents')" class="vehicle-archive-detail__section">
           <ArtSectionTitle>车辆档案附件</ArtSectionTitle>
@@ -121,7 +149,12 @@
           />
         </section>
       </ElTabPane>
-      <ElTabPane label="审批历程" name="approvalHistory" lazy>
+      <ElTabPane
+        v-if="hasAuth('VehicleArchive:TabApprovalHistory')"
+        label="审批历程"
+        name="approvalHistory"
+        lazy
+      >
         <WorkflowBusinessHistory
           v-if="archive?.id"
           business-type="vehicle_archive"
@@ -129,12 +162,19 @@
         />
       </ElTabPane>
     </ElTabs>
+    <ArtEmptyState
+      v-if="!availableTabNames.length"
+      title="暂无可访问的页签"
+      description="请联系管理员在角色权限中授权车辆档案页签。"
+    />
   </ArtPageShell>
 </template>
 
 <script setup lang="tsx">
   import type { VNodeChild } from 'vue'
   import { ElImage, ElTabPane, ElTabs } from 'element-plus'
+  import ArtEmptyState from '@/components/core/feedback/art-empty-state/index.vue'
+  import { useAuth } from '@/hooks/core/useAuth'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
@@ -196,7 +236,27 @@
   const route = useRoute()
   const router = useRouter()
   const userStore = useUserStore()
+  const { hasAuth } = useAuth()
   const activeTab = ref('basic')
+  const tabPermissions = {
+    basic: 'VehicleArchive:TabBasic',
+    body: 'VehicleArchive:TabBody',
+    engine: 'VehicleArchive:TabEngine',
+    other: 'VehicleArchive:TabOther',
+    approvalHistory: 'VehicleArchive:TabApprovalHistory'
+  } as const
+  const availableTabNames = computed(() =>
+    Object.entries(tabPermissions)
+      .filter(([, code]) => hasAuth(code))
+      .map(([name]) => name)
+  )
+  watch(
+    availableTabNames,
+    (names) => {
+      if (!names.includes(activeTab.value)) activeTab.value = names[0] ?? 'basic'
+    },
+    { immediate: true }
+  )
   const archive = ref<VehicleArchive>()
   const loading = ref(false)
   const loadError = shallowRef<Error | null>(null)
@@ -209,7 +269,8 @@
     await Promise.all([
       loadArchiveDetail(),
       userStore.ensureDictLoaded('FILE_EXTENSION_LABEL_MAP'),
-      userStore.ensureDictLoaded('vehicleAuditStatus')
+      userStore.ensureDictLoaded('vehicleAuditStatus'),
+      userStore.ensureDictLoaded('vehicleType')
     ])
   })
 
@@ -221,10 +282,6 @@
       label: '车辆归属',
       value: getDictLabel('vehicleOwnership', archive.value?.vehicleOwnership || 'self_operated')
     },
-    { label: '车型', value: getDictLabel('vehicleType', archive.value?.vehicleType) },
-    { label: '规格 / 车长', value: formatValue(archive.value?.specLengthM, ' 米') },
-    { label: '容积', value: formatValue(archive.value?.volumeM3, ' 立方米') },
-    { label: '载重', value: formatValue(archive.value?.loadTons, ' 吨') },
     { label: '国产/进口', value: getDictLabel('vehicleOriginType', archive.value?.originType) },
     ...(canViewArchiveField('vehicleIdentifiers')
       ? [{ label: '车架号（VIN）', value: archive.value?.vin }]
@@ -479,6 +536,34 @@
       gap: 8px;
       align-items: center;
       min-width: 0;
+    }
+
+    &__header-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      min-width: 0;
+      margin: 0;
+
+      > div {
+        display: inline-flex;
+        gap: 5px;
+        align-items: baseline;
+        min-width: 0;
+      }
+
+      dt {
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+
+      dd {
+        min-width: 0;
+        margin: 0;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
     }
 
     &__vehicle-photo {

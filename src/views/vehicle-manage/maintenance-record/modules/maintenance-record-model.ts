@@ -24,6 +24,17 @@ export function sanitizeVehicleMaintenancePayload(
   params: VehicleMaintenanceRecord
 ): VehicleMaintenanceRecord {
   const payload = omitWriteMetadata(params)
+  for (const key of [
+    'tripStartTime',
+    'tripEndTime',
+    'driverName',
+    'waybillNo',
+    'departureMileage',
+    'arrivalMileage',
+    'drivingMileage'
+  ] as const) {
+    delete payload[key]
+  }
   return params.id
     ? omitNonEditableFieldGroups(payload, params.fieldAccess, SENSITIVE_PAYLOAD_KEYS)
     : payload
