@@ -31,6 +31,7 @@ const getVehicleReminderSearchFilters = (
   params: VehicleReminderSearchParams,
   mode: 'days' | 'expired'
 ): FilterSpec[] => [
+  { col: 'id', op: 'eq', val: params.sourceKey },
   {
     col: 'companyName',
     op: 'ilike',
@@ -41,7 +42,7 @@ const getVehicleReminderSearchFilters = (
     col: 'expired',
     op: 'eq',
     val:
-      (!params.riskBand || params.riskBand === 'all') && mode === 'expired'
+      !params.sourceKey && (!params.riskBand || params.riskBand === 'all') && mode === 'expired'
         ? normalizeBooleanFilter(params.expired)
         : undefined
   }
@@ -129,6 +130,7 @@ export async function fetchVehicleReminderViewList(
     .range(from, to)
 
   if (
+    !params.sourceKey &&
     (!params.riskBand || params.riskBand === 'all') &&
     mode === 'days' &&
     params.reminderDays !== null &&
@@ -141,7 +143,7 @@ export async function fetchVehicleReminderViewList(
     skipEmpty: true,
     camelToSnake: true
   })
-  const filteredQuery = applyReminderRiskBand(query, params.riskBand)
+  const filteredQuery = applyReminderRiskBand(query, params.sourceKey ? undefined : params.riskBand)
 
   const result = await responseHandle<VehicleReminderRow[]>(
     () => withRequestOptions(filteredQuery, options),
@@ -157,16 +159,19 @@ export async function fetchVehicleReminderViewList(
   if (!rows.length) return { ...result, data: rows }
 
   const { data: workOrders } = await responseHandle<ReminderWorkOrder[]>(
-    () =>
-      supabase
+    () => {
+      let workOrderQuery = supabase
         .from('vehicle_reminder_work_order')
         .select('*')
         .eq('source_type', sourceType)
-        .in(
-          'source_key',
-          rows.map((row) => row.id)
-        )
-        .order('update_time', { ascending: false }),
+      workOrderQuery = params.workOrderId
+        ? workOrderQuery.eq('id', params.workOrderId)
+        : workOrderQuery.in(
+            'source_key',
+            rows.map((row) => row.id)
+          )
+      return workOrderQuery.order('update_time', { ascending: false })
+    },
     { showErrorMessage: true }
   )
   const workOrderMap = new Map(
@@ -175,11 +180,15 @@ export async function fetchVehicleReminderViewList(
       workOrder
     ])
   )
+  const targetWorkOrder = params.workOrderId ? workOrders?.[0] : undefined
 
   return {
     ...result,
     data: rows.map((row) => {
-      const workOrder = workOrderMap.get(`${row.id}:${row.sourceVersion}`) ?? null
+      const workOrder =
+        (targetWorkOrder?.sourceKey === row.id ? targetWorkOrder : undefined) ??
+        workOrderMap.get(`${row.id}:${row.sourceVersion}`) ??
+        null
       return { ...row, workOrder, workOrderStatus: workOrder?.status ?? null }
     })
   }

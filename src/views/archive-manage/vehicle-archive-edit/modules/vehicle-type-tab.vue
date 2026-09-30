@@ -90,6 +90,14 @@
                         </small>
                       </span>
                     </template>
+                    <template #empty>
+                      <ArtEmptyState
+                        title="暂无可显示内容"
+                        description="请调整当前范围或稍后刷新。"
+                        size="compact"
+                        :visual-size="64"
+                      />
+                    </template>
                   </ElTreeV2>
                 </template>
               </ElAutoResizer>
@@ -299,6 +307,7 @@
 </template>
 
 <script setup lang="ts">
+  import ArtEmptyState from '@/components/core/feedback/art-empty-state/index.vue'
   import {
     ElButton,
     ElImage,

@@ -1,6 +1,8 @@
 <template>
   <div class="art-full-height">
+    <MasterDeleteProcessingNotice v-if="targetSourceKey" />
     <VehicleReminderRiskOverview
+      v-if="!targetSourceKey"
       title="车辆寿命"
       description="汇总车辆使用年限风险，帮助提前规划检修、替换与运力调整。"
       :filters="tableState.searchQuery"
@@ -40,6 +42,8 @@
   } from '../modules/reminder-table'
   import VehicleReminderWorkOrderDrawer from '../modules/vehicle-reminder-work-order-drawer.vue'
   import VehicleReminderRiskOverview from '../modules/vehicle-reminder-risk-overview.vue'
+  import MasterDeleteProcessingNotice from '@/components/business/master-delete-processing-notice/index.vue'
+  import { useReminderDeleteLocation } from '../modules/use-reminder-delete-location'
   import { getReminderRiskRowClassName } from '../modules/reminder-risk'
 
   defineOptions({ name: 'VehicleServiceLife' })
@@ -85,6 +89,10 @@
       reminderDays: undefined
     }
   })
+  const { targetSourceKey, targetWorkOrderId } = useReminderDeleteLocation(
+    tableState.searchQuery,
+    tableQueryRef
+  )
 
   const tableConfig: TableConfig = {
     searchItems: futureReminderSearchItems,
@@ -156,6 +164,8 @@
       plateNo: params.plateNo,
       reminderDays: params.reminderDays,
       riskBand: params.riskBand,
+      sourceKey: targetSourceKey.value || undefined,
+      workOrderId: targetWorkOrderId.value || undefined,
       from,
       to
     })

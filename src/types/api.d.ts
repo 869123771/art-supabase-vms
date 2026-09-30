@@ -798,6 +798,8 @@ declare global {
             Api.Common.CommonSearchParams & {
               reminderDays?: number | null
               riskBand?: VehicleReminderRiskBand
+              sourceKey?: string
+              workOrderId?: string
             } & Api.Common.PaginationParams
         >
       }

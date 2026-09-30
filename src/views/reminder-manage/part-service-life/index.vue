@@ -1,6 +1,8 @@
 <template>
   <div class="art-full-height">
+    <MasterDeleteProcessingNotice v-if="targetSourceKey" />
     <VehicleReminderRiskOverview
+      v-if="!targetSourceKey"
       title="配件寿命"
       description="提前识别达到日期或里程阈值的配件，为备件采购与更换排期留出窗口。"
       :filters="tableState.searchQuery"
@@ -43,6 +45,8 @@
   } from '../modules/reminder-table'
   import VehicleReminderWorkOrderDrawer from '../modules/vehicle-reminder-work-order-drawer.vue'
   import VehicleReminderRiskOverview from '../modules/vehicle-reminder-risk-overview.vue'
+  import MasterDeleteProcessingNotice from '@/components/business/master-delete-processing-notice/index.vue'
+  import { useReminderDeleteLocation } from '../modules/use-reminder-delete-location'
   import { getReminderRiskRowClassName } from '../modules/reminder-risk'
 
   defineOptions({ name: 'VehiclePartServiceLife' })
@@ -89,6 +93,10 @@
       expired: undefined
     }
   })
+  const { targetSourceKey, targetWorkOrderId } = useReminderDeleteLocation(
+    tableState.searchQuery,
+    tableQueryRef
+  )
 
   const tableConfig = computed<TableConfig>(() => {
     const commonBooleanOptions = getDictMap.value.commonBoolean
@@ -194,6 +202,8 @@
       plateNo: params.plateNo,
       expired: params.expired,
       riskBand: params.riskBand,
+      sourceKey: targetSourceKey.value || undefined,
+      workOrderId: targetWorkOrderId.value || undefined,
       from,
       to
     })
