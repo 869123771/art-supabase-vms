@@ -64,7 +64,14 @@
       <section v-if="canViewDocuments" class="accident-record-dialog__section">
         <div class="accident-record-dialog__section-header">
           <ArtSectionTitle :show-line="false">事故附件</ArtSectionTitle>
-          <ElButton v-if="canEditDocuments" type="primary" plain @click="openAttachmentDialog">
+          <ElButton
+            v-if="canEditDocuments"
+            type="primary"
+            plain
+            :disabled="!attachmentTenantId"
+            :title="!attachmentTenantId ? '请先选择车辆' : undefined"
+            @click="openAttachmentDialog"
+          >
             <template #icon><ArtSvgIcon icon="ri:upload-2-line" /></template>
             上传
           </ElButton>
@@ -95,7 +102,9 @@
         <template #file>
           <div class="accident-attachment-dialog__upload">
             <ArtUploadFile
-              title="选择上传文件"
+              :title="attachmentTenantId ? '选择上传文件' : '请先选择车辆'"
+              :resource-tenant-id="attachmentTenantId"
+              :disabled="!attachmentTenantId"
               :show-file-list="false"
               :show-tip="false"
               @resource-change="handleAttachmentFileChange"
@@ -122,6 +131,7 @@
   import ArtDialog from '@/components/core/dialogs/art-dialog/index.vue'
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtUploadFile from '@/components/core/forms/art-upload-file/index.vue'
+  import { useTenantScopeStore } from '@/store/modules/tenantScope'
   import ArtAddressPicker from '@/components/core/forms/art-address-picker/index.vue'
   import type { AddressLocationPayload } from '@/components/core/forms/art-address-picker/types'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
@@ -204,6 +214,7 @@
   const attachmentDialogRef = ref<ArtDialogExpose<void>>()
   const formRef = ref<FormExpose>()
   const attachmentFormRef = ref<FormExpose>()
+  const tenantScopeStore = useTenantScopeStore()
 
   const createInitialForm = (): AccidentRecord => ({
     id: undefined,
@@ -239,6 +250,9 @@
     !form.data.id || canEditField(form.data.fieldAccess, field)
   const canViewDocuments = computed(() => canViewAccidentField('documents'))
   const canEditDocuments = computed(() => canEditAccidentField('documents'))
+  const attachmentTenantId = computed(
+    () => form.data.tenantId || tenantScopeStore.effectiveTenantId || ''
+  )
 
   const DRIVER_FIELDS = new Set(['driverId', 'driverName', 'driverPhone'])
   const LOCATION_FIELDS = new Set(['accidentLocation'])
@@ -486,7 +500,13 @@
 
   const handleVehicleChange = (_value: unknown, rows: DataSelectRecord[]): void => {
     const vehicle = rows[0] as VehicleArchive | undefined
+    const targetTenantId = vehicle?.tenantId || tenantScopeStore.effectiveTenantId || undefined
+    if (form.data.tenantId !== targetTenantId && (form.data.attachments?.length ?? 0) > 0) {
+      form.data.attachments = []
+      ElMessage.warning('车辆所属租户已变化，原有附件已清空，请重新上传')
+    }
     Object.assign(form.data, {
+      tenantId: targetTenantId,
       vehicleId: vehicle?.id ?? null,
       plateNo: vehicle?.plateNo ?? '',
       companyName: vehicle?.companyName ?? '',

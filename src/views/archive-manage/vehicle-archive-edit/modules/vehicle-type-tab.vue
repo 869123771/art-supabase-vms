@@ -291,6 +291,8 @@
                   <p>未上传时使用这套共用车型插画。</p>
                   <ArtUploadImage
                     v-model="form.imageUrl"
+                    :resource-tenant-id="selectedTenantId"
+                    :disabled="!selectedTenantId"
                     title="上传自定义车型图片"
                     :size="88"
                     :limit="1"
