@@ -23,6 +23,7 @@
           <ArtUploadFile
             v-if="canEditInsuranceField('documents')"
             title="上传附件"
+            :resource-tenant-id="form.data.tenantId || ''"
             :show-file-list="false"
             :show-tip="false"
             inline

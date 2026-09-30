@@ -34,7 +34,7 @@
   import ArtAddressPicker from '@/components/core/forms/art-address-picker/index.vue'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import { addInsuranceCompany, editInsuranceCompany } from '@vms/api'
-  import { fetchRegionOptions } from '@/api/common'
+  import { fetchRegionOptions } from '@/api/region-options'
 
   type InsuranceCompany = Api.Vms.BasicInfo.InsuranceCompany
   type InsuranceCompanyForm = InsuranceCompany & {

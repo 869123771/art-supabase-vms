@@ -116,6 +116,7 @@
           <div class="maintenance-attachment-dialog__upload">
             <ArtUploadFile
               title="选择上传文件"
+              :resource-tenant-id="form.data.tenantId || ''"
               :show-file-list="false"
               :show-tip="false"
               @resource-change="handleAttachmentFileChange"

@@ -36,7 +36,7 @@
   import ArtAddressPicker from '@/components/core/forms/art-address-picker/index.vue'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import { addSupplier, editSupplier } from '@vms/api'
-  import { fetchRegionOptions } from '@/api/common'
+  import { fetchRegionOptions } from '@/api/region-options'
   import { canEditField, canViewField } from '@/utils/field-permission'
   import { EDITABLE_SUPPLIER_ACCESS, sanitizeSupplierPayload } from './supplier-model'
 
