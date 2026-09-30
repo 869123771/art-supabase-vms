@@ -66,10 +66,14 @@
               >
                 <ArtUploadImage
                   v-model="form[item.key]"
+                  :resource-tenant-id="form.tenantId"
                   :title="item.label"
                   :size="120"
                   :limit="1"
-                  :readonly="item.key !== 'vehiclePhotoUrl' && !canEditArchiveField('documents')"
+                  :readonly="
+                    !form.tenantId ||
+                    (item.key !== 'vehiclePhotoUrl' && !canEditArchiveField('documents'))
+                  "
                 />
                 <ElButton
                   v-if="item.key === 'drivingLicenseFrontUrl' || item.key === 'operationLicenseUrl'"
@@ -135,7 +139,8 @@
               </ArtSectionTitle>
               <ArtUploadFile
                 title="上传附件"
-                :disabled="!canManageArchiveAttachments"
+                :resource-tenant-id="form.tenantId"
+                :disabled="!form.tenantId || !canManageArchiveAttachments"
                 :show-file-list="false"
                 :show-tip="false"
                 inline
@@ -1433,7 +1438,7 @@
         confirmButtonText: '删除',
         cancelButtonText: '取消',
         type: 'warning',
-        confirmButtonClass: 'el-button--danger'
+        confirmButtonType: 'danger'
       })
       form.attachments = (form.attachments ?? []).filter((item) => item.url !== row.url)
     } catch {
