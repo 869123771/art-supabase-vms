@@ -432,7 +432,7 @@
   const createInitialForm = createInitialVehicleArchiveForm
 
   const form = reactive<VehicleArchiveForm>(createInitialForm())
-  const archiveNumber = useDocumentNumberRule('vehicle.archive_self')
+  const archiveNumber = useDocumentNumberRule('vehicle.archive_self', () => form.tenantId)
 
   const canViewArchiveField = (field: Api.Vms.ArchiveManage.VehicleArchiveFieldKey): boolean =>
     !isEdit.value || canViewField(form.fieldAccess, field)
@@ -1271,9 +1271,9 @@
       ] as const
       await Promise.all([
         loadArchiveDetail(),
-        archiveNumber.loadRule(),
         ...dictionaryCodes.map((code) => userStore.ensureDictLoaded(code))
       ])
+      await archiveNumber.loadRule()
       await nextTick()
       formTabs.forEach((tab) => tab.formRef.value?.clearValidate())
     } catch (error) {
