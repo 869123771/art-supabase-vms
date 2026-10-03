@@ -79,7 +79,9 @@ const fetchReminderCount = async (
   if (configure) query = configure(query)
 
   const result = await responseHandle<never[]>(() => withRequestOptions(query, options), {
-    showErrorMessage: true
+    breakReturn: true,
+    showErrorMessage: false,
+    errorMessage: '风险概览加载失败，请稍后重试'
   })
   return result.total ?? 0
 }

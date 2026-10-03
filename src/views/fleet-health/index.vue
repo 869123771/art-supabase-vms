@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="tsx">
+  import type { TableRequestOptions } from '@/hooks/core/useTable'
   import { ElProgress, ElTag } from 'element-plus'
   import ArtTooltip from '@/components/core/feedback/art-tooltip/index.vue'
   import { storeToRefs } from 'pinia'
@@ -242,10 +243,10 @@
     }
   ]
 
-  async function fetchTableData(params: TableParams) {
+  async function fetchTableData(params: TableParams, options?: TableRequestOptions) {
     const { from, to } = pageInfoHandler(params)
     const result = await fetchFleetHealthWorkspace({ ...params, from, to })
-    Object.assign(overview, result.overview)
+    if (!options?.signal?.aborted) Object.assign(overview, result.overview)
     return result
   }
 </script>

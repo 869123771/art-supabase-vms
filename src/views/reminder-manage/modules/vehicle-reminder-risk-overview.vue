@@ -15,7 +15,9 @@
         <ArtSvgIcon icon="ri:error-warning-line" />
         <span>风险数据暂时无法加载，不影响下方提醒列表。</span>
       </div>
-      <ElButton link type="primary" @click="loadOverview">重新加载</ElButton>
+      <ElButton link type="primary" :disabled="overview.loading" @click="loadOverview"
+        >重新加载</ElButton
+      >
     </div>
   </div>
 </template>
@@ -103,26 +105,38 @@
   const workspaceMetrics = computed<BusinessWorkspaceMetric[]>(() =>
     metricCards.value.map((item) => ({
       ...item,
-      interactive: true,
+      value: overview.error ? '—' : item.value,
+      interactive: !overview.error && !overview.loading,
       selected: activeRiskBand.value === item.band,
       loading: overview.loading
     }))
   )
   const overviewTags = computed<BusinessWorkspaceTag[]>(() => [
     {
-      label: `状态稳定 ${overview.data.stable}`,
-      type: 'success',
+      label: overview.error
+        ? '风险统计暂不可用'
+        : overview.loading
+          ? '正在检查风险'
+          : `状态稳定 ${overview.data.stable}`,
+      type: overview.error ? 'warning' : overview.loading ? 'info' : 'success',
       effect: 'plain'
     },
     { label: '支持风险区间筛选', type: 'info', effect: 'plain' }
   ])
 
   const handleMetricClick = (metric: BusinessWorkspaceMetric): void => {
+    if (overview.loading || overview.error) return
     const target = metricCards.value.find((item) => item.key === metric.key)
     if (target) emit('select', target.band)
   }
 
+  let requestId = 0
+  onBeforeUnmount(() => {
+    requestId += 1
+  })
+
   async function loadOverview(): Promise<void> {
+    const currentRequestId = ++requestId
     overview.loading = true
     overview.error = null
     try {
@@ -130,19 +144,28 @@
         companyName: props.filters.companyName,
         plateNo: props.filters.plateNo
       })
-      if (result.data) overview.data = result.data
+      if (currentRequestId === requestId && result.data) overview.data = result.data
     } catch (error) {
-      overview.error = error instanceof Error ? error : new Error('风险概览加载失败')
+      if (currentRequestId === requestId) {
+        overview.error = error instanceof Error ? error : new Error('风险概览加载失败')
+      }
     } finally {
-      overview.loading = false
+      if (currentRequestId === requestId) overview.loading = false
     }
   }
 
-  watchDebounced(
-    () => [props.filters.companyName, props.filters.plateNo],
-    () => void loadOverview(),
-    { debounce: 260, immediate: true }
+  const overviewFilters = () => [props.filters.companyName, props.filters.plateNo]
+  watch(
+    overviewFilters,
+    () => {
+      requestId += 1
+      overview.loading = true
+      overview.error = null
+    },
+    { flush: 'sync' }
   )
+
+  watchDebounced(overviewFilters, () => void loadOverview(), { debounce: 260, immediate: true })
 
   defineExpose({ loadOverview })
 </script>

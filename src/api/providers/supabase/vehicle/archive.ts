@@ -1,4 +1,5 @@
 import { normalizeNullableText } from '@/utils/form/normalize'
+import { uniq } from 'lodash-es'
 import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
 import type { ApiRequestOptions } from '@/types/api/request'
@@ -215,16 +216,15 @@ export async function fetchVehicleReminderCompanyOptions() {
     )
   )
 
-  const companyNames = new Set<string>()
-  results.forEach((result) => {
-    const rows = result.data ?? []
-    rows.forEach((item) => {
-      if (item.companyName) companyNames.add(item.companyName)
-    })
-  })
+  const failedResult = results.find((result) => result.error)
+  if (failedResult) return { data: null, error: failedResult.error }
+
+  const companyNames = uniq(
+    results.flatMap((result) => (result.data ?? []).map((item) => item.companyName)).filter(Boolean)
+  )
 
   return {
-    data: [...companyNames]
+    data: companyNames
       .sort((first, second) => first.localeCompare(second, 'zh-CN'))
       .map((companyName) => ({ companyName })),
     error: null

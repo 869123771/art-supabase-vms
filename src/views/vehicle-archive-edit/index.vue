@@ -225,6 +225,7 @@
 </template>
 
 <script setup lang="tsx">
+  import { focusFirstInvalidFormField } from '@/utils/form/validation'
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, Ref, UnwrapNestedRefs } from 'vue'
   import type { FormRules } from 'element-plus'
@@ -1362,20 +1363,6 @@
     }
   }
 
-  const focusFirstInvalidField = (tabName: ArchiveTabName): void => {
-    const invalidItem = pageRef.value?.querySelector<HTMLElement>(
-      `#pane-${tabName} .el-form-item.is-error`
-    )
-    if (!invalidItem) return
-
-    invalidItem.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    invalidItem
-      .querySelector<HTMLElement>(
-        'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      ?.focus()
-  }
-
   const validateForms = async (): Promise<boolean> => {
     for (const tab of formTabs.filter((item) => availableTabNames.value.includes(item.name))) {
       try {
@@ -1383,7 +1370,7 @@
       } catch {
         page.activeTab = tab.name
         await nextTick()
-        focusFirstInvalidField(tab.name)
+        focusFirstInvalidFormField(pageRef, `#pane-${tab.name} .el-form-item.is-error`)
         return false
       }
     }
