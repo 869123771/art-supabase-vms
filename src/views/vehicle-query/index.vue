@@ -43,7 +43,7 @@
     fetchVehicleMileageList
   } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { mapWithConcurrency } from '@/utils/async'
   import {
     formatDate,

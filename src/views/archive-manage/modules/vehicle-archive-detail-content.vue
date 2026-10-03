@@ -6,6 +6,7 @@
     :error="loadError"
     :empty="!archive"
     empty-text="暂无车辆档案详情"
+    empty-description="请返回车辆档案列表重新选择，或刷新后重试。"
     @retry="loadArchiveDetail"
   >
     <ArtPageHeader

@@ -4,7 +4,7 @@ import {
   createInitialVehicleArchiveForm,
   requiresVehicleArchiveResubmission,
   sanitizeVehicleArchivePayload
-} from '../../src/views/archive-manage/vehicle-archive-edit/modules/vehicle-archive-model'
+} from '../../src/views/vehicle-archive-edit/modules/vehicle-archive-model'
 
 test('vehicle archive payload removes display and audit-only fields', () => {
   const form = createInitialVehicleArchiveForm()
@@ -94,6 +94,17 @@ test('vehicle archive payload keeps sensitive fields with edit permission', () =
   assert.equal(payload.acCode, 'AC-001')
 })
 
+test('vehicle archive payload keeps the OCR artifact marker on create and edit', () => {
+  for (const id of [undefined, 'vehicle-1']) {
+    const form = createInitialVehicleArchiveForm()
+    form.id = id
+    form.aiArtifactId = 'artifact-1'
+
+    const payload = sanitizeVehicleArchivePayload(form)
+    assert.equal(payload.aiArtifactId, 'artifact-1')
+  }
+})
+
 test('vehicle archive keeps the selected type and ownership while server fills its metrics', () => {
   const form = createInitialVehicleArchiveForm()
   assert.equal(form.vehicleOwnership, 'self_operated')
@@ -115,6 +126,30 @@ test('vehicle archive keeps the selected type and ownership while server fills i
   assert.equal('volumeM3' in payload, false)
   assert.equal('loadTons' in payload, false)
   assert.equal('ownerId' in payload, false)
+})
+
+test('vehicle archive payload respects required and nullable database fields', () => {
+  const form = createInitialVehicleArchiveForm()
+  Object.assign(form, {
+    plateNo: '  沪A12345  ',
+    vehicleType: '  厢式货车  ',
+    operationStatus: '  ',
+    vehicleOwnership: '',
+    companyName: '  ',
+    vin: '  LSVAU2189N2000001  ',
+    registerDate: '',
+    carrierId: ''
+  })
+
+  const payload = sanitizeVehicleArchivePayload(form)
+  assert.equal(payload.plateNo, '沪A12345')
+  assert.equal(payload.vehicleType, '厢式货车')
+  assert.equal(payload.operationStatus, '')
+  assert.equal(payload.vehicleOwnership, '')
+  assert.equal(payload.companyName, null)
+  assert.equal(payload.vin, 'LSVAU2189N2000001')
+  assert.equal(payload.registerDate, null)
+  assert.equal(payload.carrierId, null)
 })
 
 test('only rejected vehicle archives require resubmission after editing', () => {

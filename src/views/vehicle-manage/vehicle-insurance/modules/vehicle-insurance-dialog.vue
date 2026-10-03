@@ -43,7 +43,8 @@
 </template>
 
 <script setup lang="tsx">
-  import { useArtFeedback } from '@/hooks/core/useArtFeedback'
+  import { validateArtFormForSubmit } from '@/utils/form/validate-art-form'
+  import { notifyFriendlyError, useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import { cloneDeep } from 'lodash-es'
   import type { FormRules } from 'element-plus'
@@ -307,10 +308,15 @@
       formatter: (row) => (
         <div class="flex items-center">
           <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-          <ArtIconButton icon="ri:download-2-line" onClick={() => downloadAttachment(row)} />
+          <ArtIconButton
+            icon="ri:download-2-line"
+            label="下载附件"
+            onClick={() => downloadAttachment(row)}
+          />
           {canEditInsuranceField('documents') ? (
             <ArtIconButton
               icon="ri:delete-bin-5-line"
+              label="移除附件"
               tone="danger"
               onClick={() => void removeAttachment(row)}
             />
@@ -379,8 +385,9 @@
 
   const handleSubmit = async (): Promise<boolean> => {
     try {
-      await formRef.value?.validate()
-    } catch {
+      if (!(await validateArtFormForSubmit(formRef.value))) return false
+    } catch (error) {
+      notifyFriendlyError(error, '表单校验未完成，请稍后重试', 'warning')
       return false
     }
 
@@ -393,7 +400,8 @@
       }
       emit('success', form.data.id ? 'edit' : 'add')
       return true
-    } catch {
+    } catch (error) {
+      notifyFriendlyError(error, '车辆保险保存失败，请检查保单信息和网络后重试')
       return false
     }
   }

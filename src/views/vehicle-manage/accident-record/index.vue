@@ -61,7 +61,7 @@
     exportVehicleAccidentList,
     fetchVehicleAccidentList
   } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { formatWithDayjs } from '@/utils/time'
   import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
   import AccidentRecordDialog from './modules/accident-record-dialog.vue'

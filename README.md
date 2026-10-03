@@ -54,7 +54,7 @@ AI 健康建议用于汇总现有档案、解释风险和辅助排查，不替�
 
 2026-09-28 将 `vehicle_type_profile.volume_m3`、`load_tons` 和保存 RPC 对应校验改为允许留空。先在事务内验证空值规格可保存并回滚，再确认两列均允许 `NULL`、保存函数只要求车型分类。车型参选仅展示已启用的现有规格；所选车长与同一规格记录中的容积、载重一起带入车辆档案。
 
-默认车型插画与 TMS 开单页共用同一套造型：本仓 `src/views/archive-manage/vehicle-archive-edit/modules/vehicle-type-art.vue` 与 TMS 的 `src/views/order-open/modules/vehicle-type-art.vue` 内容保持一致，以便两个模块各自独立构建。上传的规格图片只覆盖该规格的默认展示。
+默认车型插画与 TMS 开单页共用同一套造型：本仓 `src/views/vehicle-archive-edit/modules/vehicle-type-art.vue` 与 TMS 的 `src/views/order-open/modules/vehicle-type-art.vue` 内容保持一致，以便两个模块各自独立构建。上传的规格图片只覆盖该规格的默认展示。
 
 ## 独立运行
 

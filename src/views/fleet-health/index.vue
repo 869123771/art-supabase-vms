@@ -53,7 +53,7 @@
   import ArtDictDisplay from '@/components/core/base/art-dict-display/index.vue'
   import { useAuth } from '@/hooks/core/useAuth'
   import { useUserStore } from '@/store/modules/user'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { fetchFleetHealthWorkspace } from '@vms/api'
 
   defineOptions({ name: 'VehicleFleetHealth' })

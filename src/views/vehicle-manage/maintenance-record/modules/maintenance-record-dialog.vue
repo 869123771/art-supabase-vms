@@ -133,7 +133,8 @@
 </template>
 
 <script setup lang="tsx">
-  import { useArtFeedback } from '@/hooks/core/useArtFeedback'
+  import { validateArtFormForSubmit } from '@/utils/form/validate-art-form'
+  import { notifyFriendlyError, useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import { cloneDeep } from 'lodash-es'
   import type { FormRules } from 'element-plus'
@@ -161,12 +162,12 @@
     fetchVehicleArchiveList,
     fetchVehicleMileageList
   } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { useUserStore } from '@/store/modules/user'
   import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
-  import { useTenantScopeStore } from '@/store/modules/tenantScope'
+  import { useTenantScopeStore } from '@/store/modules/tenant-scope'
   import { canEditField, canViewField } from '@/utils/field-permission'
   import {
     EDITABLE_VEHICLE_MAINTENANCE_ACCESS,
@@ -535,6 +536,7 @@
             formatter: (row: MaintenanceItem) => (
               <ArtIconButton
                 icon="ri:delete-bin-5-line"
+                label="移除维修项目"
                 tone="danger"
                 onClick={() => removeItem(row)}
               />
@@ -708,8 +710,9 @@
 
   const handleAttachmentConfirm = async (): Promise<boolean> => {
     try {
-      await attachmentFormRef.value?.validate()
-    } catch {
+      if (!(await validateArtFormForSubmit(attachmentFormRef.value))) return false
+    } catch (error) {
+      notifyFriendlyError(error, '附件校验未完成，请稍后重试', 'warning')
       return false
     }
 
@@ -736,8 +739,9 @@
 
   const handleSubmit = async (): Promise<boolean> => {
     try {
-      await formRef.value?.validate()
-    } catch {
+      if (!(await validateArtFormForSubmit(formRef.value))) return false
+    } catch (error) {
+      notifyFriendlyError(error, '表单校验未完成，请稍后重试', 'warning')
       return false
     }
 
@@ -750,7 +754,8 @@
       }
       emit('success', form.data.id ? 'edit' : 'add')
       return true
-    } catch {
+    } catch (error) {
+      notifyFriendlyError(error, '车辆维修记录保存失败，请检查维修项目后重试')
       return false
     }
   }

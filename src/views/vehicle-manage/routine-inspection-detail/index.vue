@@ -6,6 +6,7 @@
     :error="page.error"
     :empty="!detail.data"
     empty-text="暂无例检记录详情"
+    empty-description="请返回例检记录列表重新选择，或刷新后重试。"
     @retry="loadDetail"
   >
     <ArtPageHeader
@@ -184,8 +185,12 @@
       width: 96,
       formatter: (row) => (
         <div class="flex items-center">
-          <ArtIconButton icon="ri:eye-line" onClick={() => viewAttachment(row)} />
-          <ArtIconButton icon="ri:download-2-line" onClick={() => downloadAttachment(row)} />
+          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
+          <ArtIconButton
+            icon="ri:download-2-line"
+            label="下载附件"
+            onClick={() => downloadAttachment(row)}
+          />
         </div>
       )
     }

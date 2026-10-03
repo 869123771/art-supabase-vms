@@ -63,7 +63,7 @@
     exportVehicleInspectionList,
     fetchVehicleInspectionList
   } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { formatWithDayjs } from '@/utils/time'
   import VehicleInspectionDialog from './modules/vehicle-inspection-dialog.vue'
   import BusinessWorkspaceHeader, {

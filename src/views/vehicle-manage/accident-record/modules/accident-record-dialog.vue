@@ -121,9 +121,10 @@
 </template>
 
 <script setup lang="tsx">
+  import { validateArtFormForSubmit } from '@/utils/form/validate-art-form'
   import { normalizeNullableNumber } from '@/utils/form/normalize'
 
-  import { useArtFeedback } from '@/hooks/core/useArtFeedback'
+  import { notifyFriendlyError, useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import { cloneDeep } from 'lodash-es'
   import type { FormRules } from 'element-plus'
@@ -131,7 +132,7 @@
   import ArtDialog from '@/components/core/dialogs/art-dialog/index.vue'
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtUploadFile from '@/components/core/forms/art-upload-file/index.vue'
-  import { useTenantScopeStore } from '@/store/modules/tenantScope'
+  import { useTenantScopeStore } from '@/store/modules/tenant-scope'
   import ArtAddressPicker from '@/components/core/forms/art-address-picker/index.vue'
   import type { AddressLocationPayload } from '@/components/core/forms/art-address-picker/types'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
@@ -152,7 +153,7 @@
     fetchVehicleArchiveList,
     type VmsDriverReference
   } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
@@ -586,8 +587,9 @@
 
   const handleAttachmentConfirm = async (): Promise<boolean> => {
     try {
-      await attachmentFormRef.value?.validate()
-    } catch {
+      if (!(await validateArtFormForSubmit(attachmentFormRef.value))) return false
+    } catch (error) {
+      notifyFriendlyError(error, '附件校验未完成，请稍后重试', 'warning')
       return false
     }
 
@@ -622,8 +624,9 @@
 
   const handleSubmit = async (): Promise<boolean> => {
     try {
-      await formRef.value?.validate()
-    } catch {
+      if (!(await validateArtFormForSubmit(formRef.value))) return false
+    } catch (error) {
+      notifyFriendlyError(error, '表单校验未完成，请稍后重试', 'warning')
       return false
     }
 
@@ -636,7 +639,8 @@
       }
       emit('success', form.data.id ? 'edit' : 'add')
       return true
-    } catch {
+    } catch (error) {
+      notifyFriendlyError(error, '车辆事故记录保存失败，请检查事故信息后重试')
       return false
     }
   }

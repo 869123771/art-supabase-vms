@@ -63,7 +63,7 @@
     exportVehicleInsuranceList,
     fetchVehicleInsuranceList
   } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { formatWithDayjs } from '@/utils/time'
   import VehicleInsuranceDialog from './modules/vehicle-insurance-dialog.vue'
   import BusinessWorkspaceHeader, {

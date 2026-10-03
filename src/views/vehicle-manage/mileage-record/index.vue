@@ -48,7 +48,7 @@
   } from '@/components/core/tables/art-table-query/index.vue'
   import type { ColumnOption } from '@/types'
   import { exportVehicleMileageList, fetchVehicleMileageList } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { formatWithDayjs } from '@/utils/time'
   import BusinessWorkspaceHeader, {
     type BusinessWorkspaceMetric

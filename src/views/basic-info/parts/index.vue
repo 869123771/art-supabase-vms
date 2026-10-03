@@ -53,7 +53,7 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ColumnOption, DialogType } from '@/types'
   import TreeUtils from '@/utils/tree'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { useUserStore } from '@/store/modules/user'
   import {
     deleteParts,

@@ -47,7 +47,7 @@
     ArtTableQueryProps
   } from '@/components/core/tables/art-table-query/index.vue'
   import { ColumnOption, DialogType } from '@/types'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import {
     deleteSupplier,

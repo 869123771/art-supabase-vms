@@ -34,13 +34,13 @@ const { supabase } = useSupabase()
 export async function analyzeVehicleDocumentByAi(
   imageUrl: string,
   documentType: VehicleDocumentOcrType,
-  selectedTenantId?: string | null
+  tenantId?: string | null
 ) {
   const { data, error } = await supabase.functions.invoke<VehicleDocumentOcrResult>(
     'ai-vms-vehicle-document-ocr',
     {
       body: { action: 'analyze', imageUrls: [imageUrl], documentType },
-      headers: selectedTenantId ? { [TENANT_SCOPE_HEADER]: selectedTenantId } : undefined
+      headers: tenantId ? { [TENANT_SCOPE_HEADER]: tenantId } : undefined
     }
   )
   return { data: data ?? null, error: await normalizeSupabaseFunctionError(error) }

@@ -62,7 +62,7 @@
     fetchVehicleRoutineInspectionList
   } from '@vms/api'
   import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import { formatWithDayjs } from '@/utils/time'
   import RoutineInspectionDialog from './modules/routine-inspection-dialog.vue'
   import BusinessWorkspaceHeader, {

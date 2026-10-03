@@ -6,6 +6,7 @@
     :error="page.error"
     :empty="!page.vehicle"
     empty-text="未找到车辆信息"
+    empty-description="请返回车辆查询重新选择，或刷新后重试。"
     @retry="loadVehicle"
   >
     <ArtPageHeader

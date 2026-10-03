@@ -125,11 +125,13 @@
 </template>
 
 <script setup lang="ts">
+  import { validateArtFormForSubmit } from '@/utils/form/validate-art-form'
+  import { notifyFriendlyError } from '@/hooks/core/useArtFeedback'
   import { normalizeNullableText } from '@/utils/form/normalize'
   import ArtSectionCard from '@/components/core/surfaces/art-section-card/index.vue'
   import dayjs from 'dayjs'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
-  import type { FormRules } from 'element-plus'
+  import { ElMessage, type FormRules } from 'element-plus'
   import ArtDrawer from '@/components/core/drawers/art-drawer/index.vue'
   import type { ArtDrawerExpose } from '@/components/core/drawers/art-drawer/types'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
@@ -337,17 +339,21 @@
   async function handleSubmit(): Promise<boolean> {
     if (!state.workOrder || !canTransition.value) return false
     try {
-      await formRef.value?.validate()
+      if (!(await validateArtFormForSubmit(formRef.value))) return false
       const { data } = await transitionVehicleReminderWorkOrder({
         workOrderId: state.workOrder.id,
         nextStatus: form.data.nextStatus as WorkOrderStatus,
         resolution: normalizeNullableText(form.data.resolution)
       })
-      if (!data) return false
+      if (!data) {
+        ElMessage.error('状态更新未返回结果，请刷新处置单后重试')
+        return false
+      }
       state.workOrder = data
       emit('success')
       return true
-    } catch {
+    } catch (error) {
+      notifyFriendlyError(error, '提醒处置单状态更新失败，请检查当前状态后重试')
       return false
     }
   }

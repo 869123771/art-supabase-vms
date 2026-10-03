@@ -88,6 +88,7 @@
           <ArtEmptyState
             v-else
             title="当前未发现明确的车辆健康风险"
+            description="继续关注车辆状态，新的风险信号会显示在此。"
             :visual-size="72"
             size="compact"
           />

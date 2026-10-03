@@ -32,7 +32,7 @@
     fetchVehicleReminderInsuranceExpiryList,
     fetchVehicleReminderInsuranceRiskOverview
   } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/tableUtils'
+  import { pageInfoHandler } from '@/utils/table/table-utils'
   import {
     createReminderWorkOrderColumns,
     formatDate,
