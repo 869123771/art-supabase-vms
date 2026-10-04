@@ -172,7 +172,7 @@ export async function fetchVehicleReminderViewList(
             'source_key',
             rows.map((row) => row.id)
           )
-      return workOrderQuery.order('update_time', { ascending: false })
+      return withRequestOptions(workOrderQuery.order('update_time', { ascending: false }), options)
     },
     { showErrorMessage: true }
   )

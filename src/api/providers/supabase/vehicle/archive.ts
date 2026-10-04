@@ -1,3 +1,4 @@
+import { toDateStartTimestamp, toDateEndTimestamp } from '@/utils/time/date-boundary'
 import { normalizeNullableText } from '@/utils/form/normalize'
 import { uniq } from 'lodash-es'
 import { useSupabase } from '@/hooks'
@@ -49,9 +50,6 @@ export async function importVehicleArchives(rows: VehicleArchiveWritePayload[]) 
   )
 }
 
-const startOfDay = (value?: string): string | null => (value ? `${value}T00:00:00` : null)
-const endOfDay = (value?: string): string | null => (value ? `${value}T23:59:59.999` : null)
-
 const createVehicleArchiveRpcParams = (
   params: VehicleArchiveSearchParams & { ids?: string[]; maxRows?: number },
   purpose: 'list' | 'export'
@@ -72,8 +70,8 @@ const createVehicleArchiveRpcParams = (
     p_operation_status: params.operationStatus || null,
     p_audit_status: params.auditStatus || null,
     p_audit_statuses: params.auditStatuses?.length ? params.auditStatuses : null,
-    p_create_time_from: startOfDay(params.createTimeRange?.[0]),
-    p_create_time_to: endOfDay(params.createTimeRange?.[1]),
+    p_create_time_from: toDateStartTimestamp(params.createTimeRange?.[0]),
+    p_create_time_to: toDateEndTimestamp(params.createTimeRange?.[1]),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }

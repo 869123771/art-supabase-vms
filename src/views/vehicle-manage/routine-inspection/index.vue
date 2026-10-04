@@ -122,7 +122,7 @@
         ? overview.rows.filter((row) => !row.inspector || !row.driverName).length
         : '--',
       description: '至少缺少一位责任人员',
-      icon: 'ri:user-warning-line',
+      icon: 'ri:user-forbid-line',
       tone: 'warning'
     }
   ])

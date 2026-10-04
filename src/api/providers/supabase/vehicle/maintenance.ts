@@ -1,3 +1,5 @@
+import { buildSupabaseRpcRange } from '@/utils/supabase'
+import { toDateStartTimestamp, toDateEndTimestamp } from '@/utils/time/date-boundary'
 import { normalizeNullableText } from '@/utils/form/normalize'
 import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
@@ -18,11 +20,6 @@ interface SecureVehicleMaintenancePayload {
   fieldAccess?: Api.Vms.VehicleManage.VehicleMaintenanceFieldAccessMap
 }
 
-const maintenanceStartOfDay = (value?: string): string | null =>
-  value ? `${value}T00:00:00` : null
-const maintenanceEndOfDay = (value?: string): string | null =>
-  value ? `${value}T23:59:59.999` : null
-
 const createVehicleMaintenanceRpcParams = (
   params: VehicleMaintenanceSearchParams & { ids?: string[]; maxRows?: number },
   purpose: 'list' | 'export'
@@ -30,15 +27,14 @@ const createVehicleMaintenanceRpcParams = (
   const from = Math.max(params.from ?? 0, 0)
   const requestedTo = params.maxRows ? from + Math.max(params.maxRows, 1) - 1 : params.to
   return {
-    p_from: from,
-    p_to: Math.max(requestedTo ?? 9, from),
+    ...buildSupabaseRpcRange(from, requestedTo ?? 9),
     p_vehicle_id: params.vehicleId || null,
     p_company_name: normalizeNullableText(String(params.companyName ?? '')),
     p_plate_no: normalizeNullableText(String(params.plateNo ?? '')),
     p_maintenance_no: normalizeNullableText(String(params.maintenanceNo ?? '')),
     p_maintenance_type: normalizeNullableText(String(params.maintenanceType ?? '')),
-    p_create_time_from: maintenanceStartOfDay(params.createTimeRange?.[0]),
-    p_create_time_to: maintenanceEndOfDay(params.createTimeRange?.[1]),
+    p_create_time_from: toDateStartTimestamp(params.createTimeRange?.[0]),
+    p_create_time_to: toDateEndTimestamp(params.createTimeRange?.[1]),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }
@@ -140,10 +136,6 @@ interface SecureVehiclePartUsagePayload {
   fieldAccess?: Api.Vms.VehicleManage.VehiclePartUsageFieldAccessMap
 }
 
-const partUsageStartOfDay = (value?: string): string | null => (value ? `${value}T00:00:00` : null)
-const partUsageEndOfDay = (value?: string): string | null =>
-  value ? `${value}T23:59:59.999` : null
-
 const createVehiclePartUsageRpcParams = (
   params: VehiclePartUsageSearchParams & { ids?: string[]; maxRows?: number },
   purpose: 'list' | 'export'
@@ -151,8 +143,7 @@ const createVehiclePartUsageRpcParams = (
   const from = Math.max(params.from ?? 0, 0)
   const requestedTo = params.maxRows ? from + Math.max(params.maxRows, 1) - 1 : params.to
   return {
-    p_from: from,
-    p_to: Math.max(requestedTo ?? 9, from),
+    ...buildSupabaseRpcRange(from, requestedTo ?? 9),
     p_vehicle_id: params.vehicleId || null,
     p_company_name: normalizeNullableText(String(params.companyName ?? '')),
     p_plate_no: normalizeNullableText(String(params.plateNo ?? '')),
@@ -161,8 +152,8 @@ const createVehiclePartUsageRpcParams = (
     p_category_id: params.categoryId || null,
     p_rfid_tag: normalizeNullableText(String(params.rfidTag ?? '')),
     p_status: normalizeNullableText(String(params.status ?? '')),
-    p_create_time_from: partUsageStartOfDay(params.createTimeRange?.[0]),
-    p_create_time_to: partUsageEndOfDay(params.createTimeRange?.[1]),
+    p_create_time_from: toDateStartTimestamp(params.createTimeRange?.[0]),
+    p_create_time_to: toDateEndTimestamp(params.createTimeRange?.[1]),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }

@@ -1,3 +1,5 @@
+import { buildSupabaseRpcRange } from '@/utils/supabase'
+import { toDateStartTimestamp, toDateEndTimestamp } from '@/utils/time/date-boundary'
 import { normalizeNullableText } from '@/utils/form/normalize'
 import { useSupabase } from '@/hooks'
 import { normalizeBooleanFilter, withRequestOptions } from '@/api/providers/supabase/query'
@@ -20,9 +22,6 @@ interface SecureVehicleMileagePayload {
   fieldAccess?: Api.Vms.VehicleManage.VehicleMileageFieldAccessMap
 }
 
-const mileageStartOfDay = (value?: string): string | null => (value ? `${value}T00:00:00` : null)
-const mileageEndOfDay = (value?: string): string | null => (value ? `${value}T23:59:59.999` : null)
-
 const createVehicleMileageRpcParams = (
   params: VehicleMileageSearchParams & { ids?: string[]; maxRows?: number },
   purpose: 'list' | 'export'
@@ -30,13 +29,12 @@ const createVehicleMileageRpcParams = (
   const from = Math.max(params.from ?? 0, 0)
   const requestedTo = params.maxRows ? from + Math.max(params.maxRows, 1) - 1 : params.to
   return {
-    p_from: from,
-    p_to: Math.max(requestedTo ?? 9, from),
+    ...buildSupabaseRpcRange(from, requestedTo ?? 9),
     p_vehicle_id: params.vehicleId || null,
     p_company_name: normalizeNullableText(String(params.companyName ?? '')),
     p_plate_no: normalizeNullableText(String(params.plateNo ?? '')),
-    p_start_time_from: mileageStartOfDay(params.drivingTimeRange?.[0]),
-    p_start_time_to: mileageEndOfDay(params.drivingTimeRange?.[1]),
+    p_start_time_from: toDateStartTimestamp(params.drivingTimeRange?.[0]),
+    p_start_time_to: toDateEndTimestamp(params.drivingTimeRange?.[1]),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }
@@ -91,10 +89,6 @@ interface SecureVehicleViolationPayload {
   fieldAccess?: Api.Vms.VehicleManage.VehicleViolationFieldAccessMap
 }
 
-const violationStartOfDay = (value?: string): string | null => (value ? `${value}T00:00:00` : null)
-const violationEndOfDay = (value?: string): string | null =>
-  value ? `${value}T23:59:59.999` : null
-
 const createVehicleViolationRpcParams = (
   params: VehicleViolationSearchParams & { ids?: string[]; maxRows?: number },
   purpose: 'list' | 'export'
@@ -102,16 +96,15 @@ const createVehicleViolationRpcParams = (
   const from = Math.max(params.from ?? 0, 0)
   const requestedTo = params.maxRows ? from + Math.max(params.maxRows, 1) - 1 : params.to
   return {
-    p_from: from,
-    p_to: Math.max(requestedTo ?? 9, from),
+    ...buildSupabaseRpcRange(from, requestedTo ?? 9),
     p_vehicle_id: params.vehicleId || null,
     p_company_name: normalizeNullableText(String(params.companyName ?? '')),
     p_plate_no: normalizeNullableText(String(params.plateNo ?? '')),
     p_driver_name: normalizeNullableText(String(params.driverName ?? '')),
     p_violation_behavior: normalizeNullableText(String(params.violationBehavior ?? '')),
     p_processed: normalizeBooleanFilter(params.processed) ?? null,
-    p_violation_time_from: violationStartOfDay(params.violationTimeRange?.[0]),
-    p_violation_time_to: violationEndOfDay(params.violationTimeRange?.[1]),
+    p_violation_time_from: toDateStartTimestamp(params.violationTimeRange?.[0]),
+    p_violation_time_to: toDateEndTimestamp(params.violationTimeRange?.[1]),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }
@@ -166,9 +159,6 @@ interface SecureVehicleAccidentPayload {
   fieldAccess?: Api.Vms.VehicleManage.VehicleAccidentFieldAccessMap
 }
 
-const accidentStartOfDay = (value?: string): string | null => (value ? `${value}T00:00:00` : null)
-const accidentEndOfDay = (value?: string): string | null => (value ? `${value}T23:59:59.999` : null)
-
 const createVehicleAccidentRpcParams = (
   params: VehicleAccidentSearchParams & { ids?: string[]; maxRows?: number },
   purpose: 'list' | 'export'
@@ -176,18 +166,17 @@ const createVehicleAccidentRpcParams = (
   const from = Math.max(params.from ?? 0, 0)
   const requestedTo = params.maxRows ? from + Math.max(params.maxRows, 1) - 1 : params.to
   return {
-    p_from: from,
-    p_to: Math.max(requestedTo ?? 9, from),
+    ...buildSupabaseRpcRange(from, requestedTo ?? 9),
     p_vehicle_id: params.vehicleId || null,
     p_company_name: normalizeNullableText(String(params.companyName ?? '')),
     p_plate_no: normalizeNullableText(String(params.plateNo ?? '')),
     p_driver_name: normalizeNullableText(String(params.driverName ?? '')),
     p_processed: normalizeBooleanFilter(params.processed) ?? null,
     p_data_source: normalizeNullableText(String(params.dataSource ?? '')),
-    p_accident_time_from: accidentStartOfDay(params.accidentTimeRange?.[0]),
-    p_accident_time_to: accidentEndOfDay(params.accidentTimeRange?.[1]),
-    p_create_time_from: accidentStartOfDay(params.createTimeRange?.[0]),
-    p_create_time_to: accidentEndOfDay(params.createTimeRange?.[1]),
+    p_accident_time_from: toDateStartTimestamp(params.accidentTimeRange?.[0]),
+    p_accident_time_to: toDateEndTimestamp(params.accidentTimeRange?.[1]),
+    p_create_time_from: toDateStartTimestamp(params.createTimeRange?.[0]),
+    p_create_time_to: toDateEndTimestamp(params.createTimeRange?.[1]),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }

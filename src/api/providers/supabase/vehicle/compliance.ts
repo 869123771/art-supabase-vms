@@ -1,3 +1,5 @@
+import { buildSupabaseRpcRange } from '@/utils/supabase'
+import { toDateStartTimestamp, toDateEndTimestamp } from '@/utils/time/date-boundary'
 import { normalizeNullableText } from '@/utils/form/normalize'
 import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
@@ -20,9 +22,6 @@ interface SecureVehicleInsurancePayload {
   fieldAccess?: Api.Vms.VehicleManage.VehicleInsuranceFieldAccessMap
 }
 
-const startOfDay = (value?: string): string | null => (value ? `${value}T00:00:00` : null)
-const endOfDay = (value?: string): string | null => (value ? `${value}T23:59:59.999` : null)
-
 const createVehicleInsuranceRpcParams = (
   params: VehicleInsuranceSearchParams & { ids?: string[]; maxRows?: number },
   purpose: 'list' | 'export'
@@ -30,8 +29,7 @@ const createVehicleInsuranceRpcParams = (
   const from = Math.max(params.from ?? 0, 0)
   const requestedTo = params.maxRows ? from + Math.max(params.maxRows, 1) - 1 : params.to
   return {
-    p_from: from,
-    p_to: Math.max(requestedTo ?? 9, from),
+    ...buildSupabaseRpcRange(from, requestedTo ?? 9),
     p_vehicle_id: params.vehicleId || null,
     p_company_name: normalizeNullableText(String(params.companyName ?? '')),
     p_plate_no: normalizeNullableText(String(params.plateNo ?? '')),
@@ -41,8 +39,8 @@ const createVehicleInsuranceRpcParams = (
     p_commercial_expire_to: params.commercialExpireDateRange?.[1] || null,
     p_compulsory_expire_from: params.compulsoryExpireDateRange?.[0] || null,
     p_compulsory_expire_to: params.compulsoryExpireDateRange?.[1] || null,
-    p_create_time_from: startOfDay(params.createTimeRange?.[0]),
-    p_create_time_to: endOfDay(params.createTimeRange?.[1]),
+    p_create_time_from: toDateStartTimestamp(params.createTimeRange?.[0]),
+    p_create_time_to: toDateEndTimestamp(params.createTimeRange?.[1]),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }
@@ -151,16 +149,15 @@ const createVehicleInspectionRpcParams = (
   const from = Math.max(params.from ?? 0, 0)
   const requestedTo = params.maxRows ? from + Math.max(params.maxRows, 1) - 1 : params.to
   return {
-    p_from: from,
-    p_to: Math.max(requestedTo ?? 9, from),
+    ...buildSupabaseRpcRange(from, requestedTo ?? 9),
     p_vehicle_id: params.vehicleId || null,
     p_company_name: normalizeNullableText(String(params.companyName ?? '')),
     p_plate_no: normalizeNullableText(String(params.plateNo ?? '')),
     p_inspection_no: normalizeNullableText(String(params.inspectionNo ?? '')),
     p_expire_from: params.expireDateRange?.[0] || null,
     p_expire_to: params.expireDateRange?.[1] || null,
-    p_create_time_from: startOfDay(params.createTimeRange?.[0]),
-    p_create_time_to: endOfDay(params.createTimeRange?.[1]),
+    p_create_time_from: toDateStartTimestamp(params.createTimeRange?.[0]),
+    p_create_time_to: toDateEndTimestamp(params.createTimeRange?.[1]),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }
@@ -268,17 +265,16 @@ const createVehicleRoutineInspectionRpcParams = (
   const from = Math.max(params.from ?? 0, 0)
   const requestedTo = params.maxRows ? from + Math.max(params.maxRows, 1) - 1 : params.to
   return {
-    p_from: from,
-    p_to: Math.max(requestedTo ?? 9, from),
+    ...buildSupabaseRpcRange(from, requestedTo ?? 9),
     p_vehicle_id: params.vehicleId || null,
     p_company_name: normalizeNullableText(String(params.companyName ?? '')),
     p_plate_no: normalizeNullableText(String(params.plateNo ?? '')),
     p_inspection_type: normalizeNullableText(String(params.inspectionType ?? '')),
     p_check_result: normalizeNullableText(String(params.checkResult ?? '')),
-    p_inspection_time_from: startOfDay(params.inspectionTimeRange?.[0]),
-    p_inspection_time_to: endOfDay(params.inspectionTimeRange?.[1]),
-    p_create_time_from: startOfDay(params.createTimeRange?.[0]),
-    p_create_time_to: endOfDay(params.createTimeRange?.[1]),
+    p_inspection_time_from: toDateStartTimestamp(params.inspectionTimeRange?.[0]),
+    p_inspection_time_to: toDateEndTimestamp(params.inspectionTimeRange?.[1]),
+    p_create_time_from: toDateStartTimestamp(params.createTimeRange?.[0]),
+    p_create_time_to: toDateEndTimestamp(params.createTimeRange?.[1]),
     p_ids: params.ids?.length ? params.ids : null,
     p_purpose: purpose
   }

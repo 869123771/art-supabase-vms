@@ -1,8 +1,9 @@
 import { normalizeNullableText } from '@/utils/form/normalize'
+import { uniq } from 'lodash-es'
 import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
 import type { ApiRequestOptions } from '@/types/api/request'
-import { applyFilters, type FilterSpec } from '@/utils/supabase'
+import { buildSupabaseRpcRange, applyFilters, type FilterSpec } from '@/utils/supabase'
 import {
   type InsuranceCompany,
   type InsuranceCompanySearchParams,
@@ -118,8 +119,7 @@ const createSupplierRpcParams = (
   const from = Math.max(params.from ?? 0, 0)
   const requestedTo = params.maxRows ? from + Math.max(params.maxRows, 1) - 1 : params.to
   return {
-    p_from: from,
-    p_to: Math.max(requestedTo ?? 9, from),
+    ...buildSupabaseRpcRange(from, requestedTo ?? 9),
     p_supplier_name: normalizeNullableText(String(params.supplierName ?? '')),
     p_contact_person: normalizeNullableText(String(params.contactPerson ?? '')),
     p_contact_phone: normalizeNullableText(String(params.contactPhone ?? '')),
@@ -349,7 +349,11 @@ const enrichPartsWithSupplierNames = async (
   records: Parts[],
   options?: ApiRequestOptions
 ): Promise<Parts[]> => {
-  const supplierIds = [...new Set(records.map((row) => row.supplierId).filter(Boolean))] as string[]
+  const supplierIds = uniq(
+    records
+      .map((row) => row.supplierId)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0)
+  )
   if (!supplierIds.length) return records
   const { data } = await fetchSupplierOptions({ ids: supplierIds }, options)
   const suppliers = new Map<string, Supplier>(
