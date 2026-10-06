@@ -53,7 +53,7 @@
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ColumnOption, DialogType } from '@/types'
   import TreeUtils from '@/utils/tree'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { useUserStore } from '@/store/modules/user'
   import {
     deleteParts,
@@ -255,7 +255,7 @@
   ])
 
   const fetchTableData = (params: TableParams) => {
-    const { from, to } = pageInfoHandler({
+    const { from, to } = buildSupabasePageRange({
       current: params.current,
       size: params.size
     })

@@ -20,7 +20,8 @@
         <ElTabPane v-if="hasAuth('VehicleArchive:TabBasic')" label="基础信息" name="basic">
           <ArtForm
             ref="basicFormRef"
-            v-model="form"
+            :model-value="form"
+            @update:model-value="replaceReactiveModel(form, $event)"
             :items="basicItems"
             :rules="rules"
             :span="8"
@@ -94,7 +95,8 @@
         <ElTabPane v-if="hasAuth('VehicleArchive:TabBody')" label="车身参数" name="body">
           <ArtForm
             ref="bodyFormRef"
-            v-model="form"
+            :model-value="form"
+            @update:model-value="replaceReactiveModel(form, $event)"
             :items="bodyItems"
             :rules="rules"
             :span="8"
@@ -108,7 +110,8 @@
         <ElTabPane v-if="hasAuth('VehicleArchive:TabEngine')" label="发动机参数" name="engine">
           <ArtForm
             ref="engineFormRef"
-            v-model="form"
+            :model-value="form"
+            @update:model-value="replaceReactiveModel(form, $event)"
             :items="engineItems"
             :rules="rules"
             :span="8"
@@ -122,7 +125,8 @@
         <ElTabPane v-if="hasAuth('VehicleArchive:TabOther')" label="其他信息" name="other">
           <ArtForm
             ref="otherFormRef"
-            v-model="form"
+            :model-value="form"
+            @update:model-value="replaceReactiveModel(form, $event)"
             :items="otherItems"
             :rules="rules"
             :span="8"
@@ -225,6 +229,7 @@
 </template>
 
 <script setup lang="tsx">
+  import { replaceReactiveModel } from '@/utils/form/model'
   import { focusFirstInvalidFormField } from '@/utils/form/validation'
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, Ref, UnwrapNestedRefs } from 'vue'

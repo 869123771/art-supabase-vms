@@ -150,7 +150,7 @@
     ArtTableQueryProps
   } from '@/components/core/tables/art-table-query/index.vue'
   import type { ColumnOption } from '@/types'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { formatWithDayjs } from '@/utils/time'
   import {
     deleteVehicleArchive,
@@ -677,7 +677,7 @@
     if (navigationKey.value !== 'all' && !navigationIds.value.length) {
       return { data: [], total: 0, fieldAccess: listFieldAccess.value }
     }
-    const { from, to } = pageInfoHandler({
+    const { from, to } = buildSupabasePageRange({
       current: params.current,
       size: params.size
     })

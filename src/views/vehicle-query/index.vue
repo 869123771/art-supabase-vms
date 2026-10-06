@@ -43,7 +43,7 @@
     fetchVehicleMileageList
   } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { mapWithConcurrency } from '@/utils/async'
   import {
     formatDate,
@@ -258,7 +258,7 @@
   })
 
   const fetchTableData = async (params: TableParams) => {
-    const { from, to } = pageInfoHandler({ current: params.current, size: params.size })
+    const { from, to } = buildSupabasePageRange({ current: params.current, size: params.size })
     const result = await fetchVehicleArchiveList({
       ...params,
       auditStatus: 'approved',

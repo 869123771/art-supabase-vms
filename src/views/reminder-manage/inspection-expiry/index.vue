@@ -32,7 +32,7 @@
     fetchVehicleReminderInspectionExpiryList,
     fetchVehicleReminderInspectionRiskOverview
   } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import {
     createReminderWorkOrderColumns,
     formatDate,
@@ -151,7 +151,7 @@
   }
 
   const fetchTableData = async (params: ReminderTableParams) => {
-    const { from, to } = pageInfoHandler({ current: params.current, size: params.size })
+    const { from, to } = buildSupabasePageRange({ current: params.current, size: params.size })
     return await fetchVehicleReminderInspectionExpiryList({
       companyName: params.companyName,
       plateNo: params.plateNo,

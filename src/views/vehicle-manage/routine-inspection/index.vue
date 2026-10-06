@@ -62,7 +62,7 @@
     fetchVehicleRoutineInspectionList
   } from '@vms/api'
   import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { formatWithDayjs } from '@/utils/time'
   import RoutineInspectionDialog from './modules/routine-inspection-dialog.vue'
   import BusinessWorkspaceHeader, {
@@ -283,7 +283,7 @@
   ])
 
   const fetchTableData = async (params: TableParams) => {
-    const { from, to } = pageInfoHandler({ current: params.current, size: params.size })
+    const { from, to } = buildSupabasePageRange({ current: params.current, size: params.size })
     const result = await fetchVehicleRoutineInspectionList({ ...params, from, to })
     listFieldAccess.value = result.fieldAccess ?? {}
     return result

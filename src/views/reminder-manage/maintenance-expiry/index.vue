@@ -33,7 +33,7 @@
     fetchVehicleReminderMaintenanceRiskOverview
   } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { isNil } from 'lodash-es'
   import {
     companySearchItem,
@@ -191,7 +191,7 @@
   }
 
   const fetchTableData = async (params: ReminderTableParams) => {
-    const { from, to } = pageInfoHandler({ current: params.current, size: params.size })
+    const { from, to } = buildSupabasePageRange({ current: params.current, size: params.size })
     return await fetchVehicleReminderMaintenanceExpiryList({
       companyName: params.companyName,
       plateNo: params.plateNo,

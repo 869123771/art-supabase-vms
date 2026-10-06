@@ -80,7 +80,7 @@
     type ButtonMoreItem
   } from '@/components/core/forms/art-button-more/index.vue'
   import { ColumnOption, DialogType } from '@/types'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import {
     deletePartsCategory,
     deletePartsCategoryBatch,
@@ -229,7 +229,7 @@
   ])
 
   const fetchTableData = (params: TableParams) => {
-    const { from, to } = pageInfoHandler({
+    const { from, to } = buildSupabasePageRange({
       current: params.current,
       size: params.size
     })

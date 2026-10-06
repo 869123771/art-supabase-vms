@@ -4,6 +4,8 @@ import { uniq } from 'lodash-es'
 import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
 import type { ApiRequestOptions } from '@/types/api/request'
+import type { QueryResult } from '@/types/api/response'
+import { loadAllDocumentPages } from '@/utils/business/document-detail-list'
 import {
   VEHICLE_REMINDER_VIEWS,
   fetchVehicleReminderViewList,
@@ -350,16 +352,27 @@ export async function fetchVehicleReminderPartServiceLifeRiskOverview(
 }
 
 export async function fetchInsuranceCompanyOptions(_params?: unknown, options?: ApiRequestOptions) {
-  const query = supabase
-    .from('mdm_insurance_company')
-    .select('id, company_name, contact_person, contact_phone')
-    .order('company_name', { ascending: true })
-    .limit(200)
-
-  return await responseHandle<Api.Vms.VehicleManage.InsuranceCompanyOption[]>(
-    () => withRequestOptions(query, options),
-    {
-      showErrorMessage: true
-    }
-  )
+  type CompanyOption = Api.Vms.VehicleManage.InsuranceCompanyOption
+  try {
+    const data = await loadAllDocumentPages<CompanyOption, { from?: number; to?: number }>(
+      ({ from = 0, to = 499 }) =>
+        responseHandle<CompanyOption[]>(
+          () =>
+            withRequestOptions(
+              supabase
+                .from('mdm_insurance_company')
+                .select('id, company_name, contact_person, contact_phone', { count: 'exact' })
+                .order('company_name', { ascending: true })
+                .order('id')
+                .range(from, to),
+              options
+            ),
+          { showErrorMessage: true }
+        ),
+      {}
+    )
+    return { data, total: data.length, error: null } satisfies QueryResult<CompanyOption[]>
+  } catch (error) {
+    return { data: null, error } satisfies QueryResult<CompanyOption[]>
+  }
 }

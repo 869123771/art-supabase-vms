@@ -82,7 +82,7 @@
   import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import { addVehicleInspection, editVehicleInspection, fetchVehicleArchiveList } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canEditField, canViewField } from '@/utils/field-permission'
@@ -281,7 +281,7 @@
     pageSize: number
     keyword?: string
   }) => {
-    const { from, to } = pageInfoHandler({ current: params.page, size: params.pageSize })
+    const { from, to } = buildSupabasePageRange({ current: params.page, size: params.pageSize })
     const { data, total } = await fetchVehicleArchiveList({
       plateNo: params.keyword,
       auditStatus: 'approved',

@@ -49,7 +49,7 @@
   } from '@/components/core/tables/art-table-query/index.vue'
   import type { ColumnOption } from '@/types'
   import { exportVehicleViolationList, fetchVehicleViolationList } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { formatWithDayjs } from '@/utils/time'
   import { useUserStore } from '@/store/modules/user'
   import BusinessWorkspaceHeader, {
@@ -228,7 +228,7 @@
   ])
 
   const fetchTableData = async (params: TableParams) => {
-    const { from, to } = pageInfoHandler({
+    const { from, to } = buildSupabasePageRange({
       current: params.current,
       size: params.size
     })

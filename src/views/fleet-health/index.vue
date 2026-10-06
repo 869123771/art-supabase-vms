@@ -54,7 +54,7 @@
   import ArtDictDisplay from '@/components/core/base/art-dict-display/index.vue'
   import { useAuth } from '@/hooks/core/useAuth'
   import { useUserStore } from '@/store/modules/user'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { fetchFleetHealthWorkspace } from '@vms/api'
 
   defineOptions({ name: 'VehicleFleetHealth' })
@@ -244,7 +244,7 @@
   ]
 
   async function fetchTableData(params: TableParams, options?: TableRequestOptions) {
-    const { from, to } = pageInfoHandler(params)
+    const { from, to } = buildSupabasePageRange(params)
     const result = await fetchFleetHealthWorkspace({ ...params, from, to })
     if (!options?.signal?.aborted) Object.assign(overview, result.overview)
     return result

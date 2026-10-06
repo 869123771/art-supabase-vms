@@ -47,7 +47,7 @@
     ArtTableQueryProps
   } from '@/components/core/tables/art-table-query/index.vue'
   import { ColumnOption, DialogType } from '@/types'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import {
     deleteSupplier,
@@ -213,7 +213,7 @@
   ])
 
   const fetchTableData = async (params: TableParams) => {
-    const { from, to } = pageInfoHandler({
+    const { from, to } = buildSupabasePageRange({
       current: params.current,
       size: params.size
     })

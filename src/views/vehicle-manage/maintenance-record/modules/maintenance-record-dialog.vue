@@ -162,7 +162,7 @@
     fetchVehicleArchiveList,
     fetchVehicleMileageList
   } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { useUserStore } from '@/store/modules/user'
@@ -427,7 +427,7 @@
 
   const fetchMileageSelectData = async (params: { page: number; pageSize: number }) => {
     if (!form.data.vehicleId) return { data: [], total: 0 }
-    const { from, to } = pageInfoHandler({ current: params.page, size: params.pageSize })
+    const { from, to } = buildSupabasePageRange({ current: params.page, size: params.pageSize })
     const result = await fetchVehicleMileageList({ vehicleId: form.data.vehicleId, from, to })
     if (result.error) throw result.error
     return { data: result.data ?? [], total: result.total ?? 0 }
@@ -588,7 +588,7 @@
     pageSize: number
     keyword?: string
   }) => {
-    const { from, to } = pageInfoHandler({ current: params.page, size: params.pageSize })
+    const { from, to } = buildSupabasePageRange({ current: params.page, size: params.pageSize })
     const { data, total } = await fetchVehicleArchiveList({
       plateNo: params.keyword,
       auditStatus: 'approved',

@@ -61,7 +61,7 @@
     exportVehicleAccidentList,
     fetchVehicleAccidentList
   } from '@vms/api'
-  import { pageInfoHandler } from '@/utils/table/table-utils'
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { formatWithDayjs } from '@/utils/time'
   import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
   import AccidentRecordDialog from './modules/accident-record-dialog.vue'
@@ -308,7 +308,7 @@
   ])
 
   const fetchTableData = async (params: TableParams) => {
-    const { from, to } = pageInfoHandler({ current: params.current, size: params.size })
+    const { from, to } = buildSupabasePageRange({ current: params.current, size: params.size })
     const result = await fetchVehicleAccidentList({ ...params, from, to })
     listFieldAccess.value = result.fieldAccess ?? {}
     return result
