@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+  import { normalizeNullableNumber } from '@/utils/form/normalize'
   import {
     fetchVehicleArchiveDetail,
     fetchVehicleInspectionList,
@@ -71,7 +72,7 @@
     VehicleQueryTab,
     VehicleQueryTabKey
   } from '../modules/types'
-  import { getLatestByDate, toFiniteNumber } from '../modules/query-format'
+  import { getLatestByDate } from '../modules/query-format'
   import { isNil } from 'lodash-es'
 
   defineOptions({ name: 'VehicleQueryDetail' })
@@ -216,7 +217,8 @@
       compulsoryExpireDate: latestInsurance?.compulsoryExpireDate,
       inspectionExpireDate: latestInspection?.expireDate,
       runningMileage:
-        toFiniteNumber(latestMileage?.endMileage) ?? toFiniteNumber(latestMileage?.runningMileage),
+        normalizeNullableNumber(latestMileage?.endMileage) ??
+        normalizeNullableNumber(latestMileage?.runningMileage),
       nextMaintenanceDate: getNextMaintenanceDate(latestMaintenance),
       nextMaintenanceMileage: getNextMaintenanceMileage(latestMaintenance, latestMileage)
     }
@@ -235,9 +237,9 @@
     mileage?: VehicleMileageRecord
   ): number | null => {
     const currentMileage =
-      toFiniteNumber(mileage?.endMileage) ??
-      toFiniteNumber(mileage?.runningMileage) ??
-      toFiniteNumber(mileage?.startMileage)
+      normalizeNullableNumber(mileage?.endMileage) ??
+      normalizeNullableNumber(mileage?.runningMileage) ??
+      normalizeNullableNumber(mileage?.startMileage)
     if (isNil(currentMileage)) return null
     if (!maintenance) return currentMileage + 5000
     return currentMileage + 5000

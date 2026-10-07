@@ -27,6 +27,7 @@
 </template>
 
 <script setup lang="tsx">
+  import { normalizeNullableNumber } from '@/utils/form/normalize'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import BusinessWorkspaceHeader, {
@@ -45,12 +46,7 @@
   import { useUserStore } from '@/store/modules/user'
   import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { mapWithConcurrency } from '@/utils/async'
-  import {
-    formatDate,
-    formatMileage,
-    getLatestByDate,
-    toFiniteNumber
-  } from './modules/query-format'
+  import { formatDate, formatMileage, getLatestByDate } from './modules/query-format'
   import type {
     VehicleArchive,
     VehicleInspection,
@@ -317,7 +313,8 @@
 
     return {
       runningMileage:
-        toFiniteNumber(latestMileage?.endMileage) ?? toFiniteNumber(latestMileage?.runningMileage),
+        normalizeNullableNumber(latestMileage?.endMileage) ??
+        normalizeNullableNumber(latestMileage?.runningMileage),
       operationYears: getOperationYears(row.startUseDate),
       commercialExpireDate: latestInsurance?.commercialExpireDate,
       compulsoryExpireDate: latestInsurance?.compulsoryExpireDate,
