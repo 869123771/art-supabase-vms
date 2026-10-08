@@ -38,10 +38,6 @@
     mergeFieldAccessMaps(...records.value.map((record) => record.fieldAccess))
   )
 
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
-  }
-
   const columns = computed<ColumnOption<VehicleInspection>[]>(() => [
     { type: 'globalIndex', label: '序号', width: 80 },
     {
@@ -59,7 +55,8 @@
             prop: 'inspectionAmount',
             label: '年检金额',
             minWidth: 150,
-            formatter: (row: VehicleInspection) => formatMoney(row.inspectionAmount)
+            formatter: (row: VehicleInspection) =>
+              formatSensitiveNumberWithAffix(row.inspectionAmount, { suffix: ' 元' })
           }
         ]
       : []),

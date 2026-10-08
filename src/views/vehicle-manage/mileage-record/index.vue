@@ -1,5 +1,5 @@
 <template>
-  <div class="mileage-record-page art-full-height">
+  <div class="mileage-record-page art-full-height min-w-0 gap-3">
     <BusinessWorkspaceHeader
       eyebrow="MILEAGE LEDGER"
       title="车辆里程"
@@ -239,10 +239,3 @@
   const formatMileageTime = (value?: string | null): string =>
     value === '***' ? value : (formatWithDayjs(value) ?? '--')
 </script>
-
-<style scoped lang="scss">
-  .mileage-record-page {
-    gap: 12px;
-    min-width: 0;
-  }
-</style>

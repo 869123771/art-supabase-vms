@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { isEmpty, isNil } from 'lodash-es'
+import { isEmpty, isNil, maxBy } from 'lodash-es'
 import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
 import type { InfoItem } from './types'
 
@@ -54,13 +54,11 @@ export const getLatestByDate = <TRecord>(
   records: TRecord[],
   getDate: (record: TRecord) => string | null | undefined
 ): TRecord | undefined =>
-  [...records].sort((first, second) => {
-    const firstDate = getDate(first)
-    const secondDate = getDate(second)
-    const firstTime = firstDate && dayjs(firstDate).isValid() ? dayjs(firstDate).valueOf() : 0
-    const secondTime = secondDate && dayjs(secondDate).isValid() ? dayjs(secondDate).valueOf() : 0
-    return secondTime - firstTime
-  })[0]
+  maxBy(records, (record) => {
+    const value = getDate(record)
+    const date = value ? dayjs(value) : null
+    return date?.isValid() ? date.valueOf() : 0
+  })
 
 export const getExpireDateByYears = (
   startDate?: string | null,

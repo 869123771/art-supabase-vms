@@ -103,6 +103,8 @@ export const transitionVehicleReminderWorkOrder =
 export const fetchInsuranceCompanyOptions = supabaseVehicleApi.fetchInsuranceCompanyOptions
 
 export const fetchVehicleInsuranceList = supabaseVehicleApi.fetchVehicleInsuranceList
+export const fetchVehicleQuerySummaryRecords = supabaseVehicleApi.fetchVehicleQuerySummaryRecords
+export type { VehicleQuerySummaryRecords } from '@vms/api/providers/supabase/vehicle/types'
 export const exportVehicleInsuranceList = supabaseVehicleApi.exportVehicleInsuranceList
 export const fetchVehicleInsuranceDetail = supabaseVehicleApi.fetchVehicleInsuranceDetail
 export const addVehicleInsurance = supabaseVehicleApi.addVehicleInsurance

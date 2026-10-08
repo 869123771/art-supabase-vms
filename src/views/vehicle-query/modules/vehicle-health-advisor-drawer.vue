@@ -1,8 +1,6 @@
 <template>
-  <ArtDrawer ref="drawerRef" :show-footer="false">
+  <ArtDrawer :loading="state.loading" ref="drawerRef" :show-footer="false">
     <ArtAsyncState
-      :loading="state.loading"
-      loading-mode="skeleton"
       :skeleton-rows="9"
       :error="state.error"
       error-title="车辆健康研判失败"

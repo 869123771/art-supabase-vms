@@ -1,0 +1,1 @@
+import{x as e}from"./art-icon-button-CHgEgBMF.js";var t=1/0,n=17976931348623157e292;function r(r){return r?(r=e(r),r===t||r===-t?(r<0?-1:1)*n:r===r?r:0):r===0?r:0}function i(e){var t=r(e),n=t%1;return t===t?n?t-n:t:0}function a(e,t,n,r){for(var i=e.length,a=n+(r?1:-1);r?a--:++a<i;)if(t(e[a],a,e))return a;return-1}export{i as n,a as t};

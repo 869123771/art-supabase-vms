@@ -26,7 +26,7 @@
         <strong>
           {{
             canViewLossAmounts
-              ? formatMoney(detail.data?.economicLoss)
+              ? formatSensitiveNumberWithAffix(detail.data?.economicLoss, { suffix: ' 元' })
               : formatValue(detail.data?.damageLevel)
           }}
         </strong>
@@ -152,13 +152,19 @@
             key: 'economicLoss',
             label: '经济损失',
             field: 'economicLoss',
-            formatter: (value: unknown) => formatMoney(value as number | string | null | undefined)
+            formatter: (value: unknown) =>
+              formatSensitiveNumberWithAffix(value as number | string | null | undefined, {
+                suffix: ' 元'
+              })
           },
           {
             key: 'companyBearAmount',
             label: '公司承担',
             field: 'companyBearAmount',
-            formatter: (value: unknown) => formatMoney(value as number | string | null | undefined)
+            formatter: (value: unknown) =>
+              formatSensitiveNumberWithAffix(value as number | string | null | undefined, {
+                suffix: ' 元'
+              })
           }
         ]
       : []),
@@ -235,10 +241,6 @@
   const formatValue = (value?: string | number | null): string => {
     if (isNil(value) || value === '') return '--'
     return String(value)
-  }
-
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
   }
 
   const formatPercent = (value?: number | null): string => {

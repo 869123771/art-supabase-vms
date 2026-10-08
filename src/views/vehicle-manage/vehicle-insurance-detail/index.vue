@@ -121,7 +121,10 @@
             key: 'commercialPremium',
             label: '投保金额',
             field: 'commercialPremium',
-            formatter: (value) => formatMoney(value as number | string | null | undefined)
+            formatter: (value) =>
+              formatSensitiveNumberWithAffix(value as number | string | null | undefined, {
+                suffix: ' 元'
+              })
           } as ArtDescriptionItem<Partial<VehicleInsurance>>
         ]
       : []),
@@ -156,7 +159,10 @@
             key: 'compulsoryPremium',
             label: '投保金额',
             field: 'compulsoryPremium',
-            formatter: (value) => formatMoney(value as number | string | null | undefined)
+            formatter: (value) =>
+              formatSensitiveNumberWithAffix(value as number | string | null | undefined, {
+                suffix: ' 元'
+              })
           } as ArtDescriptionItem<Partial<VehicleInsurance>>
         ]
       : []),
@@ -224,10 +230,6 @@
   const formatValue = (value?: string | number | null): string => {
     if (value === undefined || value === null || value === '') return '--'
     return String(value)
-  }
-
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
   }
 </script>
 

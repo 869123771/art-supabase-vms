@@ -1,5 +1,5 @@
 <template>
-  <div class="vehicle-violation-page art-full-height">
+  <div class="vehicle-violation-page art-full-height min-w-0 gap-3">
     <BusinessWorkspaceHeader
       eyebrow="TRAFFIC COMPLIANCE"
       title="车辆违章"
@@ -184,7 +184,8 @@
               label: '罚款金额',
               width: 120,
               align: 'right',
-              formatter: (row: ViolationRecord) => formatMoney(row.fineAmount)
+              formatter: (row: ViolationRecord) =>
+                formatSensitiveNumberWithAffix(row.fineAmount, { suffix: ' 元' })
             }
           ]
         : []),
@@ -247,15 +248,4 @@
       ...item,
       value: item.value === 'true'
     }))
-
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
-  }
 </script>
-
-<style scoped lang="scss">
-  .vehicle-violation-page {
-    gap: 12px;
-    min-width: 0;
-  }
-</style>

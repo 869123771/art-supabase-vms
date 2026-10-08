@@ -1,8 +1,9 @@
 <template>
   <ArtPageSection title="车辆视图">
     <div class="vehicle-view-panel">
+      <p class="vehicle-view-panel__description">车辆结构示意，用于查看档案中的车身资料。</p>
       <div class="vehicle-view-panel__canvas">
-        <svg viewBox="0 0 980 420" role="img" aria-label="车辆视图">
+        <svg viewBox="0 0 980 420" aria-hidden="true" focusable="false">
           <path
             class="vehicle-view-panel__body"
             d="M150 255 L180 165 L295 165 L330 220 L760 220 L790 315 L170 315 Z"
@@ -17,23 +18,21 @@
           <circle class="vehicle-view-panel__wheel" cx="700" cy="315" r="52" />
           <circle class="vehicle-view-panel__wheel-inner" cx="260" cy="315" r="18" />
           <circle class="vehicle-view-panel__wheel-inner" cx="700" cy="315" r="18" />
-          <path class="vehicle-view-panel__dash" d="M230 315 H170 V370 H92" />
-          <path class="vehicle-view-panel__dash" d="M560 300 V370 H640" />
-          <circle class="vehicle-view-panel__point" cx="205" cy="260" r="9" />
-          <circle class="vehicle-view-panel__point" cx="300" cy="162" r="9" />
-          <circle class="vehicle-view-panel__point" cx="560" cy="295" r="9" />
         </svg>
-        <div class="vehicle-view-panel__tip vehicle-view-panel__tip--left">
-          <p>胎压：{{ tirePressure }}</p>
-          <p>损坏：{{ damageText }}</p>
-          <p>上次检测：{{ lastCheckDate }}</p>
-        </div>
-        <div class="vehicle-view-panel__tip vehicle-view-panel__tip--right">
-          <p>灭火装置</p>
-          <p>检测结果：{{ routineResult }}</p>
-          <p>上次检测：{{ lastCheckDate }}</p>
-        </div>
       </div>
+      <dl class="vehicle-view-panel__facts">
+        <div>
+          <dt>轮胎数</dt>
+          <dd>{{ vehicle.tireCount ?? '--' }}</dd>
+        </div>
+        <div>
+          <dt>例检启用日期</dt>
+          <dd>{{ formatDate(vehicle.inspectionStartDate) }}</dd>
+        </div>
+      </dl>
+      <p class="vehicle-view-panel__note">
+        档案未提供实时胎压或损伤数据；灭火装置等检测结果请在“例检记录”中核验。
+      </p>
     </div>
   </ArtPageSection>
 </template>
@@ -45,90 +44,85 @@
 
   defineOptions({ name: 'VehicleQueryViewPanel' })
 
-  const props = defineProps<{
+  defineProps<{
     vehicle: VehicleArchive
   }>()
-
-  const tirePressure = computed(() => (props.vehicle.tireCount ? '2.5BAR' : '--'))
-  const damageText = computed(() => '轻微')
-  const lastCheckDate = computed(() => formatDate(props.vehicle.inspectionStartDate))
-  const routineResult = computed(() => '正常')
 </script>
 
 <style scoped lang="scss">
   .vehicle-view-panel {
-    min-height: 560px;
-    padding-top: 32px;
+    display: grid;
+    gap: 24px;
+    padding-top: 16px;
+
+    &__description {
+      margin: 0;
+      color: var(--art-gray-700);
+    }
 
     &__canvas {
-      position: relative;
-      max-width: 980px;
-      margin: 0 auto;
+      padding: 16px;
+      background: var(--art-gray-100);
+      border-radius: var(--art-surface-radius);
     }
 
     svg {
+      display: block;
       width: 100%;
       height: auto;
+      max-height: 320px;
     }
 
     &__body {
-      fill: #c7c9cc;
-      stroke: #4c4f52;
+      fill: var(--art-gray-200);
+      stroke: var(--art-gray-700);
       stroke-width: 2;
     }
 
     &__line {
       fill: none;
-      stroke: #4c4f52;
+      stroke: var(--art-gray-700);
       stroke-width: 2;
     }
 
     &__wheel {
-      fill: #111;
-      stroke: #111;
+      fill: var(--art-gray-800);
+      stroke: var(--art-gray-800);
     }
 
     &__wheel-inner {
-      fill: #e5e7eb;
-      stroke: #111;
+      fill: var(--art-gray-100);
+      stroke: var(--art-gray-800);
       stroke-width: 8;
     }
 
-    &__dash {
-      fill: none;
-      stroke: #3ba6dd;
-      stroke-width: 3;
-      stroke-dasharray: 12 8;
+    &__facts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 32px;
+      padding-bottom: 16px;
+      margin: 0;
+      border-bottom: 1px solid var(--art-gray-200);
+
+      div {
+        min-width: 120px;
+      }
+
+      dt {
+        color: var(--art-gray-700);
+      }
+
+      dd {
+        margin: 4px 0 0;
+        font-weight: 600;
+        color: var(--art-gray-900);
+      }
     }
 
-    &__point {
-      opacity: 0.85;
-      fill: #9adb6e;
-    }
-
-    &__tip {
-      position: absolute;
-      min-width: 150px;
-      padding: 10px 12px;
-      font-weight: 600;
-      line-height: 1.5;
-      color: #fff;
-      background: rgb(80 80 80 / 65%);
-      box-shadow: 0 6px 12px rgb(0 0 0 / 18%);
-
-      p {
-        margin: 0;
-      }
-
-      &--left {
-        bottom: 4%;
-        left: 6%;
-      }
-
-      &--right {
-        right: 18%;
-        bottom: 2%;
-      }
+    &__note {
+      margin: 0;
+      line-height: 1.6;
+      color: var(--art-gray-700);
     }
   }
 </style>

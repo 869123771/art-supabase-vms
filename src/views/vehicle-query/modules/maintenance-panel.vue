@@ -5,7 +5,7 @@
         v-model="panel.maintenanceType"
         clearable
         placeholder="维修类型"
-        style="width: 180px"
+        class="w-full sm:w-45"
       >
         <ElOption
           v-for="option in maintenanceTypeOptions"
@@ -70,10 +70,6 @@
     mergeFieldAccessMaps(...records.value.map((record) => record.fieldAccess))
   )
 
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
-  }
-
   const columns = computed<ColumnOption<VehicleMaintenanceRecord>[]>(() => [
     { type: 'globalIndex', label: '序号', width: 80 },
     ...(canViewField(effectiveFieldAccess.value, 'maintenanceIdentifiers')
@@ -104,7 +100,8 @@
             prop: 'costAmount',
             label: '费用',
             minWidth: 130,
-            formatter: (row: VehicleMaintenanceRecord) => formatMoney(row.costAmount)
+            formatter: (row: VehicleMaintenanceRecord) =>
+              formatSensitiveNumberWithAffix(row.costAmount, { suffix: ' 元' })
           }
         ]
       : [])

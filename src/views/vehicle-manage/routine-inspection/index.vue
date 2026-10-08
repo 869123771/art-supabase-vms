@@ -1,5 +1,5 @@
 <template>
-  <div class="routine-inspection-page art-full-height">
+  <div class="routine-inspection-page art-full-height min-w-0 gap-3">
     <BusinessWorkspaceHeader
       eyebrow="DAILY SAFETY CHECK"
       title="车辆例行检查"
@@ -349,10 +349,3 @@
     }
   }
 </script>
-
-<style scoped lang="scss">
-  .routine-inspection-page {
-    gap: 12px;
-    min-width: 0;
-  }
-</style>

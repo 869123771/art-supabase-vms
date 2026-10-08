@@ -1,5 +1,5 @@
 <template>
-  <div class="accident-record-page art-full-height">
+  <div class="accident-record-page art-full-height min-w-0 gap-3">
     <BusinessWorkspaceHeader
       eyebrow="SAFETY INCIDENT CONTROL"
       title="车辆事故"
@@ -373,10 +373,3 @@
 
   const getProcessedDictOptions = () => processedOptions
 </script>
-
-<style scoped lang="scss">
-  .accident-record-page {
-    gap: 12px;
-    min-width: 0;
-  }
-</style>

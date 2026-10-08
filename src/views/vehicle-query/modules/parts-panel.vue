@@ -1,7 +1,7 @@
 <template>
   <ArtPageSection title="零部件管理">
     <template #actions>
-      <ElInput v-model="panel.keyword" clearable placeholder="零部件名称" style="width: 220px" />
+      <ElInput v-model="panel.keyword" clearable placeholder="零部件名称" class="w-full sm:w-55" />
     </template>
     <VehicleQueryTable :data="filteredRecords" :columns="columns" :loading="loading" />
   </ArtPageSection>

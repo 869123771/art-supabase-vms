@@ -1,5 +1,5 @@
 <template>
-  <div class="maintenance-record-page art-full-height">
+  <div class="maintenance-record-page art-full-height min-w-0 gap-3">
     <BusinessWorkspaceHeader
       eyebrow="MAINTENANCE CONTROL"
       title="维修保养记录"
@@ -258,7 +258,8 @@
               label: '费用金额',
               width: 120,
               align: 'right',
-              formatter: (row: MaintenanceRecord) => formatMoney(row.costAmount)
+              formatter: (row: MaintenanceRecord) =>
+                formatSensitiveNumberWithAffix(row.costAmount, { suffix: ' 元' })
             }
           ]
         : []),
@@ -376,10 +377,6 @@
     }
   }
 
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
-  }
-
   const formatMileage = (value?: number | string | null): string =>
     formatSensitiveNumberWithAffix(value, { suffix: ' KM' })
 
@@ -392,10 +389,3 @@
     return `${start} ~ ${end}`
   }
 </script>
-
-<style scoped lang="scss">
-  .maintenance-record-page {
-    gap: 12px;
-    min-width: 0;
-  }
-</style>

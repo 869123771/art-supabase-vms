@@ -27,7 +27,6 @@
 </template>
 
 <script setup lang="tsx">
-  import { normalizeNullableNumber } from '@/utils/form/normalize'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import BusinessWorkspaceHeader, {
@@ -36,24 +35,13 @@
   import type { SearchFormItem } from '@/components/core/forms/art-search-bar/index.vue'
   import type { ArtTableQueryProps } from '@/components/core/tables/art-table-query/index.vue'
   import type { ColumnOption } from '@/types'
-  import {
-    fetchVehicleArchiveList,
-    fetchVehicleInspectionList,
-    fetchVehicleInsuranceList,
-    fetchVehicleMaintenanceList,
-    fetchVehicleMileageList
-  } from '@vms/api'
+  import { fetchVehicleArchiveList } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
   import { buildSupabasePageRange } from '@/utils/supabase/pagination'
-  import { mapWithConcurrency } from '@/utils/async'
-  import { formatDate, formatMileage, getLatestByDate } from './modules/query-format'
-  import type {
-    VehicleArchive,
-    VehicleInspection,
-    VehicleInsurance,
-    VehicleMaintenanceRecord,
-    VehicleMileageRecord
-  } from './modules/types'
+  import { formatDate, formatMileage } from './modules/query-format'
+  import { loadVehicleQuerySummaries } from './modules/load-vehicle-query-summary'
+  import type { VehicleQueryCoverage } from './modules/vehicle-query-summary'
+  import type { VehicleArchive, VehicleQuerySummary } from './modules/types'
   import { isNil } from 'lodash-es'
   import { canViewField, mergeFieldAccessMaps } from '@/utils/field-permission'
 
@@ -62,16 +50,8 @@
   type SearchParams = Api.Vms.ArchiveManage.VehicleArchiveSearchParams
   type TableParams = SearchParams & Pick<Api.Common.PaginationParams, 'current' | 'size'>
 
-  interface VehicleQueryRow extends VehicleArchive {
-    runningMileage?: number | null
+  interface VehicleQueryRow extends VehicleArchive, VehicleQuerySummary, VehicleQueryCoverage {
     operationYears?: number | null
-    commercialExpireDate?: string
-    compulsoryExpireDate?: string
-    inspectionExpireDate?: string
-    maintenanceExpireDate?: string | null
-    insuranceReady: boolean
-    inspectionReady: boolean
-    maintenanceReady: boolean
     threeGuaranteeReady: boolean
     warrantyReady: boolean
   }
@@ -270,64 +250,19 @@
   }
 
   const createQueryRows = async (rows: VehicleArchive[]): Promise<VehicleQueryRow[]> => {
-    const summaries = await mapWithConcurrency(rows, 4, (row) => loadVehicleSummary(row))
-    return rows.map((row, index) => ({
+    const summaries = await loadVehicleQuerySummaries(
+      rows.flatMap((row) => (row.id ? [row.id] : []))
+    )
+    return rows.map((row) => ({
       ...row,
-      ...summaries[index]
-    }))
-  }
-
-  const loadVehicleSummary = async (
-    row: VehicleArchive
-  ): Promise<Omit<VehicleQueryRow, keyof VehicleArchive>> => {
-    const [insuranceResult, inspectionResult, maintenanceResult, mileageResult] = await Promise.all(
-      [
-        fetchVehicleInsuranceList({ plateNo: row.plateNo, from: 0, to: 9999 }),
-        fetchVehicleInspectionList({ plateNo: row.plateNo, from: 0, to: 9999 }),
-        fetchVehicleMaintenanceList({
-          plateNo: row.plateNo,
-          maintenanceType: 'maintenance',
-          from: 0,
-          to: 9999
-        }),
-        fetchVehicleMileageList({ plateNo: row.plateNo, from: 0, to: 9999 })
-      ]
-    )
-
-    const latestInsurance = getLatestByDate<VehicleInsurance>(
-      insuranceResult.data ?? [],
-      (item) => item.createTime
-    )
-    const latestInspection = getLatestByDate<VehicleInspection>(
-      inspectionResult.data ?? [],
-      (item) => item.expireDate
-    )
-    const latestMaintenance = getLatestByDate<VehicleMaintenanceRecord>(
-      maintenanceResult.data ?? [],
-      (item) => item.startTime
-    )
-    const latestMileage = getLatestByDate<VehicleMileageRecord>(
-      mileageResult.data ?? [],
-      (item) => item.endTime || item.startTime
-    )
-
-    return {
-      runningMileage:
-        normalizeNullableNumber(latestMileage?.endMileage) ??
-        normalizeNullableNumber(latestMileage?.runningMileage),
+      ...(row.id ? summaries[row.id]?.summary : undefined),
+      insuranceReady: row.id ? (summaries[row.id]?.coverage.insuranceReady ?? false) : false,
+      inspectionReady: row.id ? (summaries[row.id]?.coverage.inspectionReady ?? false) : false,
+      maintenanceReady: row.id ? (summaries[row.id]?.coverage.maintenanceReady ?? false) : false,
       operationYears: getOperationYears(row.startUseDate),
-      commercialExpireDate: latestInsurance?.commercialExpireDate,
-      compulsoryExpireDate: latestInsurance?.compulsoryExpireDate,
-      inspectionExpireDate: latestInspection?.expireDate,
-      maintenanceExpireDate: latestMaintenance?.startTime,
-      insuranceReady: Boolean(
-        latestInsurance?.commercialExpireDate || latestInsurance?.compulsoryExpireDate
-      ),
-      inspectionReady: Boolean(latestInspection?.expireDate),
-      maintenanceReady: Boolean(latestMaintenance?.startTime),
       threeGuaranteeReady: !isNil(row.threeGuaranteeMileage) || !isNil(row.threeGuaranteeDuration),
       warrantyReady: !isNil(row.warrantyMileage) || !isNil(row.warrantyDuration)
-    }
+    }))
   }
 
   const openDetail = (row: VehicleArchive): void => {

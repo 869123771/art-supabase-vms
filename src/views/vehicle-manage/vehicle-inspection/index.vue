@@ -1,5 +1,5 @@
 <template>
-  <div class="vehicle-inspection-page art-full-height">
+  <div class="vehicle-inspection-page art-full-height min-w-0 gap-3">
     <BusinessWorkspaceHeader
       eyebrow="REGULATORY INSPECTION"
       title="车辆年检"
@@ -205,7 +205,8 @@
               prop: 'inspectionAmount',
               label: '年检金额',
               width: 110,
-              formatter: (row: VehicleInspection) => formatMoney(row.inspectionAmount)
+              formatter: (row: VehicleInspection) =>
+                formatSensitiveNumberWithAffix(row.inspectionAmount, { suffix: ' 元' })
             }
           ]
         : []),
@@ -324,19 +325,8 @@
     }
   }
 
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
-  }
-
   onErrorCaptured((error) => {
     ElMessage.error(getFriendlySupabaseErrorMessage(error, '车辆年检页面异常'))
     return false
   })
 </script>
-
-<style scoped lang="scss">
-  .vehicle-inspection-page {
-    gap: 12px;
-    min-width: 0;
-  }
-</style>

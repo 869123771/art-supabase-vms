@@ -1,10 +1,10 @@
 <template>
-  <ArtDialog ref="dialogRef" size="xl" :show-fullscreen-button="false">
+  <ArtDialog ref="dialogRef" size="xl" :loading="loading" :show-fullscreen-button="false">
     <template #subtitle
       >选择已有启用规格的车型分类，容积和载重将随规格自动带入。待配置分类暂不可选。</template
     >
     <div class="vehicle-type-picker">
-      <ArtAsyncState :loading="loading" :error="error" :min-height="360" @retry="loadProfiles">
+      <ArtAsyncState :error="error" :min-height="360" @retry="loadProfiles">
         <div class="vehicle-type-picker__categories">
           <button
             v-for="category in categories"

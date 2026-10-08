@@ -1,5 +1,5 @@
 <template>
-  <div class="vehicle-part-usage-page art-full-height">
+  <div class="vehicle-part-usage-page art-full-height min-w-0 gap-3">
     <BusinessWorkspaceHeader
       eyebrow="PARTS LIFECYCLE"
       title="车辆零部件"
@@ -406,10 +406,3 @@
     }
   }
 </script>
-
-<style scoped lang="scss">
-  .vehicle-part-usage-page {
-    gap: 12px;
-    min-width: 0;
-  }
-</style>

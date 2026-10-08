@@ -31,7 +31,9 @@
       </div>
       <div v-if="canViewMaintenanceItems" class="maintenance-record-detail__summary-item">
         <span>费用金额</span>
-        <strong>{{ formatMoney(detail.data?.costAmount) }}</strong>
+        <strong>{{
+          formatSensitiveNumberWithAffix(detail.data?.costAmount, { suffix: ' 元' })
+        }}</strong>
       </div>
       <div class="maintenance-record-detail__summary-item">
         <span>维修项目数</span>
@@ -131,7 +133,10 @@
             key: 'costAmount',
             label: '费用金额',
             field: 'costAmount',
-            formatter: (value: unknown) => formatMoney(value as number | string | null | undefined)
+            formatter: (value: unknown) =>
+              formatSensitiveNumberWithAffix(value as number | string | null | undefined, {
+                suffix: ' 元'
+              })
           }
         ]
       : []),
@@ -154,19 +159,19 @@
       prop: 'partPrice',
       label: '配件金额',
       width: 120,
-      formatter: (row) => formatMoney(row.partPrice)
+      formatter: (row) => formatSensitiveNumberWithAffix(row.partPrice, { suffix: ' 元' })
     },
     {
       prop: 'laborAmount',
       label: '工时费',
       width: 120,
-      formatter: (row) => formatMoney(row.laborAmount)
+      formatter: (row) => formatSensitiveNumberWithAffix(row.laborAmount, { suffix: ' 元' })
     },
     {
       prop: 'totalAmount',
       label: '合计',
       width: 120,
-      formatter: (row) => formatMoney(row.totalAmount)
+      formatter: (row) => formatSensitiveNumberWithAffix(row.totalAmount, { suffix: ' 元' })
     }
   ]
 
@@ -228,10 +233,6 @@
   const formatValue = (value?: string | number | null): string => {
     if (isNil(value) || value === '') return '--'
     return String(value)
-  }
-
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
   }
 
   const getBooleanDictValue = (value?: boolean | null): string | undefined =>

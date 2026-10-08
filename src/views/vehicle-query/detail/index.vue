@@ -39,14 +39,7 @@
 </template>
 
 <script setup lang="ts">
-  import { normalizeNullableNumber } from '@/utils/form/normalize'
-  import {
-    fetchVehicleArchiveDetail,
-    fetchVehicleInspectionList,
-    fetchVehicleInsuranceList,
-    fetchVehicleMaintenanceList,
-    fetchVehicleMileageList
-  } from '@vms/api'
+  import { fetchVehicleArchiveDetail } from '@vms/api'
   import VehicleQuerySummary from '../modules/vehicle-query-summary.vue'
   import VehicleQuerySideTabs from '../modules/vehicle-query-side-tabs.vue'
   import VehicleViewPanel from '../modules/vehicle-view-panel.vue'
@@ -64,16 +57,11 @@
   import VehicleHealthAdvisorDrawer from '../modules/vehicle-health-advisor-drawer.vue'
   import type {
     VehicleArchive,
-    VehicleInspection,
-    VehicleInsurance,
-    VehicleMaintenanceRecord,
-    VehicleMileageRecord,
     VehicleQuerySummary as VehicleSummaryData,
     VehicleQueryTab,
     VehicleQueryTabKey
   } from '../modules/types'
-  import { getLatestByDate } from '../modules/query-format'
-  import { isNil } from 'lodash-es'
+  import { loadVehicleQuerySummary } from '../modules/load-vehicle-query-summary'
 
   defineOptions({ name: 'VehicleQueryDetail' })
 
@@ -164,7 +152,7 @@
         return
       }
 
-      const summary = await loadSummary(data)
+      const { summary } = await loadVehicleQuerySummary(id)
       page.vehicle = data
       page.summary = summary
     } catch (error) {
@@ -178,71 +166,6 @@
 
   const goBack = (): void => {
     void router.push('/vms/vehicle-query')
-  }
-
-  const loadSummary = async (vehicle: VehicleArchive): Promise<VehicleSummaryData> => {
-    const [insuranceResult, inspectionResult, mileageResult, maintenanceResult] = await Promise.all(
-      [
-        fetchVehicleInsuranceList({ plateNo: vehicle.plateNo, from: 0, to: 9999 }),
-        fetchVehicleInspectionList({ plateNo: vehicle.plateNo, from: 0, to: 9999 }),
-        fetchVehicleMileageList({ plateNo: vehicle.plateNo, from: 0, to: 9999 }),
-        fetchVehicleMaintenanceList({
-          plateNo: vehicle.plateNo,
-          maintenanceType: 'maintenance',
-          from: 0,
-          to: 9999
-        })
-      ]
-    )
-
-    const latestInsurance = getLatestByDate<VehicleInsurance>(
-      insuranceResult.data ?? [],
-      (item) => item.createTime
-    )
-    const latestInspection = getLatestByDate<VehicleInspection>(
-      inspectionResult.data ?? [],
-      (item) => item.expireDate
-    )
-    const latestMileage = getLatestByDate<VehicleMileageRecord>(
-      mileageResult.data ?? [],
-      (item) => item.endTime || item.startTime
-    )
-    const latestMaintenance = getLatestByDate<VehicleMaintenanceRecord>(
-      maintenanceResult.data ?? [],
-      (item) => item.startTime
-    )
-
-    return {
-      commercialExpireDate: latestInsurance?.commercialExpireDate,
-      compulsoryExpireDate: latestInsurance?.compulsoryExpireDate,
-      inspectionExpireDate: latestInspection?.expireDate,
-      runningMileage:
-        normalizeNullableNumber(latestMileage?.endMileage) ??
-        normalizeNullableNumber(latestMileage?.runningMileage),
-      nextMaintenanceDate: getNextMaintenanceDate(latestMaintenance),
-      nextMaintenanceMileage: getNextMaintenanceMileage(latestMaintenance, latestMileage)
-    }
-  }
-
-  const getNextMaintenanceDate = (record?: VehicleMaintenanceRecord): string | null => {
-    if (!record?.startTime) return null
-    const start = new Date(record.startTime)
-    if (Number.isNaN(start.getTime())) return null
-    start.setMonth(start.getMonth() + 6)
-    return start.toISOString().slice(0, 10)
-  }
-
-  const getNextMaintenanceMileage = (
-    maintenance?: VehicleMaintenanceRecord,
-    mileage?: VehicleMileageRecord
-  ): number | null => {
-    const currentMileage =
-      normalizeNullableNumber(mileage?.endMileage) ??
-      normalizeNullableNumber(mileage?.runningMileage) ??
-      normalizeNullableNumber(mileage?.startMileage)
-    if (isNil(currentMileage)) return null
-    if (!maintenance) return currentMileage + 5000
-    return currentMileage + 5000
   }
 </script>
 

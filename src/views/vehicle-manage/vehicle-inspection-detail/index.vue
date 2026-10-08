@@ -29,7 +29,9 @@
       </div>
       <div class="vehicle-inspection-detail__summary-item">
         <span>年检金额</span>
-        <strong>{{ formatMoney(detail.data?.inspectionAmount) }}</strong>
+        <strong>{{
+          formatSensitiveNumberWithAffix(detail.data?.inspectionAmount, { suffix: ' 元' })
+        }}</strong>
       </div>
       <div class="vehicle-inspection-detail__summary-item">
         <span>附件数量</span>
@@ -97,7 +99,10 @@
             key: 'inspectionAmount',
             label: '年检金额',
             field: 'inspectionAmount',
-            formatter: (value: unknown) => formatMoney(value as number | string | null | undefined)
+            formatter: (value: unknown) =>
+              formatSensitiveNumberWithAffix(value as number | string | null | undefined, {
+                suffix: ' 元'
+              })
           }
         ]
       : []),
@@ -157,10 +162,6 @@
 
   const goBack = (): void => {
     void router.push('/vms/vehicle-manage/vehicle-inspection')
-  }
-
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
   }
 </script>
 

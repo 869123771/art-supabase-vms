@@ -1,5 +1,5 @@
 <template>
-  <div class="vehicle-insurance-page art-full-height">
+  <div class="vehicle-insurance-page art-full-height min-w-0 gap-3">
     <BusinessWorkspaceHeader
       eyebrow="INSURANCE COMPLIANCE"
       title="车辆保险"
@@ -225,7 +225,8 @@
                   prop: 'commercialPremium',
                   label: '投保金额',
                   width: 120,
-                  formatter: (row: VehicleInsurance) => formatMoney(row.commercialPremium)
+                  formatter: (row: VehicleInsurance) =>
+                    formatSensitiveNumberWithAffix(row.commercialPremium, { suffix: ' 元' })
                 }
               ]
             : []),
@@ -246,7 +247,8 @@
                   prop: 'compulsoryPremium',
                   label: '投保金额',
                   width: 120,
-                  formatter: (row: VehicleInsurance) => formatMoney(row.compulsoryPremium)
+                  formatter: (row: VehicleInsurance) =>
+                    formatSensitiveNumberWithAffix(row.compulsoryPremium, { suffix: ' 元' })
                 }
               ]
             : []),
@@ -379,19 +381,8 @@
     }
   }
 
-  const formatMoney = (value?: number | string | null): string => {
-    return formatSensitiveNumberWithAffix(value, { suffix: ' 元' })
-  }
-
   onErrorCaptured((error) => {
     ElMessage.error(getFriendlySupabaseErrorMessage(error, '车辆保险页面异常'))
     return false
   })
 </script>
-
-<style scoped lang="scss">
-  .vehicle-insurance-page {
-    gap: 12px;
-    min-width: 0;
-  }
-</style>

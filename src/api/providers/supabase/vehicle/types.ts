@@ -42,6 +42,19 @@ export type VehicleAccidentRecord = Api.Vms.VehicleManage.VehicleAccidentRecord
 export type VehicleAccidentSearchParams = Api.Vms.VehicleManage.VehicleAccidentSearchParams
 export type VehicleMaintenanceRecord = Api.Vms.VehicleManage.VehicleMaintenanceRecord
 export type VehicleMaintenanceSearchParams = Api.Vms.VehicleManage.VehicleMaintenanceSearchParams
+
+export interface VehicleQuerySummaryRecords {
+  insurance: Pick<
+    VehicleInsurance,
+    'createTime' | 'commercialExpireDate' | 'compulsoryExpireDate'
+  >[]
+  inspection: Pick<VehicleInspection, 'expireDate'>[]
+  maintenance: Pick<VehicleMaintenanceRecord, 'startTime'>[]
+  mileage: Pick<
+    VehicleMileageRecord,
+    'endTime' | 'startTime' | 'endMileage' | 'runningMileage' | 'startMileage'
+  >[]
+}
 export type VehiclePartUsage = Api.Vms.VehicleManage.VehiclePartUsage
 export type VehiclePartUsageSearchParams = Api.Vms.VehicleManage.VehiclePartUsageSearchParams
 
