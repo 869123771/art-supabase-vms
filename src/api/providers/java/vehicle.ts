@@ -1,4 +1,5 @@
 import http from '@/utils/http'
+import TreeUtils from '@/utils/tree'
 import type { QueryResult } from '@/types/api/response'
 
 type InsuranceCompany = Api.Vms.BasicInfo.InsuranceCompany
@@ -19,6 +20,7 @@ interface RangePaginationParams {
 }
 
 const API_PREFIX = '/api/vms/basic-info'
+const categoryTree = new TreeUtils({ parentKey: 'parentId' })
 
 const ENDPOINTS = {
   insuranceCompany: `${API_PREFIX}/insurance-companies`,
@@ -202,12 +204,21 @@ export async function fetchPartsCategoryList(params: PartsCategorySearchParams) 
 
 export async function fetchPartsCategoryTree(
   params: Partial<Pick<PartsCategory, 'categoryName'>> = {}
-) {
+): Promise<QueryResult<PartsCategory[]>> {
   const result = await http.get<PartsCategory[] | JavaPageResult<PartsCategory>>({
     url: `${ENDPOINTS.partsCategory}/tree`,
     params
   })
-  return normalizeListResult(result)
+  const normalized = normalizeListResult(result)
+  const rows = normalized.data
+  return {
+    ...normalized,
+    data: rows
+      ? rows.some((row) => row.children?.length)
+        ? categoryTree.normalizeTreeData<PartsCategory>(rows)
+        : categoryTree.listToTree(rows.filter((row) => Boolean(row.id)))
+      : null
+  }
 }
 
 export async function exportPartsCategoryList(

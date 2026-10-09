@@ -29,6 +29,7 @@
   import { useDocumentNumberRule } from '@/hooks/core/useDocumentNumberRule'
   import { addPartsCategory, editPartsCategory, fetchPartsCategoryTree } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
+  import TreeUtils from '@/utils/tree'
 
   type PartsCategory = Api.Vms.BasicInfo.PartsCategory
   type PartsCategoryForm = Omit<PartsCategory, 'children'>
@@ -58,25 +59,7 @@
 
   const form = reactive<PartsCategoryForm>(createInitialForm())
 
-  const normalizeTreeOptions = (records: PartsCategory[], excludeId?: string): PartsCategory[] => {
-    const nodeMap = new Map<string, PartsCategory>()
-    const roots: PartsCategory[] = []
-
-    records.forEach((item) => {
-      if (!item.id || item.id === excludeId) return
-      nodeMap.set(item.id, { ...item, children: [] })
-    })
-
-    nodeMap.forEach((node) => {
-      if (node.parentId && node.parentId !== excludeId && nodeMap.has(node.parentId)) {
-        nodeMap.get(node.parentId)?.children?.push(node)
-      } else {
-        roots.push(node)
-      }
-    })
-
-    return roots
-  }
+  const categoryTree = new TreeUtils({ parentKey: 'parentId' })
 
   const categoryNumber = useDocumentNumberRule('vehicle.part_category')
 
@@ -106,11 +89,17 @@
       key: 'parentId',
       type: 'treeSelect',
       span: 24,
-      api: fetchPartsCategoryTree,
-      afterFetch: (result: unknown) => {
-        const records = (result as { data?: PartsCategory[] })?.data ?? []
-        return normalizeTreeOptions(records, form.id)
+      api: async (params: Partial<Pick<PartsCategory, 'categoryName'>> = {}) => {
+        const result = await fetchPartsCategoryTree(params)
+        return {
+          ...result,
+          data:
+            result.data && form.id
+              ? categoryTree.removeNodesByCondition(result.data, (node) => node.id === form.id).tree
+              : result.data
+        }
       },
+      resultField: 'data',
       labelField: 'categoryName',
       valueField: 'id',
       childrenField: 'children',

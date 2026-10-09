@@ -68,7 +68,7 @@
       >
         <ArtSectionTitle>检查情况</ArtSectionTitle>
         <div class="routine-inspection-detail__text">
-          {{ formatValue(detail.data?.checkCondition) }}
+          {{ formatArtValue(detail.data?.checkCondition) }}
         </div>
       </section>
 
@@ -78,13 +78,13 @@
       >
         <ArtSectionTitle>处理方式</ArtSectionTitle>
         <div class="routine-inspection-detail__text">
-          {{ formatValue(detail.data?.handlingMethod) }}
+          {{ formatArtValue(detail.data?.handlingMethod) }}
         </div>
       </section>
 
       <section class="routine-inspection-detail__section">
         <ArtSectionTitle>备注</ArtSectionTitle>
-        <div class="routine-inspection-detail__text">{{ formatValue(detail.data?.remark) }}</div>
+        <div class="routine-inspection-detail__text">{{ formatArtValue(detail.data?.remark) }}</div>
       </section>
 
       <section
@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="tsx">
-  import { isNil } from 'lodash-es'
+  import { formatArtValue } from '@/utils/ui/format'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
   import ArtDictDisplay from '@/components/core/base/art-dict-display/index.vue'
@@ -220,11 +220,6 @@
 
   const goBack = (): void => {
     void router.push('/vms/vehicle-manage/routine-inspection')
-  }
-
-  const formatValue = (value?: string | number | null): string => {
-    if (isNil(value) || value === '') return '--'
-    return String(value)
   }
 </script>
 

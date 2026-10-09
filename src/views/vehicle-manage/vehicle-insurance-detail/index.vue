@@ -19,11 +19,11 @@
     <section class="vehicle-insurance-detail__summary art-card-xs">
       <div v-if="canViewInsuranceField('documents')" class="vehicle-insurance-detail__summary-item">
         <span>商业险到期</span>
-        <strong>{{ formatValue(detail.data?.commercialExpireDate) }}</strong>
+        <strong>{{ formatArtValue(detail.data?.commercialExpireDate) }}</strong>
       </div>
       <div class="vehicle-insurance-detail__summary-item">
         <span>交强险到期</span>
-        <strong>{{ formatValue(detail.data?.compulsoryExpireDate) }}</strong>
+        <strong>{{ formatArtValue(detail.data?.compulsoryExpireDate) }}</strong>
       </div>
       <div class="vehicle-insurance-detail__summary-item">
         <span>附件数量</span>
@@ -51,7 +51,9 @@
 
       <section class="vehicle-insurance-detail__section">
         <ArtSectionTitle>备注</ArtSectionTitle>
-        <div class="vehicle-insurance-detail__remark">{{ formatValue(detail.data?.remark) }}</div>
+        <div class="vehicle-insurance-detail__remark">{{
+          formatArtValue(detail.data?.remark)
+        }}</div>
       </section>
 
       <section class="vehicle-insurance-detail__section">
@@ -69,6 +71,7 @@
 </template>
 
 <script setup lang="tsx">
+  import { formatArtValue } from '@/utils/ui/format'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
@@ -225,11 +228,6 @@
 
   const goBack = (): void => {
     void router.push('/vms/vehicle-manage/vehicle-insurance')
-  }
-
-  const formatValue = (value?: string | number | null): string => {
-    if (value === undefined || value === null || value === '') return '--'
-    return String(value)
   }
 </script>
 

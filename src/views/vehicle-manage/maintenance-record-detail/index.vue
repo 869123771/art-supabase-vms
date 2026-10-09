@@ -60,7 +60,9 @@
 
       <section class="maintenance-record-detail__section">
         <ArtSectionTitle>备注</ArtSectionTitle>
-        <div class="maintenance-record-detail__remark">{{ formatValue(detail.data?.remark) }}</div>
+        <div class="maintenance-record-detail__remark">{{
+          formatArtValue(detail.data?.remark)
+        }}</div>
       </section>
 
       <section class="maintenance-record-detail__section">
@@ -78,6 +80,7 @@
 </template>
 
 <script setup lang="tsx">
+  import { formatArtValue } from '@/utils/ui/format'
   import { isNil } from 'lodash-es'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
@@ -228,11 +231,6 @@
 
   const goBack = (): void => {
     void router.push('/vms/vehicle-manage/maintenance-record')
-  }
-
-  const formatValue = (value?: string | number | null): string => {
-    if (isNil(value) || value === '') return '--'
-    return String(value)
   }
 
   const getBooleanDictValue = (value?: boolean | null): string | undefined =>

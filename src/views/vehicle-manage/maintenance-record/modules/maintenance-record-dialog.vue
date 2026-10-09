@@ -639,7 +639,7 @@
   )
 
   const handleInitiatorChange = (
-    _id: string | undefined,
+    _id: string | string[] | undefined,
     rows: EmployeeIntegrationItem[]
   ): void => {
     form.data.initiatorEmployeeId = rows[0]?.id ?? null

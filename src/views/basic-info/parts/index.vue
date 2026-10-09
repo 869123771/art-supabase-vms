@@ -52,7 +52,6 @@
   } from '@/components/core/tables/art-table-query/index.vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { ColumnOption, DialogType } from '@/types'
-  import TreeUtils from '@/utils/tree'
   import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { useUserStore } from '@/store/modules/user'
   import {
@@ -76,7 +75,6 @@
   type Parts = Api.Vms.BasicInfo.Parts
   type SearchParams = Api.Vms.BasicInfo.PartsSearchParams
   type TableParams = SearchParams & Pick<Api.Common.PaginationParams, 'current' | 'size'>
-  type PartsCategory = Api.Vms.BasicInfo.PartsCategory
 
   interface DialogExpose {
     handleOpen: (row?: Parts) => Promise<void>
@@ -86,11 +84,6 @@
   const dialogRef = ref<DialogExpose>()
   const userStore = useUserStore()
   const { getDictMap } = storeToRefs(userStore)
-  const categoryTreeUtils = new TreeUtils({
-    idKey: 'id',
-    parentKey: 'parentId',
-    childrenKey: 'children'
-  })
   const overview = reactive<{ total: number; rows: Parts[] }>({ total: 0, rows: [] })
   const workspaceMetrics = computed<BusinessWorkspaceMetric[]>(() => [
     {
@@ -139,10 +132,7 @@
       key: 'categoryId',
       type: 'treeSelect',
       api: fetchPartsCategoryTree,
-      afterFetch: (result: unknown) => {
-        const records = (result as { data?: PartsCategory[] })?.data ?? []
-        return categoryTreeUtils.listToTree(records) as PartsCategory[]
-      },
+      resultField: 'data',
       labelField: 'categoryName',
       valueField: 'id',
       childrenField: 'children',

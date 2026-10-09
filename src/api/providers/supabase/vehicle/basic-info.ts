@@ -1,8 +1,11 @@
 import { normalizeNullableText } from '@/utils/form/normalize'
 import { uniq } from 'lodash-es'
+import TreeUtils from '@/utils/tree'
+import { fetchAllRangePages } from '@/utils/supabase/pagination'
 import { useSupabase } from '@/hooks'
 import { withRequestOptions } from '@/api/providers/supabase/query'
 import type { ApiRequestOptions } from '@/types/api/request'
+import type { QueryResult } from '@/types/api/response'
 import { buildSupabaseRpcRange, applyFilters, type FilterSpec } from '@/utils/supabase'
 import {
   type InsuranceCompany,
@@ -16,6 +19,7 @@ import {
 } from './types'
 
 const { supabase, keysToSnakeDeep, responseHandle } = useSupabase()
+const categoryTree = new TreeUtils({ parentKey: 'parentId' })
 
 // 保险公司
 export async function fetchInsuranceCompanyList(
@@ -240,21 +244,28 @@ export async function fetchPartsCategoryList(
 export async function fetchPartsCategoryTree(
   params: Partial<Pick<PartsCategory, 'categoryName'>> = {},
   options?: ApiRequestOptions
-) {
-  const { categoryName } = params
-  let query = supabase
-    .from('mdm_part_category')
-    .select('*')
-    .order('sort', { ascending: true })
-    .order('create_time', { ascending: false })
-
-  if (categoryName) {
-    query = query.ilike('category_name', `%${categoryName}%`)
-  }
-
-  return await responseHandle<PartsCategory[]>(() => withRequestOptions(query, options), {
-    showErrorMessage: true
+): Promise<QueryResult<PartsCategory[]>> {
+  const result = await fetchAllRangePages<PartsCategory>(async ({ from, to }) => {
+    let query = supabase
+      .from('mdm_part_category')
+      .select('*')
+      .order('sort', { ascending: true })
+      .order('create_time', { ascending: false })
+      .order('id', { ascending: true })
+      .range(from, to)
+    if (params.categoryName) {
+      query = query.ilike('category_name', `%${params.categoryName}%`)
+    }
+    return responseHandle<PartsCategory[]>(() => withRequestOptions(query, options), {
+      showErrorMessage: true
+    })
   })
+  return {
+    ...result,
+    data: result.data
+      ? categoryTree.listToTree(result.data.filter((item) => Boolean(item.id)))
+      : null
+  }
 }
 
 export async function exportPartsCategoryList(

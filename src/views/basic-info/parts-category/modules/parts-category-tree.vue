@@ -91,7 +91,6 @@
   import { debounce } from 'lodash-es'
   import type { ElTree } from 'element-plus'
   import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
-  import TreeUtils from '@/utils/tree'
   import { deletePartsCategory, fetchPartsCategoryTree } from '@vms/api'
   import PartsCategoryDialog from './parts-category-dialog.vue'
 
@@ -120,16 +119,6 @@
     label: 'categoryName'
   }
 
-  const categoryTree = new TreeUtils({
-    idKey: 'id',
-    parentKey: 'parentId',
-    childrenKey: 'children',
-    deepClone: false
-  })
-
-  const buildTree = (records: PartsCategory[]): PartsCategory[] =>
-    categoryTree.listToTree(records.filter((item) => Boolean(item.id)))
-
   const getCurrentCategory = computed<PartsCategory | undefined>(() => {
     return treeRef.value?.getCurrentNode() as PartsCategory | undefined
   })
@@ -143,7 +132,7 @@
     try {
       loading.value = true
       const { data } = await fetchPartsCategoryTree({ categoryName: keyword.value })
-      treeData.value = buildTree(data ?? [])
+      treeData.value = data ?? []
     } finally {
       loading.value = false
     }

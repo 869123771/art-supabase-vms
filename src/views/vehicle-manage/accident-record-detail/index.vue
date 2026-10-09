@@ -19,7 +19,7 @@
     <section class="accident-record-detail__summary art-card-xs">
       <div class="accident-record-detail__summary-item">
         <span>事故时间</span>
-        <strong>{{ formatValue(detail.data?.accidentTime) }}</strong>
+        <strong>{{ formatArtValue(detail.data?.accidentTime) }}</strong>
       </div>
       <div class="accident-record-detail__summary-item">
         <span>{{ canViewLossAmounts ? '经济损失' : '事故等级' }}</span>
@@ -27,7 +27,7 @@
           {{
             canViewLossAmounts
               ? formatSensitiveNumberWithAffix(detail.data?.economicLoss, { suffix: ' 元' })
-              : formatValue(detail.data?.damageLevel)
+              : formatArtValue(detail.data?.damageLevel)
           }}
         </strong>
       </div>
@@ -56,7 +56,7 @@
 
       <section v-if="canViewNarrative" class="accident-record-detail__section">
         <ArtSectionTitle>备注</ArtSectionTitle>
-        <div class="accident-record-detail__remark">{{ formatValue(detail.data?.remark) }}</div>
+        <div class="accident-record-detail__remark">{{ formatArtValue(detail.data?.remark) }}</div>
       </section>
 
       <section v-if="canViewDocuments" class="accident-record-detail__section">
@@ -74,6 +74,7 @@
 </template>
 
 <script setup lang="tsx">
+  import { formatArtValue } from '@/utils/ui/format'
   import { isNil } from 'lodash-es'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
@@ -236,11 +237,6 @@
 
   const goBack = (): void => {
     void router.push('/vms/vehicle-manage/accident-record')
-  }
-
-  const formatValue = (value?: string | number | null): string => {
-    if (isNil(value) || value === '') return '--'
-    return String(value)
   }
 
   const formatPercent = (value?: number | null): string => {

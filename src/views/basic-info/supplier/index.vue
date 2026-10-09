@@ -61,7 +61,12 @@
     type BusinessWorkspaceMetric
   } from '@/components/business/business-workspace-header/index.vue'
   import BusinessTableWorkspaceActions from '@/components/business/business-table-workspace-actions/index.vue'
-  import { canViewField, getFieldAccess, mergeFieldAccessMaps } from '@/utils/field-permission'
+  import {
+    isReadableFieldAccess,
+    canViewField,
+    getFieldAccess,
+    mergeFieldAccessMaps
+  } from '@/utils/field-permission'
 
   defineOptions({ name: 'Supplier' })
 
@@ -131,8 +136,7 @@
       key: 'supplierName',
       type: 'input'
     },
-    ...(getFieldAccess(listFieldAccess.value, 'contactDetails') === 'read' ||
-    getFieldAccess(listFieldAccess.value, 'contactDetails') === 'edit'
+    ...(isReadableFieldAccess(getFieldAccess(listFieldAccess.value, 'contactDetails'))
       ? ([
           { label: '联系人', key: 'contactPerson', type: 'input' },
           { label: '联系电话', key: 'contactPhone', type: 'input' }

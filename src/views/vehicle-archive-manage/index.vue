@@ -254,12 +254,12 @@
       groupBy(navigationRows.value, (row) => row.vehicleOwnership || 'unassigned')
     ).map(([ownership, rows]) => {
       const label =
-        getDictMap.value.vehicleOwnership?.find((item) => item.value === ownership)?.label ??
+        userStore.getDictItemByValue('vehicleOwnership', ownership)?.label ??
         (ownership === 'unassigned' ? '归属未设置' : ownership)
       const children = Object.entries(groupBy(rows, (row) => row.vehicleType || 'unassigned')).map(
         ([vehicleType, typeRows]) => {
           const typeLabel =
-            getDictMap.value.vehicleType?.find((item) => item.value === vehicleType)?.label ??
+            userStore.getDictItemByValue('vehicleType', vehicleType)?.label ??
             (vehicleType === 'unassigned' ? '车型未设置' : vehicleType)
           return {
             key: `type:${ownership}:${vehicleType}`,

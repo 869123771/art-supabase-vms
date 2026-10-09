@@ -28,12 +28,10 @@
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import { useDocumentNumberRule } from '@/hooks/core/useDocumentNumberRule'
-  import TreeUtils from '@/utils/tree'
   import { useUserStore } from '@/store/modules/user'
   import { addParts, editParts, fetchPartsCategoryTree, fetchSupplierOptions } from '@vms/api'
 
   type Parts = Api.Vms.BasicInfo.Parts
-  type PartsCategory = Api.Vms.BasicInfo.PartsCategory
   type Supplier = Api.Vms.BasicInfo.Supplier
 
   interface Emits {
@@ -47,11 +45,6 @@
     clearValidate: () => void
   }>()
   const { getDictMap } = storeToRefs(useUserStore())
-  const categoryTreeUtils = new TreeUtils({
-    idKey: 'id',
-    parentKey: 'parentId',
-    childrenKey: 'children'
-  })
 
   const createInitialForm = (): Parts => ({
     id: undefined,
@@ -130,10 +123,7 @@
       key: 'categoryId',
       type: 'treeSelect',
       api: fetchPartsCategoryTree,
-      afterFetch: (result: unknown) => {
-        const records = (result as { data?: PartsCategory[] })?.data ?? []
-        return categoryTreeUtils.listToTree(records) as PartsCategory[]
-      },
+      resultField: 'data',
       labelField: 'categoryName',
       valueField: 'id',
       childrenField: 'children',

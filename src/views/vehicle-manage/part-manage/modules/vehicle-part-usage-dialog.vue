@@ -217,6 +217,7 @@
 </template>
 
 <script setup lang="ts">
+  import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { validateArtFormForSubmit } from '@/utils/form/validate-art-form'
   import { notifyFriendlyError } from '@/hooks/core/useArtFeedback'
   import { cloneDeep } from 'lodash-es'
@@ -486,23 +487,23 @@
     }))
 
   const fetchVehicleRows = async (params: DataSelectFetchParams) => {
-    const from = (params.page - 1) * params.pageSize
+    const { from, to } = buildSupabasePageRange({ current: params.page, size: params.pageSize })
     const { data, total } = await fetchVehicleArchiveList({
       plateNo: params.keyword,
       auditStatus: 'approved',
       from,
-      to: from + params.pageSize - 1
+      to
     })
     return { data: data ?? [], total: total ?? 0 }
   }
 
   const fetchPartRows = async (params: DataSelectFetchParams) => {
-    const from = (params.page - 1) * params.pageSize
+    const { from, to } = buildSupabasePageRange({ current: params.page, size: params.pageSize })
     const { data, total } = await fetchPartsList({
       partName: params.keyword,
       status: '1',
       from,
-      to: from + params.pageSize - 1
+      to
     })
     return { data: data ?? [], total: total ?? 0 }
   }

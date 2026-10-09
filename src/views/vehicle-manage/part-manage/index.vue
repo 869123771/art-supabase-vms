@@ -63,13 +63,17 @@
     fetchVehiclePartUsageList
   } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
-  import TreeUtils from '@/utils/tree'
   import VehiclePartUsageDialog from './modules/vehicle-part-usage-dialog.vue'
   import BusinessWorkspaceHeader, {
     type BusinessWorkspaceMetric
   } from '@/components/business/business-workspace-header/index.vue'
   import BusinessTableWorkspaceActions from '@/components/business/business-table-workspace-actions/index.vue'
-  import { canViewField, getFieldAccess, mergeFieldAccessMaps } from '@/utils/field-permission'
+  import {
+    isReadableFieldAccess,
+    canViewField,
+    getFieldAccess,
+    mergeFieldAccessMaps
+  } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehiclePartsManage' })
 
@@ -95,11 +99,6 @@
   const { getDictMap } = storeToRefs(userStore)
   const tableQueryRef = ref<ArtTableQueryExpose>()
   const dialogRef = ref<DialogExpose>()
-  const categoryTreeUtils = new TreeUtils({
-    idKey: 'id',
-    parentKey: 'parentId',
-    childrenKey: 'children'
-  })
   const overview = reactive<{ total: number; rows: Usage[] }>({ total: 0, rows: [] })
   const listFieldAccess = ref<Api.Vms.VehicleManage.VehiclePartUsageFieldAccessMap>({})
   const effectiveFieldAccess = computed(() =>
@@ -160,18 +159,14 @@
         key: 'categoryId',
         type: 'treeSelect',
         api: fetchPartsCategoryTree,
-        afterFetch: (result: unknown) => {
-          const records = (result as { data?: Api.Vms.BasicInfo.PartsCategory[] }).data ?? []
-          return categoryTreeUtils.listToTree(records)
-        },
+        resultField: 'data',
         labelField: 'categoryName',
         valueField: 'id',
         childrenField: 'children',
         props: { checkStrictly: true }
       },
       { label: '零部件名称', key: 'partName', type: 'input' },
-      ...(getFieldAccess(listFieldAccess.value, 'traceabilityTag') === 'read' ||
-      getFieldAccess(listFieldAccess.value, 'traceabilityTag') === 'edit'
+      ...(isReadableFieldAccess(getFieldAccess(listFieldAccess.value, 'traceabilityTag'))
         ? [{ label: 'RFID标签', key: 'rfidTag', type: 'input' as const }]
         : []),
       {
