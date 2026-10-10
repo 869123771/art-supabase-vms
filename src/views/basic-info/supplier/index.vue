@@ -87,11 +87,7 @@
   const effectiveFieldAccess = computed(() =>
     mergeFieldAccessMaps(listFieldAccess.value, ...overview.rows.map((row) => row.fieldAccess))
   )
-  const columnAccessSignature = computed(() =>
-    (['contactDetails', 'addressDetails', 'internalNotes'] as const)
-      .map((field) => `${field}:${getFieldAccess(effectiveFieldAccess.value, field)}`)
-      .join('|')
-  )
+
   const visibleContactRows = computed(() =>
     overview.rows.filter((row) => canViewField(row.fieldAccess, 'contactDetails'))
   )
@@ -283,10 +279,6 @@
       )
     }
   ]
-
-  watch(columnAccessSignature, () => {
-    nextTick(() => tableQueryRef.value?.resetColumns())
-  })
 
   const handleTableSuccess: NonNullable<ArtTableQueryProps['onSuccess']> = (rows, response) => {
     overview.rows = rows as Supplier[]

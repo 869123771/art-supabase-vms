@@ -1,8 +1,13 @@
 <template>
   <div class="art-full-height">
-    <MasterDeleteProcessingNotice v-if="targetSourceKey" />
+    <MasterDeleteProcessingNotice
+      :table="tableQueryRef"
+      :record-id="targetSourceKey"
+      v-if="targetSourceKey"
+    />
     <VehicleReminderRiskOverview
-      v-if="!targetSourceKey"
+      :overview-hidden="Boolean(targetSourceKey)"
+      :table="tableQueryRef"
       title="保险到期"
       description="优先处理已逾期与 7 天内到期车辆，提前安排续保资料与报价确认。"
       :filters="tableState.searchQuery"

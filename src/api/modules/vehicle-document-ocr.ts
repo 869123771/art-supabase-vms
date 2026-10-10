@@ -1,4 +1,4 @@
-import { useSupabase } from '@/hooks'
+import { useSupabase } from '@/hooks/core/useSupabase'
 import { normalizeSupabaseFunctionError } from '@/utils/supabase'
 import { TENANT_SCOPE_HEADER } from '@/utils/tenant-scope-context'
 

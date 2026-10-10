@@ -1,8 +1,13 @@
 <template>
   <div class="art-full-height">
-    <MasterDeleteProcessingNotice v-if="targetSourceKey" />
+    <MasterDeleteProcessingNotice
+      :table="tableQueryRef"
+      :record-id="targetSourceKey"
+      v-if="targetSourceKey"
+    />
     <VehicleReminderRiskOverview
-      v-if="!targetSourceKey"
+      :overview-hidden="Boolean(targetSourceKey)"
+      :table="tableQueryRef"
       title="配件寿命"
       description="提前识别达到日期或里程阈值的配件，为备件采购与更换排期留出窗口。"
       :filters="tableState.searchQuery"
@@ -39,10 +44,10 @@
     companySearchItem,
     createReminderWorkOrderColumns,
     formatDate,
-    formatMileage,
     renderRemainingDays,
     renderReminderStatus
   } from '../modules/reminder-table'
+  import { formatSensitiveCountValue } from '@/utils/ui/format'
   import VehicleReminderWorkOrderDrawer from '../modules/vehicle-reminder-work-order-drawer.vue'
   import VehicleReminderRiskOverview from '../modules/vehicle-reminder-risk-overview.vue'
   import MasterDeleteProcessingNotice from '@/components/business/master-delete-processing-notice/index.vue'
@@ -142,13 +147,13 @@
           prop: 'usedMileage',
           label: '已使用里程（公里）',
           width: 175,
-          formatter: (row) => formatMileage(row.usedMileage)
+          formatter: (row) => formatSensitiveCountValue(row.usedMileage)
         },
         {
           prop: 'serviceMileage',
           label: '可使用里程（公里）',
           width: 175,
-          formatter: (row) => formatMileage(row.serviceMileage)
+          formatter: (row) => formatSensitiveCountValue(row.serviceMileage)
         },
         {
           prop: 'expireDate',

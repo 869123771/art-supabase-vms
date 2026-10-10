@@ -1,8 +1,13 @@
 <template>
   <div class="art-full-height">
-    <MasterDeleteProcessingNotice v-if="targetSourceKey" />
+    <MasterDeleteProcessingNotice
+      :table="tableQueryRef"
+      :record-id="targetSourceKey"
+      v-if="targetSourceKey"
+    />
     <VehicleReminderRiskOverview
-      v-if="!targetSourceKey"
+      :overview-hidden="Boolean(targetSourceKey)"
+      :table="tableQueryRef"
       title="保养到期"
       description="结合日期与里程风险安排进场，优先消化已逾期和本周临期车辆。"
       :filters="tableState.searchQuery"
@@ -39,10 +44,10 @@
     companySearchItem,
     createReminderWorkOrderColumns,
     formatDate,
-    formatMileage,
     renderRemainingDays,
     renderReminderStatus
   } from '../modules/reminder-table'
+  import { formatSensitiveCountValue } from '@/utils/ui/format'
   import VehicleReminderWorkOrderDrawer from '../modules/vehicle-reminder-work-order-drawer.vue'
   import VehicleReminderRiskOverview from '../modules/vehicle-reminder-risk-overview.vue'
   import MasterDeleteProcessingNotice from '@/components/business/master-delete-processing-notice/index.vue'
@@ -137,13 +142,13 @@
           prop: 'currentMileage',
           label: '当前里程（公里）',
           width: 150,
-          formatter: (row) => formatMileage(row.currentMileage)
+          formatter: (row) => formatSensitiveCountValue(row.currentMileage)
         },
         {
           prop: 'nextMaintenanceMileage',
           label: '下次保养里程（公里）',
           width: 185,
-          formatter: (row) => formatMileage(row.nextMaintenanceMileage)
+          formatter: (row) => formatSensitiveCountValue(row.nextMaintenanceMileage)
         },
         {
           prop: 'nextMaintenanceDate',

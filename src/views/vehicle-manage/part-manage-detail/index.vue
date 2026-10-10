@@ -1,6 +1,6 @@
 <template>
   <ArtPageShell
-    class="vehicle-part-usage-detail"
+    class="vehicle-part-usage-detail min-h-full p-4 bg-[var(--art-main-bg-color)]"
     :loading="page.loading"
     loading-mode="skeleton"
     :error="page.error"
@@ -16,13 +16,12 @@
       @back="goBack"
     />
 
-    <section class="vehicle-part-usage-detail__summary art-card-xs">
-      <div
-        v-if="canViewField(fieldAccess, 'traceabilityTag')"
-        class="vehicle-part-usage-detail__summary-item"
-      >
-        <span>零部件状态</span>
-        <strong>
+    <section
+      class="vehicle-part-usage-detail__summary art-card-xs mt-3 grid gap-4 p-4 grid-cols-2 min-[721px]:grid-cols-4"
+    >
+      <div class="vehicle-part-usage-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">零部件状态</span>
+        <strong class="text-lg font-semibold wrap-anywhere">
           <ArtDictDisplay
             dict-code="vehiclePartUsageStatus"
             :value="detail.data?.status"
@@ -30,51 +29,70 @@
           />
         </strong>
       </div>
-      <div class="vehicle-part-usage-detail__summary-item">
-        <span>RFID 标签</span>
-        <strong>{{ detail.data?.rfidTag || '待绑定' }}</strong>
+      <div
+        class="vehicle-part-usage-detail__summary-item flex min-w-0 flex-col gap-2"
+        v-if="canViewField(fieldAccess, 'traceabilityTag')"
+      >
+        <span class="text-[var(--el-text-color-secondary)]">RFID 标签</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          detail.data?.rfidTag || '待绑定'
+        }}</strong>
       </div>
       <div
         v-if="canViewField(fieldAccess, 'lifecycleLimits')"
-        class="vehicle-part-usage-detail__summary-item"
+        class="vehicle-part-usage-detail__summary-item flex min-w-0 flex-col gap-2"
       >
-        <span>启用日期</span>
-        <strong>{{
+        <span class="text-[var(--el-text-color-secondary)]">启用日期</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
           detail.data?.lifecycleLimitsMasked ? '***' : detail.data?.enableDate || '--'
         }}</strong>
       </div>
       <div
         v-if="canViewField(fieldAccess, 'lifecycleLimits')"
-        class="vehicle-part-usage-detail__summary-item"
+        class="vehicle-part-usage-detail__summary-item flex min-w-0 flex-col gap-2"
       >
-        <span>已使用里程</span>
-        <strong>{{
-          detail.data?.lifecycleLimitsMasked ? '***' : formatMileage(detail.data?.usedMileage)
+        <span class="text-[var(--el-text-color-secondary)]">已使用里程</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          detail.data?.lifecycleLimitsMasked
+            ? '***'
+            : formatSensitiveNumberWithAffix(detail.data?.usedMileage, {
+                suffix: ' km',
+                numberFormat: { maximumFractionDigits: 3 }
+              })
         }}</strong>
       </div>
     </section>
 
-    <div class="vehicle-part-usage-detail__content art-card-xs">
-      <section>
-        <ArtSectionTitle>零部件信息</ArtSectionTitle>
-        <ArtDescriptions :data="descriptionData" :items="partItems" :columns="3" />
-      </section>
+    <div class="vehicle-part-usage-detail__content art-card-xs mt-3 flex flex-col gap-6 p-5">
+      <ArtPageSection title="零部件信息">
+        <ArtDescriptions
+          :data="descriptionData"
+          :items="partItems"
+          :columns="3"
+          :label-width="138"
+        />
+      </ArtPageSection>
 
-      <section>
-        <ArtSectionTitle>零部件使用</ArtSectionTitle>
-        <ArtDescriptions :data="descriptionData" :items="usageItems" :columns="3" />
-      </section>
+      <ArtPageSection title="零部件使用">
+        <ArtDescriptions
+          :data="descriptionData"
+          :items="usageItems"
+          :columns="3"
+          :label-width="138"
+        />
+      </ArtPageSection>
     </div>
   </ArtPageShell>
 </template>
 
 <script setup lang="ts">
+  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import ArtDictDisplay from '@/components/core/base/art-dict-display/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
-  import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
+  import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import { fetchVehiclePartUsageDetail } from '@vms/api'
-  import { canViewField } from '@/utils/field-permission'
+  import { canViewField, formatSensitiveNumberWithAffix } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehiclePartUsageDetail' })
 
@@ -86,9 +104,6 @@
   const detail = reactive<{ data?: Usage }>({ data: undefined })
   const fieldAccess = computed(() => detail.data?.fieldAccess ?? {})
   const descriptionData = computed<Partial<Usage>>(() => detail.data ?? {})
-
-  const formatMileage = (value?: number | null): string =>
-    value === undefined || value === null ? '--' : `${Number(value).toLocaleString()} km`
 
   const partItems = computed<ArtDescriptionItem<Partial<Usage>>[]>(() => [
     { key: 'plateNo', label: '车牌号', field: 'plateNo' },
@@ -181,7 +196,10 @@
             label: '已使用里程',
             value: detail.data?.lifecycleLimitsMasked
               ? '***'
-              : numberWithUnit(detail.data?.usedMileage, '公里')
+              : formatSensitiveNumberWithAffix(detail.data?.usedMileage, {
+                  suffix: ' 公里',
+                  numberFormat: { maximumFractionDigits: 3 }
+                })
           }
         ] as ArtDescriptionItem<Partial<Usage>>[])
       : []),
@@ -214,10 +232,16 @@
     page.loading = true
     page.error = null
     try {
-      const { data } = await fetchVehiclePartUsageDetail(id)
+      const { data, error } = await fetchVehiclePartUsageDetail(id, { showErrorMessage: false })
+      if (error) throw error
       detail.data = data ?? undefined
     } catch (error) {
-      page.error = error instanceof Error ? error : new Error('零部件详情加载失败')
+      page.error =
+        error instanceof Error
+          ? error
+          : new Error(getFriendlySupabaseErrorMessage(error, '零部件详情加载失败'), {
+              cause: error
+            })
     } finally {
       page.loading = false
     }
@@ -227,84 +251,15 @@
     void router.push('/vms/vehicle-manage/part-manage')
   }
 
-  const numberWithUnit = (data: number | null | undefined, unit: string): string => {
-    if (data === undefined || data === null) return '--'
-    return `${data}${unit}`
-  }
-
   const getBooleanDictValue = (value?: boolean | null): string | undefined =>
     value === undefined || value === null ? undefined : String(value)
 </script>
 
 <style scoped lang="scss">
-  .vehicle-part-usage-detail {
-    min-height: 100%;
-    padding: 16px;
-    background: var(--art-main-bg-color);
-
-    &__content {
-      padding: 20px;
-      margin-top: 12px;
-
-      section + section {
-        margin-top: 24px;
-      }
-    }
-
-    &__summary {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      margin-top: 12px;
-    }
-
-    &__summary-item {
-      display: grid;
-      gap: 4px;
-      min-width: 0;
-      padding: 16px 20px;
-
-      &:not(:last-child) {
-        border-right: 1px solid var(--el-border-color-lighter);
-      }
-
-      span {
-        font-size: 12px;
-        color: var(--el-text-color-secondary);
-      }
-
-      strong {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-size: 18px;
-        font-variant-numeric: tabular-nums;
-        color: var(--el-text-color-primary);
-        white-space: nowrap;
-      }
-    }
-
-    :deep(.art-descriptions .el-descriptions__label) {
-      width: 138px;
-      font-weight: 600;
-    }
-
-    @media (width <= 900px) {
+  @media (width <= 900px) {
+    .vehicle-part-usage-detail
       :deep(.art-descriptions .el-descriptions__body .el-descriptions__table) {
-        table-layout: auto;
-      }
-    }
-
-    @media (width <= 720px) {
-      &__summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      &__summary-item:nth-child(2) {
-        border-right: 0;
-      }
-
-      &__summary-item:nth-child(-n + 2) {
-        border-bottom: 1px solid var(--el-border-color-lighter);
-      }
+      table-layout: auto;
     }
   }
 </style>

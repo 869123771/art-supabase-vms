@@ -1,6 +1,12 @@
 <template>
   <ArtPageSection title="里程记录">
-    <VehicleQueryTable :data="records" :columns="columns" :loading="loading" />
+    <VehicleQueryTable
+      :error="error"
+      @retry="loadRecords"
+      :data="records"
+      :columns="columns"
+      :loading="loading"
+    />
   </ArtPageSection>
 </template>
 
@@ -25,14 +31,18 @@
   }>()
 
   const vehicle = toRef(props, 'vehicle')
-  const { loading, records } = useVehiclePanelList<VehicleMileageRecord>(
+  const { loading, records, error, loadRecords } = useVehiclePanelList<VehicleMileageRecord>(
     vehicle,
     async (current) => {
-      const { data } = await fetchVehicleMileageList({
-        vehicleId: current.id,
-        from: 0,
-        to: 9999
-      })
+      const { data, error: requestError } = await fetchVehicleMileageList(
+        {
+          vehicleId: current.id,
+          from: 0,
+          to: 9999
+        },
+        { showErrorMessage: false }
+      )
+      if (requestError) throw requestError
       return data ?? []
     }
   )

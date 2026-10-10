@@ -1,9 +1,9 @@
 import { buildSupabaseRpcRange } from '@/utils/supabase'
 import { toDateStartTimestamp, toDateEndTimestamp } from '@/utils/time/date-boundary'
 import { normalizeNullableText } from '@/utils/form/normalize'
-import { useSupabase } from '@/hooks'
+import { useSupabase } from '@/hooks/core/useSupabase'
 import { withRequestOptions } from '@/api/providers/supabase/query'
-import type { ApiRequestOptions } from '@/types/api/request'
+import type { ApiFeedbackOptions, ApiRequestOptions } from '@/types/api/request'
 import {
   type VehicleMaintenanceRecord,
   type VehicleMaintenanceSearchParams,
@@ -42,7 +42,7 @@ const createVehicleMaintenanceRpcParams = (
 
 export async function fetchVehicleMaintenanceList(
   params: VehicleMaintenanceSearchParams,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ) {
   const result = await responseHandle<SecureVehicleMaintenancePayload>(
     () =>
@@ -53,7 +53,7 @@ export async function fetchVehicleMaintenanceList(
         ),
         options
       ),
-    { showErrorMessage: true }
+    { showErrorMessage: options?.showErrorMessage ?? true }
   )
   return {
     data: result.data?.records ?? [],
@@ -82,11 +82,11 @@ export async function exportVehicleMaintenanceList(
   }
 }
 
-export async function fetchVehicleMaintenanceDetail(id: string) {
+export async function fetchVehicleMaintenanceDetail(id: string, options?: ApiFeedbackOptions) {
   return await responseHandle<VehicleMaintenanceRecord | null>(
     () => supabase.rpc('vms_get_vehicle_maintenance_secure', { p_id: id }),
     {
-      showErrorMessage: true
+      showErrorMessage: options?.showErrorMessage ?? true
     }
   )
 }
@@ -161,7 +161,7 @@ const createVehiclePartUsageRpcParams = (
 
 export async function fetchVehiclePartUsageList(
   params: VehiclePartUsageSearchParams,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ) {
   const result = await responseHandle<SecureVehiclePartUsagePayload>(
     () =>
@@ -172,7 +172,7 @@ export async function fetchVehiclePartUsageList(
         ),
         options
       ),
-    { showErrorMessage: true }
+    { showErrorMessage: options?.showErrorMessage ?? true }
   )
   return {
     data: result.data?.records ?? [],
@@ -201,11 +201,11 @@ export async function exportVehiclePartUsageList(
   }
 }
 
-export async function fetchVehiclePartUsageDetail(id: string) {
+export async function fetchVehiclePartUsageDetail(id: string, options?: ApiFeedbackOptions) {
   return await responseHandle<VehiclePartUsage | null>(
     () => supabase.rpc('vms_get_vehicle_part_usage_secure', { p_id: id }),
     {
-      showErrorMessage: true
+      showErrorMessage: options?.showErrorMessage ?? true
     }
   )
 }

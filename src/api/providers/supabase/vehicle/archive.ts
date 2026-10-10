@@ -1,7 +1,7 @@
 import { toDateStartTimestamp, toDateEndTimestamp } from '@/utils/time/date-boundary'
 import { normalizeNullableText } from '@/utils/form/normalize'
 import { uniq } from 'lodash-es'
-import { useSupabase } from '@/hooks'
+import { useSupabase } from '@/hooks/core/useSupabase'
 import { withRequestOptions } from '@/api/providers/supabase/query'
 import type { ApiRequestOptions } from '@/types/api/request'
 import type { QueryResult } from '@/types/api/response'

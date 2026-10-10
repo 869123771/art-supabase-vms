@@ -1,9 +1,9 @@
 import { buildSupabaseRpcRange } from '@/utils/supabase'
 import { toDateStartTimestamp, toDateEndTimestamp } from '@/utils/time/date-boundary'
 import { normalizeNullableText } from '@/utils/form/normalize'
-import { useSupabase } from '@/hooks'
+import { useSupabase } from '@/hooks/core/useSupabase'
 import { withRequestOptions } from '@/api/providers/supabase/query'
-import type { ApiRequestOptions } from '@/types/api/request'
+import type { ApiFeedbackOptions, ApiRequestOptions } from '@/types/api/request'
 import {
   type VehicleInsurance,
   type VehicleInsuranceSearchParams,
@@ -48,7 +48,7 @@ const createVehicleInsuranceRpcParams = (
 
 export async function fetchVehicleInsuranceList(
   params: VehicleInsuranceSearchParams,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ) {
   const result = await responseHandle<SecureVehicleInsurancePayload>(
     () =>
@@ -59,7 +59,7 @@ export async function fetchVehicleInsuranceList(
         ),
         options
       ),
-    { showErrorMessage: true }
+    { showErrorMessage: options?.showErrorMessage ?? true }
   )
   return {
     data: result.data?.records ?? [],
@@ -88,11 +88,11 @@ export async function exportVehicleInsuranceList(
   }
 }
 
-export async function fetchVehicleInsuranceDetail(id: string) {
+export async function fetchVehicleInsuranceDetail(id: string, options?: ApiFeedbackOptions) {
   return await responseHandle<VehicleInsurance | null>(
     () => supabase.rpc('vms_get_vehicle_insurance_secure', { p_id: id }),
     {
-      showErrorMessage: true
+      showErrorMessage: options?.showErrorMessage ?? true
     }
   )
 }
@@ -165,7 +165,7 @@ const createVehicleInspectionRpcParams = (
 
 export async function fetchVehicleInspectionList(
   params: VehicleInspectionSearchParams,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ) {
   const result = await responseHandle<SecureVehicleInspectionPayload>(
     () =>
@@ -176,7 +176,7 @@ export async function fetchVehicleInspectionList(
         ),
         options
       ),
-    { showErrorMessage: true }
+    { showErrorMessage: options?.showErrorMessage ?? true }
   )
   return {
     data: result.data?.records ?? [],
@@ -205,11 +205,11 @@ export async function exportVehicleInspectionList(
   }
 }
 
-export async function fetchVehicleInspectionDetail(id: string) {
+export async function fetchVehicleInspectionDetail(id: string, options?: ApiFeedbackOptions) {
   return await responseHandle<VehicleInspection | null>(
     () => supabase.rpc('vms_get_vehicle_inspection_secure', { p_id: id }),
     {
-      showErrorMessage: true
+      showErrorMessage: options?.showErrorMessage ?? true
     }
   )
 }
@@ -282,7 +282,7 @@ const createVehicleRoutineInspectionRpcParams = (
 
 export async function fetchVehicleRoutineInspectionList(
   params: VehicleRoutineInspectionSearchParams,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ) {
   const result = await responseHandle<SecureVehicleRoutineInspectionPayload>(
     () =>
@@ -293,7 +293,7 @@ export async function fetchVehicleRoutineInspectionList(
         ),
         options
       ),
-    { showErrorMessage: true }
+    { showErrorMessage: options?.showErrorMessage ?? true }
   )
   return {
     data: result.data?.records ?? [],
@@ -325,11 +325,14 @@ export async function exportVehicleRoutineInspectionList(
   }
 }
 
-export async function fetchVehicleRoutineInspectionDetail(id: string) {
+export async function fetchVehicleRoutineInspectionDetail(
+  id: string,
+  options?: ApiFeedbackOptions
+) {
   return await responseHandle<VehicleRoutineInspectionRecord | null>(
     () => supabase.rpc('vms_get_vehicle_routine_inspection_secure', { p_id: id }),
     {
-      showErrorMessage: true
+      showErrorMessage: options?.showErrorMessage ?? true
     }
   )
 }

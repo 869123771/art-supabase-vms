@@ -1,8 +1,13 @@
 <template>
   <div class="art-full-height">
-    <MasterDeleteProcessingNotice v-if="targetSourceKey" />
+    <MasterDeleteProcessingNotice
+      :table="tableQueryRef"
+      :record-id="targetSourceKey"
+      v-if="targetSourceKey"
+    />
     <VehicleReminderRiskOverview
-      v-if="!targetSourceKey"
+      :overview-hidden="Boolean(targetSourceKey)"
+      :table="tableQueryRef"
       title="年检到期"
       description="聚焦已逾期和临期车辆，预留检测预约、资料补齐与整改时间。"
       :filters="tableState.searchQuery"

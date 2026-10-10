@@ -1,4 +1,4 @@
-import { useSupabase } from '@/hooks'
+import { useSupabase } from '@/hooks/core/useSupabase'
 import type { VehicleTypeProfile, VehicleTypeProfileWriteInput } from '@vms/types/vehicle-type'
 
 const { supabase, keysToSnakeDeep, responseHandle } = useSupabase()

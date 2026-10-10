@@ -1,6 +1,6 @@
 <template>
   <ArtPageShell
-    class="vehicle-insurance-detail"
+    class="vehicle-insurance-detail min-h-full p-4 bg-[var(--art-main-bg-color)]"
     :loading="page.loading"
     loading-mode="skeleton"
     :error="page.error"
@@ -16,48 +16,74 @@
       @back="goBack"
     />
 
-    <section class="vehicle-insurance-detail__summary art-card-xs">
-      <div v-if="canViewInsuranceField('documents')" class="vehicle-insurance-detail__summary-item">
-        <span>商业险到期</span>
-        <strong>{{ formatArtValue(detail.data?.commercialExpireDate) }}</strong>
+    <section
+      class="vehicle-insurance-detail__summary art-card-xs mt-3 grid gap-4 p-4 min-[901px]:grid-cols-3"
+    >
+      <div class="vehicle-insurance-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">商业险到期</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          formatArtValue(detail.data?.commercialExpireDate, 'date')
+        }}</strong>
       </div>
-      <div class="vehicle-insurance-detail__summary-item">
-        <span>交强险到期</span>
-        <strong>{{ formatArtValue(detail.data?.compulsoryExpireDate) }}</strong>
+      <div class="vehicle-insurance-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">交强险到期</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          formatArtValue(detail.data?.compulsoryExpireDate, 'date')
+        }}</strong>
       </div>
-      <div class="vehicle-insurance-detail__summary-item">
-        <span>附件数量</span>
-        <strong>{{ detail.data?.attachments?.length ?? 0 }}</strong>
+      <div
+        class="vehicle-insurance-detail__summary-item flex min-w-0 flex-col gap-2"
+        v-if="canViewInsuranceField('documents')"
+      >
+        <span class="text-[var(--el-text-color-secondary)]">附件数量</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          detail.data?.attachments?.length ?? 0
+        }}</strong>
       </div>
     </section>
 
-    <div class="vehicle-insurance-detail__content art-card-xs">
-      <section v-if="canViewInsuranceField('documents')" class="vehicle-insurance-detail__section">
-        <ArtSectionTitle>保险信息</ArtSectionTitle>
-        <ArtDescriptions :data="descriptionData" :items="vehicleItems" :columns="2" />
-      </section>
+    <div class="vehicle-insurance-detail__content art-card-xs mt-3 flex flex-col gap-6 p-5">
+      <ArtPageSection title="保险信息" class="vehicle-insurance-detail__section">
+        <ArtDescriptions
+          :data="descriptionData"
+          :items="vehicleItems"
+          :columns="2"
+          :label-width="128"
+        />
+      </ArtPageSection>
 
-      <div class="vehicle-insurance-detail__insurance-grid">
-        <section class="vehicle-insurance-detail__section">
-          <ArtSectionTitle>商业险</ArtSectionTitle>
-          <ArtDescriptions :data="descriptionData" :items="commercialItems" :columns="1" />
-        </section>
+      <div class="vehicle-insurance-detail__insurance-grid grid gap-4 min-[901px]:grid-cols-2">
+        <ArtPageSection title="商业险" class="vehicle-insurance-detail__section">
+          <ArtDescriptions
+            :data="descriptionData"
+            :items="commercialItems"
+            :columns="1"
+            :label-width="128"
+          />
+        </ArtPageSection>
 
-        <section class="vehicle-insurance-detail__section">
-          <ArtSectionTitle>交强险</ArtSectionTitle>
-          <ArtDescriptions :data="descriptionData" :items="compulsoryItems" :columns="1" />
-        </section>
+        <ArtPageSection title="交强险" class="vehicle-insurance-detail__section">
+          <ArtDescriptions
+            :data="descriptionData"
+            :items="compulsoryItems"
+            :columns="1"
+            :label-width="128"
+          />
+        </ArtPageSection>
       </div>
 
-      <section class="vehicle-insurance-detail__section">
-        <ArtSectionTitle>备注</ArtSectionTitle>
-        <div class="vehicle-insurance-detail__remark">{{
-          formatArtValue(detail.data?.remark)
-        }}</div>
-      </section>
+      <ArtPageSection title="备注" class="vehicle-insurance-detail__section">
+        <div
+          class="vehicle-insurance-detail__remark min-h-12 rounded-[var(--el-border-radius-base)] bg-[var(--el-fill-color-lighter)] px-3.5 py-3 leading-relaxed text-[var(--el-text-color-regular)] wrap-anywhere whitespace-pre-wrap"
+          >{{ formatArtValue(detail.data?.remark) }}</div
+        >
+      </ArtPageSection>
 
-      <section class="vehicle-insurance-detail__section">
-        <ArtSectionTitle>保险附件</ArtSectionTitle>
+      <ArtPageSection
+        title="保险附件"
+        class="vehicle-insurance-detail__section"
+        v-if="canViewInsuranceField('documents')"
+      >
         <ArtTable
           :data="detail.data?.attachments ?? []"
           :columns="attachmentColumns"
@@ -65,21 +91,21 @@
           :show-table-header="false"
           empty-height="180px"
         />
-      </section>
+      </ArtPageSection>
     </div>
   </ArtPageShell>
 </template>
 
 <script setup lang="tsx">
+  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
+  import BusinessAttachmentRowActions from '@/components/business/business-attachment-row-actions/index.vue'
   import { formatArtValue } from '@/utils/ui/format'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
-  import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
+  import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import { fetchVehicleInsuranceDetail } from '@vms/api'
-  import { downloadAttachment, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canViewField, formatSensitiveNumberWithAffix } from '@/utils/field-permission'
 
@@ -191,16 +217,8 @@
       prop: 'operation',
       label: '操作',
       width: 104,
-      formatter: (row) => (
-        <>
-          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-          <ArtIconButton
-            icon="ri:download-2-line"
-            label="下载附件"
-            onClick={() => downloadAttachment(row)}
-          />
-        </>
-      )
+      fixed: 'right',
+      formatter: (row) => <BusinessAttachmentRowActions file={row} />
     }
   ]
 
@@ -217,10 +235,16 @@
     page.loading = true
     page.error = null
     try {
-      const { data } = await fetchVehicleInsuranceDetail(id)
+      const { data, error } = await fetchVehicleInsuranceDetail(id, { showErrorMessage: false })
+      if (error) throw error
       detail.data = data ? { ...data, attachments: data.attachments ?? [] } : undefined
     } catch (error) {
-      page.error = error instanceof Error ? error : new Error('车辆保险详情加载失败')
+      page.error =
+        error instanceof Error
+          ? error
+          : new Error(getFriendlySupabaseErrorMessage(error, '车辆保险详情加载失败'), {
+              cause: error
+            })
     } finally {
       page.loading = false
     }
@@ -230,75 +254,3 @@
     void router.push('/vms/vehicle-manage/vehicle-insurance')
   }
 </script>
-
-<style scoped lang="scss">
-  .vehicle-insurance-detail {
-    min-height: 100%;
-    padding: 16px;
-    background: var(--art-main-bg-color);
-
-    &__summary {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1px;
-      padding: 16px;
-      margin-top: 12px;
-    }
-
-    &__summary-item {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 0;
-
-      span {
-        color: var(--el-text-color-secondary);
-      }
-
-      strong {
-        font-size: 18px;
-        font-weight: 600;
-        overflow-wrap: anywhere;
-      }
-    }
-
-    &__content {
-      padding: 20px;
-      margin-top: 12px;
-    }
-
-    &__content > &__section + &__section,
-    &__content > &__insurance-grid + &__section {
-      margin-top: 22px;
-    }
-
-    &__insurance-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      margin-top: 22px;
-    }
-
-    &__remark {
-      min-height: 48px;
-      padding: 12px 14px;
-      line-height: 1.7;
-      color: var(--el-text-color-regular);
-      overflow-wrap: anywhere;
-      background: var(--el-fill-color-lighter);
-      border-radius: var(--el-border-radius-base);
-    }
-
-    :deep(.art-descriptions .el-descriptions__label) {
-      width: 128px;
-      font-weight: 600;
-    }
-
-    @media (width <= 900px) {
-      &__summary,
-      &__insurance-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  }
-</style>

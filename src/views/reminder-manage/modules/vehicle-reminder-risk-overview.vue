@@ -1,6 +1,7 @@
 <template>
   <div class="vehicle-reminder-risk">
     <BusinessWorkspaceHeader
+      v-if="!overviewHidden"
       eyebrow="VEHICLE RISK CONTROL"
       :title="`${title}风险概览`"
       :description="description"
@@ -8,9 +9,20 @@
       :tags="overviewTags"
       :metrics="workspaceMetrics"
       @metric-click="handleMetricClick"
-    />
+    >
+      <template v-if="table" #actions>
+        <BusinessTableWorkspaceActions :table="table" />
+      </template>
+    </BusinessWorkspaceHeader>
+    <div v-else-if="table" class="flex justify-end">
+      <BusinessTableWorkspaceActions :table="table" />
+    </div>
 
-    <div v-if="overview.error" class="vehicle-reminder-risk__error art-card-xs" role="alert">
+    <div
+      v-if="!overviewHidden && overview.error"
+      class="vehicle-reminder-risk__error art-card-xs"
+      role="alert"
+    >
       <div>
         <ArtSvgIcon icon="ri:error-warning-line" />
         <span>风险数据暂时无法加载，不影响下方提醒列表。</span>
@@ -24,6 +36,8 @@
 
 <script setup lang="ts">
   import { watchDebounced } from '@vueuse/core'
+  import type { ArtTableQueryExpose } from '@/components/core/tables/art-table-query/index.vue'
+  import BusinessTableWorkspaceActions from '@/components/business/business-table-workspace-actions/index.vue'
   import ArtSvgIcon from '@/components/core/base/art-svg-icon/index.vue'
   import BusinessWorkspaceHeader, {
     type BusinessWorkspaceMetric,
@@ -41,6 +55,8 @@
   }
 
   interface Props {
+    table?: ArtTableQueryExpose | null
+    overviewHidden?: boolean
     title: string
     description: string
     filters: ReminderSearchParams
@@ -137,6 +153,11 @@
 
   async function loadOverview(): Promise<void> {
     const currentRequestId = ++requestId
+    if (props.overviewHidden) {
+      overview.loading = false
+      overview.error = null
+      return
+    }
     overview.loading = true
     overview.error = null
     try {
@@ -154,7 +175,11 @@
     }
   }
 
-  const overviewFilters = () => [props.filters.companyName, props.filters.plateNo]
+  const overviewFilters = () => [
+    props.filters.companyName,
+    props.filters.plateNo,
+    props.overviewHidden
+  ]
   watch(
     overviewFilters,
     () => {

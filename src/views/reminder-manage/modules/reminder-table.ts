@@ -1,6 +1,6 @@
 import { h, type VNodeChild } from 'vue'
 import { ElTag } from 'element-plus'
-import dayjs from 'dayjs'
+import { createDateTimeFormatter } from '@/utils/ui/format'
 import { isNil } from 'lodash-es'
 import type { SearchFormItem } from '@/components/core/forms/art-search-bar/index.vue'
 import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
@@ -41,11 +41,11 @@ export const futureReminderSearchItems: SearchFormItem[] = [
   }
 ]
 
-export const formatDate = (value?: string | null): string =>
-  value && dayjs(value).isValid() ? dayjs(value).format('YYYY-MM-DD') : '--'
-
-export const formatMileage = (value?: number | null): string =>
-  isNil(value) ? '--' : Number(value).toLocaleString()
+export const formatDate = createDateTimeFormatter({
+  format: 'YYYY-MM-DD',
+  invalidText: '--',
+  allowTimeOnly: false
+})
 
 export const renderRemainingDays = (days?: number | null): VNodeChild => {
   if (isNil(days)) return h(ElTag, { type: 'info', effect: 'plain' }, () => '未配置')

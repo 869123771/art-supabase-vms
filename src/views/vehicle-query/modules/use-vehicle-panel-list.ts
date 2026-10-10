@@ -1,36 +1,41 @@
-import type { Ref } from 'vue'
+import { computed, watch, type Ref } from 'vue'
+import { useAsyncState } from '@vueuse/core'
+import { noop } from 'lodash-es'
+import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
 import type { VehicleArchive } from './types'
 
 export const useVehiclePanelList = <TRecord>(
   vehicle: Ref<VehicleArchive>,
   fetcher: (vehicle: VehicleArchive) => Promise<TRecord[]>
 ) => {
-  const loading = ref(false)
-  const records = ref<TRecord[]>([]) as Ref<TRecord[]>
-
+  const {
+    state: records,
+    isLoading: loading,
+    executeImmediate,
+    error: rawError
+  } = useAsyncState(
+    async (current: VehicleArchive): Promise<TRecord[]> =>
+      current.plateNo ? fetcher(current) : [],
+    [] as TRecord[],
+    {
+      immediate: false,
+      onError: noop
+    }
+  )
+  const error = computed(() =>
+    rawError.value
+      ? new Error(getFriendlySupabaseErrorMessage(rawError.value, '车辆记录加载失败，请重试'), {
+          cause: rawError.value
+        })
+      : null
+  )
   const loadRecords = async (): Promise<void> => {
-    if (!vehicle.value.plateNo) {
-      records.value = []
-      return
-    }
-
-    loading.value = true
-    try {
-      records.value = await fetcher(vehicle.value)
-    } finally {
-      loading.value = false
-    }
+    await executeImmediate(vehicle.value)
   }
-
   watch(
-    () => vehicle.value.plateNo,
+    () => [vehicle.value.id, vehicle.value.plateNo],
     () => void loadRecords(),
     { immediate: true }
   )
-
-  return {
-    loading,
-    records,
-    loadRecords
-  }
+  return { loading, records, error, loadRecords }
 }

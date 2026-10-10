@@ -172,6 +172,7 @@
 </template>
 
 <script setup lang="tsx">
+  import BusinessAttachmentRowActions from '@/components/business/business-attachment-row-actions/index.vue'
   import type { VNodeChild } from 'vue'
   import { ElImage, ElTabPane, ElTabs } from 'element-plus'
   import ArtEmptyState from '@/components/core/feedback/art-empty-state/index.vue'
@@ -179,7 +180,6 @@
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import WorkflowBusinessHistory from '@/components/business/workflow-business-history/index.vue'
   import ArtUploadImage from '@/components/core/forms/art-upload-image/index.vue'
@@ -187,7 +187,6 @@
   import type { ColumnOption } from '@/types'
   import { fetchVehicleArchiveDetail } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
-  import { viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canViewField } from '@/utils/field-permission'
 
@@ -449,11 +448,8 @@
       prop: 'operation',
       label: '操作',
       width: 64,
-      formatter: (row) => (
-        <div class="flex items-center">
-          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-        </div>
-      )
+      fixed: 'right',
+      formatter: (row) => <BusinessAttachmentRowActions file={row} download={false} />
     }
   ]
 

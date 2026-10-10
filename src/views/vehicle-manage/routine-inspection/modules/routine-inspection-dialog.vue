@@ -109,6 +109,7 @@
 </template>
 
 <script setup lang="tsx">
+  import BusinessAttachmentRowActions from '@/components/business/business-attachment-row-actions/index.vue'
   import { validateArtFormForSubmit } from '@/utils/form/validate-art-form'
   import { notifyFriendlyError, useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
@@ -131,7 +132,6 @@
   import { useDocumentNumberRule } from '@/hooks/core/useDocumentNumberRule'
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import {
     addVehicleRoutineInspection,
@@ -139,7 +139,7 @@
     fetchVehicleArchiveList
   } from '@vms/api'
   import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
-  import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
+  import { getFileExtension } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { buildSupabasePageRange } from '@/utils/supabase/pagination'
   import { canEditField, canViewField } from '@/utils/field-permission'
@@ -394,23 +394,14 @@
       prop: 'operation',
       label: '操作',
       width: 144,
+      fixed: 'right',
       formatter: (row) => (
-        <>
-          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-          <ArtIconButton
-            icon="ri:download-2-line"
-            label="下载附件"
-            onClick={() => downloadAttachment(row)}
-          />
-          {canEditField(currentFieldAccess.value, 'documents') ? (
-            <ArtIconButton
-              icon="ri:delete-bin-5-line"
-              label="删除附件"
-              tone="danger"
-              onClick={() => void removeAttachment(row)}
-            />
-          ) : null}
-        </>
+        <BusinessAttachmentRowActions
+          file={row}
+          removable={canEditField(currentFieldAccess.value, 'documents')}
+          removeLabel="删除附件"
+          onRemove={() => void removeAttachment(row)}
+        />
       )
     }
   ]

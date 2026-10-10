@@ -1,28 +1,39 @@
 <template>
-  <div class="vehicle-query-summary art-card-xs">
-    <div class="vehicle-query-summary__photo">
+  <div
+    class="vehicle-query-summary art-card-xs grid gap-7 p-6 min-[901px]:grid-cols-[220px_minmax(0,1fr)]"
+  >
+    <div class="vehicle-query-summary__photo h-[150px] w-full max-w-[260px] min-[901px]:w-[220px]">
       <ElImage
         v-if="vehicle.vehiclePhotoUrl"
         :src="vehicle.vehiclePhotoUrl"
+        class="h-full w-full"
+        :alt="`${vehicle.plateNo || '车辆'}照片`"
         fit="cover"
         :preview-src-list="[vehicle.vehiclePhotoUrl]"
       />
-      <div v-else class="vehicle-query-summary__photo-empty">
-        <IconifyIconOnline icon="ri:bus-2-line" />
+      <div
+        v-else
+        class="vehicle-query-summary__photo-empty flex h-full w-full items-center justify-center bg-[var(--el-fill-color-light)] text-[56px] text-[var(--el-text-color-placeholder)]"
+      >
+        <ArtSvgIcon icon="ri:bus-2-line" />
       </div>
     </div>
 
-    <div class="vehicle-query-summary__main">
-      <header class="vehicle-query-summary__header">
-        <div>
-          <span>车辆综合档案</span>
-          <small>汇总车辆合规、运营和维保关键数据</small>
+    <div class="vehicle-query-summary__main grid min-w-0 gap-3.5">
+      <header
+        class="vehicle-query-summary__header flex min-w-0 gap-4 min-[641px]:items-center min-[641px]:justify-between max-[640px]:flex-col max-[640px]:items-stretch"
+      >
+        <div class="grid min-w-0 gap-[3px]">
+          <span class="text-base font-bold text-[var(--el-text-color-primary)]">车辆综合档案</span>
+          <small class="truncate text-[var(--el-text-color-secondary)]"
+            >汇总车辆合规、运营和维保关键数据</small
+          >
         </div>
         <ElButton v-auth="'VehicleQuery:AiAnalyze'" type="primary" plain @click="emit('analyze')">
           <ArtSvgIcon icon="ri:sparkling-2-line" />AI 车辆健康研判
         </ElButton>
       </header>
-      <ArtDescriptions :data="descriptionData" :items="descriptionItems" />
+      <ArtDescriptions :data="descriptionData" :items="descriptionItems" :label-width="128" />
     </div>
   </div>
 </template>
@@ -32,7 +43,8 @@
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import ArtSvgIcon from '@/components/core/base/art-svg-icon/index.vue'
   import type { InfoItem, VehicleArchive, VehicleQuerySummary } from './types'
-  import { createDescriptionItems, formatDate, formatMileage, formatNumber } from './query-format'
+  import { createDescriptionItems, formatDate, formatMileage } from './query-format'
+  import { formatNumberValue } from '@/utils/ui/format'
   import { canViewField } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehicleQuerySummary' })
@@ -70,111 +82,11 @@
     ] satisfies InfoItem[])
   )
 
-  const getOperationYears = (): string => {
-    if (!props.vehicle.startUseDate) return '--'
+  const getOperationYears = (): string | undefined => {
+    if (!props.vehicle.startUseDate) return undefined
     const startTime = new Date(props.vehicle.startUseDate).getTime()
-    if (Number.isNaN(startTime)) return '--'
+    if (Number.isNaN(startTime)) return undefined
     const years = Math.max(0, (Date.now() - startTime) / (365.25 * 24 * 60 * 60 * 1000))
-    return formatNumber(Number(years.toFixed(1)))
+    return formatNumberValue(Number(years.toFixed(1)))
   }
 </script>
-
-<style scoped lang="scss">
-  .vehicle-query-summary {
-    display: grid;
-    grid-template-columns: 220px minmax(0, 1fr);
-    gap: 28px;
-    padding: 24px;
-
-    &__photo {
-      width: 220px;
-      height: 150px;
-
-      :deep(.el-image) {
-        width: 100%;
-        height: 100%;
-      }
-    }
-
-    &__photo-empty {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      font-size: 56px;
-      color: var(--el-text-color-placeholder);
-      background: var(--el-fill-color-light);
-    }
-
-    &__main {
-      display: grid;
-      gap: 14px;
-      min-width: 0;
-    }
-
-    :deep(.art-descriptions .el-descriptions__label) {
-      width: 128px;
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-      background: var(--el-fill-color-lighter);
-    }
-
-    :deep(.art-descriptions .el-descriptions__content) {
-      min-width: 180px;
-      color: var(--el-text-color-secondary);
-      overflow-wrap: anywhere;
-    }
-
-    &__header {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      justify-content: space-between;
-      min-width: 0;
-
-      > div {
-        display: grid;
-        gap: 3px;
-        min-width: 0;
-      }
-
-      span {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--el-text-color-primary);
-      }
-
-      small {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: var(--el-text-color-secondary);
-        white-space: nowrap;
-      }
-    }
-  }
-
-  @media (width <= 900px) {
-    .vehicle-query-summary {
-      grid-template-columns: 1fr;
-
-      &__photo {
-        width: 100%;
-        max-width: 260px;
-      }
-    }
-  }
-
-  @media (width <= 640px) {
-    .vehicle-query-summary {
-      &__header {
-        flex-direction: column;
-        align-items: stretch;
-
-        :deep(.el-button) {
-          width: 100%;
-        }
-      }
-    }
-  }
-</style>

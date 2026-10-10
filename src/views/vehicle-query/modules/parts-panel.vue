@@ -1,9 +1,20 @@
 <template>
   <ArtPageSection title="零部件管理">
     <template #actions>
-      <ElInput v-model="panel.keyword" clearable placeholder="零部件名称" class="w-full sm:w-55" />
+      <ElInput
+        v-model="panel.keyword"
+        clearable
+        placeholder="零部件名称"
+        class="w-55! max-w-full"
+      />
     </template>
-    <VehicleQueryTable :data="filteredRecords" :columns="columns" :loading="loading" />
+    <VehicleQueryTable
+      :error="error"
+      @retry="loadRecords"
+      :data="filteredRecords"
+      :columns="columns"
+      :loading="loading"
+    />
   </ArtPageSection>
 </template>
 
@@ -30,14 +41,21 @@
     keyword: ''
   })
 
-  const { loading, records } = useVehiclePanelList<VehiclePartUsage>(vehicle, async (current) => {
-    const { data } = await fetchVehiclePartUsageList({
-      plateNo: current.plateNo,
-      from: 0,
-      to: 9999
-    })
-    return data ?? []
-  })
+  const { loading, records, error, loadRecords } = useVehiclePanelList<VehiclePartUsage>(
+    vehicle,
+    async (current) => {
+      const { data, error: requestError } = await fetchVehiclePartUsageList(
+        {
+          plateNo: current.plateNo,
+          from: 0,
+          to: 9999
+        },
+        { showErrorMessage: false }
+      )
+      if (requestError) throw requestError
+      return data ?? []
+    }
+  )
 
   const filteredRecords = computed(() => {
     const keyword = panel.keyword.trim()

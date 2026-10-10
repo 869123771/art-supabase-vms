@@ -1,9 +1,9 @@
 import { buildSupabaseRpcRange } from '@/utils/supabase'
 import { toDateStartTimestamp, toDateEndTimestamp } from '@/utils/time/date-boundary'
 import { normalizeNullableText } from '@/utils/form/normalize'
-import { useSupabase } from '@/hooks'
+import { useSupabase } from '@/hooks/core/useSupabase'
 import { normalizeBooleanFilter, withRequestOptions } from '@/api/providers/supabase/query'
-import type { ApiRequestOptions } from '@/types/api/request'
+import type { ApiFeedbackOptions, ApiRequestOptions } from '@/types/api/request'
 import {
   type VehicleMileageRecord,
   type VehicleMileageSearchParams,
@@ -42,7 +42,7 @@ const createVehicleMileageRpcParams = (
 
 export async function fetchVehicleMileageList(
   params: VehicleMileageSearchParams,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ) {
   const result = await responseHandle<SecureVehicleMileagePayload>(
     () =>
@@ -53,7 +53,7 @@ export async function fetchVehicleMileageList(
         ),
         options
       ),
-    { showErrorMessage: true }
+    { showErrorMessage: options?.showErrorMessage ?? true }
   )
   return {
     data: result.data?.records ?? [],
@@ -112,7 +112,7 @@ const createVehicleViolationRpcParams = (
 
 export async function fetchVehicleViolationList(
   params: VehicleViolationSearchParams,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ) {
   const result = await responseHandle<SecureVehicleViolationPayload>(
     () =>
@@ -123,7 +123,7 @@ export async function fetchVehicleViolationList(
         ),
         options
       ),
-    { showErrorMessage: true }
+    { showErrorMessage: options?.showErrorMessage ?? true }
   )
   return {
     data: result.data?.records ?? [],
@@ -184,7 +184,7 @@ const createVehicleAccidentRpcParams = (
 
 export async function fetchVehicleAccidentList(
   params: VehicleAccidentSearchParams,
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ) {
   const result = await responseHandle<SecureVehicleAccidentPayload>(
     () =>
@@ -195,7 +195,7 @@ export async function fetchVehicleAccidentList(
         ),
         options
       ),
-    { showErrorMessage: true }
+    { showErrorMessage: options?.showErrorMessage ?? true }
   )
   return {
     data: result.data?.records ?? [],
@@ -224,11 +224,11 @@ export async function exportVehicleAccidentList(
   }
 }
 
-export async function fetchVehicleAccidentDetail(id: string) {
+export async function fetchVehicleAccidentDetail(id: string, options?: ApiFeedbackOptions) {
   return await responseHandle<VehicleAccidentRecord | null>(
     () => supabase.rpc('vms_get_vehicle_accident_secure', { p_id: id }),
     {
-      showErrorMessage: true
+      showErrorMessage: options?.showErrorMessage ?? true
     }
   )
 }

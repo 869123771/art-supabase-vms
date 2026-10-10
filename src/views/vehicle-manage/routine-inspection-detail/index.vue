@@ -1,6 +1,6 @@
 <template>
   <ArtPageShell
-    class="routine-inspection-detail"
+    class="routine-inspection-detail min-h-full p-4 bg-[var(--art-main-bg-color)]"
     :loading="page.loading"
     loading-mode="skeleton"
     :error="page.error"
@@ -18,13 +18,12 @@
       @back="goBack"
     />
 
-    <section class="routine-inspection-detail__summary art-card-xs">
-      <div
-        v-if="canViewField(fieldAccess, 'inspectionFindings')"
-        class="routine-inspection-detail__summary-item"
-      >
-        <span>例检类型</span>
-        <strong>
+    <section
+      class="routine-inspection-detail__summary art-card-xs mt-3 grid gap-4 p-4 min-[901px]:grid-cols-3"
+    >
+      <div class="routine-inspection-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">例检类型</span>
+        <strong class="text-lg font-semibold wrap-anywhere">
           <ArtDictDisplay
             dict-code="vehicleRoutineInspectionType"
             :value="detail.data?.inspectionType"
@@ -32,9 +31,12 @@
           />
         </strong>
       </div>
-      <div class="routine-inspection-detail__summary-item">
-        <span>检查结果</span>
-        <strong>
+      <div
+        class="routine-inspection-detail__summary-item flex min-w-0 flex-col gap-2"
+        v-if="canViewField(fieldAccess, 'inspectionFindings')"
+      >
+        <span class="text-[var(--el-text-color-secondary)]">检查结果</span>
+        <strong class="text-lg font-semibold wrap-anywhere">
           <ArtDictDisplay
             dict-code="vehicleRoutineInspectionResult"
             :value="detail.data?.checkResult"
@@ -44,55 +46,69 @@
       </div>
       <div
         v-if="canViewField(fieldAccess, 'documents')"
-        class="routine-inspection-detail__summary-item"
+        class="routine-inspection-detail__summary-item flex min-w-0 flex-col gap-2"
       >
-        <span>附件数量</span>
-        <strong>{{
+        <span class="text-[var(--el-text-color-secondary)]">附件数量</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
           detail.data?.attachmentsMasked ? '***' : (detail.data?.attachments?.length ?? 0)
         }}</strong>
       </div>
     </section>
 
-    <div class="routine-inspection-detail__content art-card-xs">
-      <section
+    <div class="routine-inspection-detail__content art-card-xs mt-3 flex flex-col gap-6 p-5">
+      <ArtPageSection title="基础信息" class="routine-inspection-detail__section">
+        <ArtDescriptions
+          :data="descriptionData"
+          :items="descriptionItems"
+          :columns="2"
+          :label-width="128"
+        />
+      </ArtPageSection>
+
+      <ArtPageSection
+        title="检查情况"
         v-if="canViewField(fieldAccess, 'inspectionFindings')"
         class="routine-inspection-detail__section"
       >
-        <ArtSectionTitle>基础信息</ArtSectionTitle>
-        <ArtDescriptions :data="descriptionData" :items="descriptionItems" :columns="2" />
-      </section>
-
-      <section
-        v-if="canViewField(fieldAccess, 'remediationDetails')"
-        class="routine-inspection-detail__section"
-      >
-        <ArtSectionTitle>检查情况</ArtSectionTitle>
-        <div class="routine-inspection-detail__text">
+        <div
+          class="routine-inspection-detail__text min-h-12 rounded-[var(--el-border-radius-base)] bg-[var(--el-fill-color-lighter)] px-3.5 py-3 leading-relaxed text-[var(--el-text-color-regular)] wrap-anywhere whitespace-pre-wrap"
+        >
           {{ formatArtValue(detail.data?.checkCondition) }}
         </div>
-      </section>
+      </ArtPageSection>
 
-      <section
+      <ArtPageSection
+        title="处理方式"
         v-if="canViewField(fieldAccess, 'remediationDetails')"
         class="routine-inspection-detail__section"
       >
-        <ArtSectionTitle>处理方式</ArtSectionTitle>
-        <div class="routine-inspection-detail__text">
+        <div
+          class="routine-inspection-detail__text min-h-12 rounded-[var(--el-border-radius-base)] bg-[var(--el-fill-color-lighter)] px-3.5 py-3 leading-relaxed text-[var(--el-text-color-regular)] wrap-anywhere whitespace-pre-wrap"
+        >
           {{ formatArtValue(detail.data?.handlingMethod) }}
         </div>
-      </section>
+      </ArtPageSection>
 
-      <section class="routine-inspection-detail__section">
-        <ArtSectionTitle>备注</ArtSectionTitle>
-        <div class="routine-inspection-detail__text">{{ formatArtValue(detail.data?.remark) }}</div>
-      </section>
+      <ArtPageSection
+        title="备注"
+        class="routine-inspection-detail__section"
+        v-if="canViewField(fieldAccess, 'remediationDetails')"
+      >
+        <div
+          class="routine-inspection-detail__text min-h-12 rounded-[var(--el-border-radius-base)] bg-[var(--el-fill-color-lighter)] px-3.5 py-3 leading-relaxed text-[var(--el-text-color-regular)] wrap-anywhere whitespace-pre-wrap"
+          >{{ formatArtValue(detail.data?.remark) }}</div
+        >
+      </ArtPageSection>
 
-      <section
+      <ArtPageSection
+        title="例检附件"
         v-if="canViewField(fieldAccess, 'documents')"
         class="routine-inspection-detail__section"
       >
-        <ArtSectionTitle>例检附件</ArtSectionTitle>
-        <div v-if="detail.data?.attachmentsMasked" class="routine-inspection-detail__text">
+        <div
+          v-if="detail.data?.attachmentsMasked"
+          class="routine-inspection-detail__text min-h-12 rounded-[var(--el-border-radius-base)] bg-[var(--el-fill-color-lighter)] px-3.5 py-3 leading-relaxed text-[var(--el-text-color-regular)] wrap-anywhere whitespace-pre-wrap"
+        >
           附件内容已脱敏
         </div>
         <ArtTable
@@ -103,22 +119,22 @@
           :show-table-header="false"
           empty-height="180px"
         />
-      </section>
+      </ArtPageSection>
     </div>
   </ArtPageShell>
 </template>
 
 <script setup lang="tsx">
+  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
+  import BusinessAttachmentRowActions from '@/components/business/business-attachment-row-actions/index.vue'
   import { formatArtValue } from '@/utils/ui/format'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
   import ArtDictDisplay from '@/components/core/base/art-dict-display/index.vue'
-  import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
+  import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import { fetchVehicleRoutineInspectionDetail } from '@vms/api'
-  import { downloadAttachment, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canViewField } from '@/utils/field-permission'
 
@@ -182,17 +198,9 @@
     {
       prop: 'operation',
       label: '操作',
-      width: 96,
-      formatter: (row) => (
-        <div class="flex items-center">
-          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-          <ArtIconButton
-            icon="ri:download-2-line"
-            label="下载附件"
-            onClick={() => downloadAttachment(row)}
-          />
-        </div>
-      )
+      width: 104,
+      fixed: 'right',
+      formatter: (row) => <BusinessAttachmentRowActions file={row} />
     }
   ]
 
@@ -209,10 +217,18 @@
     page.loading = true
     page.error = null
     try {
-      const { data } = await fetchVehicleRoutineInspectionDetail(id)
+      const { data, error } = await fetchVehicleRoutineInspectionDetail(id, {
+        showErrorMessage: false
+      })
+      if (error) throw error
       detail.data = data ? { ...data, attachments: data.attachments ?? [] } : undefined
     } catch (error) {
-      page.error = error instanceof Error ? error : new Error('例检记录详情加载失败')
+      page.error =
+        error instanceof Error
+          ? error
+          : new Error(getFriendlySupabaseErrorMessage(error, '例检记录详情加载失败'), {
+              cause: error
+            })
     } finally {
       page.loading = false
     }
@@ -222,66 +238,3 @@
     void router.push('/vms/vehicle-manage/routine-inspection')
   }
 </script>
-
-<style scoped lang="scss">
-  .routine-inspection-detail {
-    min-height: 100%;
-    padding: 16px;
-    background: var(--art-main-bg-color);
-
-    &__summary {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1px;
-      padding: 16px;
-      margin-top: 12px;
-    }
-
-    &__summary-item {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 0;
-
-      span {
-        color: var(--el-text-color-secondary);
-      }
-
-      strong {
-        font-size: 18px;
-        font-weight: 600;
-        overflow-wrap: anywhere;
-      }
-    }
-
-    &__content {
-      padding: 20px;
-      margin-top: 12px;
-    }
-
-    &__section + &__section {
-      margin-top: 22px;
-    }
-
-    &__text {
-      min-height: 48px;
-      padding: 12px 14px;
-      line-height: 1.7;
-      color: var(--el-text-color-regular);
-      overflow-wrap: anywhere;
-      background: var(--el-fill-color-lighter);
-      border-radius: var(--el-border-radius-base);
-    }
-
-    :deep(.art-descriptions .el-descriptions__label) {
-      width: 128px;
-      font-weight: 600;
-    }
-
-    @media (width <= 900px) {
-      &__summary {
-        grid-template-columns: 1fr;
-      }
-    }
-  }
-</style>

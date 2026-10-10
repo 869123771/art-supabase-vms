@@ -1,6 +1,6 @@
 <template>
   <ArtPageShell
-    class="maintenance-record-detail"
+    class="maintenance-record-detail min-h-full p-4 bg-[var(--art-main-bg-color)]"
     :loading="page.loading"
     loading-mode="skeleton"
     :error="page.error"
@@ -10,7 +10,7 @@
     @retry="loadDetail"
   >
     <ArtPageHeader
-      :title="detail.data?.maintenanceNo || '维修保养详情'"
+      :title="(canViewIdentifiers && detail.data?.maintenanceNo) || '维修保养详情'"
       :subtitle="
         [detail.data?.plateNo, detail.data?.companyName].filter(Boolean).join(' / ') || '--'
       "
@@ -18,10 +18,12 @@
       @back="goBack"
     />
 
-    <section class="maintenance-record-detail__summary art-card-xs">
-      <div v-if="canViewTotalCost" class="maintenance-record-detail__summary-item">
-        <span>维修类型</span>
-        <strong>
+    <section
+      class="maintenance-record-detail__summary art-card-xs mt-3 grid gap-4 p-4 min-[901px]:grid-cols-3"
+    >
+      <div class="maintenance-record-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">维修类型</span>
+        <strong class="text-lg font-semibold wrap-anywhere">
           <ArtDictDisplay
             dict-code="vehicleMaintenanceType"
             :value="detail.data?.maintenanceType"
@@ -29,26 +31,41 @@
           />
         </strong>
       </div>
-      <div v-if="canViewMaintenanceItems" class="maintenance-record-detail__summary-item">
-        <span>费用金额</span>
-        <strong>{{
+      <div
+        v-if="canViewTotalCost"
+        class="maintenance-record-detail__summary-item flex min-w-0 flex-col gap-2"
+      >
+        <span class="text-[var(--el-text-color-secondary)]">费用金额</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
           formatSensitiveNumberWithAffix(detail.data?.costAmount, { suffix: ' 元' })
         }}</strong>
       </div>
-      <div class="maintenance-record-detail__summary-item">
-        <span>维修项目数</span>
-        <strong>{{ detail.data?.items?.length ?? 0 }}</strong>
+      <div
+        class="maintenance-record-detail__summary-item flex min-w-0 flex-col gap-2"
+        v-if="canViewMaintenanceItems"
+      >
+        <span class="text-[var(--el-text-color-secondary)]">维修项目数</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          detail.data?.items?.length ?? 0
+        }}</strong>
       </div>
     </section>
 
-    <div class="maintenance-record-detail__content art-card-xs">
-      <section v-if="canViewMaintenanceItems" class="maintenance-record-detail__section">
-        <ArtSectionTitle>基础信息</ArtSectionTitle>
-        <ArtDescriptions :data="descriptionData" :items="descriptionItems" :columns="2" />
-      </section>
+    <div class="maintenance-record-detail__content art-card-xs mt-3 flex flex-col gap-6 p-5">
+      <ArtPageSection title="基础信息" class="maintenance-record-detail__section">
+        <ArtDescriptions
+          :data="descriptionData"
+          :items="descriptionItems"
+          :columns="2"
+          :label-width="128"
+        />
+      </ArtPageSection>
 
-      <section v-if="canViewDocuments" class="maintenance-record-detail__section">
-        <ArtSectionTitle>维修项目</ArtSectionTitle>
+      <ArtPageSection
+        title="维修项目"
+        v-if="canViewMaintenanceItems"
+        class="maintenance-record-detail__section"
+      >
         <ArtTable
           :data="detail.data?.items ?? []"
           :columns="itemColumns"
@@ -56,17 +73,20 @@
           :show-table-header="false"
           empty-height="180px"
         />
-      </section>
+      </ArtPageSection>
 
-      <section class="maintenance-record-detail__section">
-        <ArtSectionTitle>备注</ArtSectionTitle>
-        <div class="maintenance-record-detail__remark">{{
-          formatArtValue(detail.data?.remark)
-        }}</div>
-      </section>
+      <ArtPageSection title="备注" class="maintenance-record-detail__section">
+        <div
+          class="maintenance-record-detail__remark min-h-12 rounded-[var(--el-border-radius-base)] bg-[var(--el-fill-color-lighter)] px-3.5 py-3 leading-relaxed text-[var(--el-text-color-regular)] wrap-anywhere whitespace-pre-wrap"
+          >{{ formatArtValue(detail.data?.remark) }}</div
+        >
+      </ArtPageSection>
 
-      <section class="maintenance-record-detail__section">
-        <ArtSectionTitle>维修附件</ArtSectionTitle>
+      <ArtPageSection
+        title="维修附件"
+        class="maintenance-record-detail__section"
+        v-if="canViewDocuments"
+      >
         <ArtTable
           :data="detail.data?.attachments ?? []"
           :columns="attachmentColumns"
@@ -74,23 +94,23 @@
           :show-table-header="false"
           empty-height="180px"
         />
-      </section>
+      </ArtPageSection>
     </div>
   </ArtPageShell>
 </template>
 
 <script setup lang="tsx">
+  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
+  import BusinessAttachmentRowActions from '@/components/business/business-attachment-row-actions/index.vue'
   import { formatArtValue } from '@/utils/ui/format'
   import { isNil } from 'lodash-es'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
   import ArtDictDisplay from '@/components/core/base/art-dict-display/index.vue'
-  import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
+  import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import { fetchVehicleMaintenanceDetail } from '@vms/api'
-  import { downloadAttachment, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canViewField, formatSensitiveNumberWithAffix } from '@/utils/field-permission'
 
@@ -191,17 +211,9 @@
     {
       prop: 'operation',
       label: '操作',
-      width: 96,
-      formatter: (row) => (
-        <div class="flex items-center">
-          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-          <ArtIconButton
-            icon="ri:download-2-line"
-            label="下载附件"
-            onClick={() => downloadAttachment(row)}
-          />
-        </div>
-      )
+      width: 104,
+      fixed: 'right',
+      formatter: (row) => <BusinessAttachmentRowActions file={row} />
     }
   ]
 
@@ -218,12 +230,18 @@
     page.loading = true
     page.error = null
     try {
-      const { data } = await fetchVehicleMaintenanceDetail(id)
+      const { data, error } = await fetchVehicleMaintenanceDetail(id, { showErrorMessage: false })
+      if (error) throw error
       detail.data = data
         ? { ...data, items: data.items ?? [], attachments: data.attachments ?? [] }
         : undefined
     } catch (error) {
-      page.error = error instanceof Error ? error : new Error('维修保养详情加载失败')
+      page.error =
+        error instanceof Error
+          ? error
+          : new Error(getFriendlySupabaseErrorMessage(error, '维修保养详情加载失败'), {
+              cause: error
+            })
     } finally {
       page.loading = false
     }
@@ -236,66 +254,3 @@
   const getBooleanDictValue = (value?: boolean | null): string | undefined =>
     isNil(value) ? undefined : String(value)
 </script>
-
-<style scoped lang="scss">
-  .maintenance-record-detail {
-    min-height: 100%;
-    padding: 16px;
-    background: var(--art-main-bg-color);
-
-    &__summary {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1px;
-      padding: 16px;
-      margin-top: 12px;
-    }
-
-    &__summary-item {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 0;
-
-      span {
-        color: var(--el-text-color-secondary);
-      }
-
-      strong {
-        font-size: 18px;
-        font-weight: 600;
-        overflow-wrap: anywhere;
-      }
-    }
-
-    &__content {
-      padding: 20px;
-      margin-top: 12px;
-    }
-
-    &__section + &__section {
-      margin-top: 22px;
-    }
-
-    &__remark {
-      min-height: 48px;
-      padding: 12px 14px;
-      line-height: 1.7;
-      color: var(--el-text-color-regular);
-      overflow-wrap: anywhere;
-      background: var(--el-fill-color-lighter);
-      border-radius: var(--el-border-radius-base);
-    }
-
-    :deep(.art-descriptions .el-descriptions__label) {
-      width: 128px;
-      font-weight: 600;
-    }
-
-    @media (width <= 900px) {
-      &__summary {
-        grid-template-columns: 1fr;
-      }
-    }
-  }
-</style>

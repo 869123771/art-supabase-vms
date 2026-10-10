@@ -129,7 +129,7 @@
   import { notifyFriendlyError } from '@/hooks/core/useArtFeedback'
   import { normalizeNullableText } from '@/utils/form/normalize'
   import ArtSectionCard from '@/components/core/surfaces/art-section-card/index.vue'
-  import dayjs from 'dayjs'
+  import { createDateTimeFormatter, formatDateTimeValue } from '@/utils/ui/format'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
   import { ElMessage, type FormRules } from 'element-plus'
   import ArtDrawer from '@/components/core/drawers/art-drawer/index.vue'
@@ -312,12 +312,19 @@
     void nextTick(() => formRef.value?.clearValidate())
   }
 
-  function formatDate(value?: string | null): string {
-    return value && dayjs(value).isValid() ? dayjs(value).format('YYYY-MM-DD') : '--'
-  }
+  const formatDate = createDateTimeFormatter({
+    format: 'YYYY-MM-DD',
+    invalidText: '--',
+    allowTimeOnly: false
+  })
 
   function formatProgressTime(value: string | null | undefined, fallback: string): string {
-    return value && dayjs(value).isValid() ? dayjs(value).format('MM-DD HH:mm') : fallback
+    return formatDateTimeValue(value, {
+      format: 'MM-DD HH:mm',
+      emptyText: fallback,
+      invalidText: fallback,
+      allowTimeOnly: false
+    })
   }
 
   function createPayload(data: OpenData) {

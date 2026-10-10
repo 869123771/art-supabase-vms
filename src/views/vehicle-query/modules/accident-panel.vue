@@ -1,6 +1,12 @@
 <template>
   <ArtPageSection title="事故记录">
-    <VehicleQueryTable :data="records" :columns="columns" :loading="loading" />
+    <VehicleQueryTable
+      :error="error"
+      @retry="loadRecords"
+      :data="records"
+      :columns="columns"
+      :loading="loading"
+    />
   </ArtPageSection>
 </template>
 
@@ -21,14 +27,18 @@
   }>()
 
   const vehicle = toRef(props, 'vehicle')
-  const { loading, records } = useVehiclePanelList<VehicleAccidentRecord>(
+  const { loading, records, error, loadRecords } = useVehiclePanelList<VehicleAccidentRecord>(
     vehicle,
     async (current) => {
-      const { data } = await fetchVehicleAccidentList({
-        vehicleId: current.id,
-        from: 0,
-        to: 9999
-      })
+      const { data, error: requestError } = await fetchVehicleAccidentList(
+        {
+          vehicleId: current.id,
+          from: 0,
+          to: 9999
+        },
+        { showErrorMessage: false }
+      )
+      if (requestError) throw requestError
       return data ?? []
     }
   )

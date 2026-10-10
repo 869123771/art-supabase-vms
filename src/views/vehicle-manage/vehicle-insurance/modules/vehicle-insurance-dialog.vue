@@ -43,6 +43,7 @@
 </template>
 
 <script setup lang="tsx">
+  import BusinessAttachmentRowActions from '@/components/business/business-attachment-row-actions/index.vue'
   import { validateArtFormForSubmit } from '@/utils/form/validate-art-form'
   import { notifyFriendlyError, useArtFeedback } from '@/hooks/core/useArtFeedback'
   import type { ComputedRef, UnwrapNestedRefs } from 'vue'
@@ -55,7 +56,6 @@
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import {
     addVehicleInsurance,
@@ -63,7 +63,7 @@
     fetchInsuranceCompanyOptions,
     fetchVehicleArchiveOptions
   } from '@vms/api'
-  import { downloadAttachment, getFileExtension, viewAttachment } from '@/utils/file'
+  import { getFileExtension } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canEditField, canViewField } from '@/utils/field-permission'
   import {
@@ -304,24 +304,15 @@
     {
       prop: 'operation',
       label: '操作',
-      width: canEditInsuranceField('documents') ? 120 : 80,
+      width: canEditInsuranceField('documents') ? 144 : 104,
+      fixed: 'right',
       formatter: (row) => (
-        <div class="flex items-center">
-          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-          <ArtIconButton
-            icon="ri:download-2-line"
-            label="下载附件"
-            onClick={() => downloadAttachment(row)}
-          />
-          {canEditInsuranceField('documents') ? (
-            <ArtIconButton
-              icon="ri:delete-bin-5-line"
-              label="移除附件"
-              tone="danger"
-              onClick={() => void removeAttachment(row)}
-            />
-          ) : null}
-        </div>
+        <BusinessAttachmentRowActions
+          file={row}
+          removable={canEditInsuranceField('documents')}
+          removeLabel="移除附件"
+          onRemove={() => void removeAttachment(row)}
+        />
       )
     }
   ])

@@ -1,46 +1,72 @@
 <template>
-  <div class="vehicle-query-archive-panel">
+  <div class="vehicle-query-archive-panel [&_.el-tabs__content]:pt-2">
     <ElTabs v-model="panel.activeTab">
       <ElTabPane v-if="hasAuth('VehicleQuery:TabBasic')" label="基础信息" name="basic">
         <ArtPageSection title="基础信息">
-          <ArtDescriptions :data="descriptionData" :items="basicDescriptionItems" />
+          <ArtDescriptions
+            :data="descriptionData"
+            :items="basicDescriptionItems"
+            :label-width="128"
+          />
         </ArtPageSection>
         <ArtPageSection
           v-if="canViewField(vehicle.fieldAccess, 'documents')"
           title="车辆证件"
-          class="vehicle-query-archive-panel__certificates"
+          class="vehicle-query-archive-panel__certificates mt-6"
         >
-          <div class="vehicle-query-archive-panel__images">
+          <div
+            class="vehicle-query-archive-panel__images grid max-w-[860px] grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-5 rounded-[var(--el-border-radius-base)] border border-[var(--el-border-color-lighter)] p-5"
+          >
             <div
               v-for="item in certificateItems"
               :key="item.key"
-              class="vehicle-query-archive-panel__image-item"
+              class="vehicle-query-archive-panel__image-item flex flex-col items-center gap-2"
             >
               <ElImage
                 v-if="vehicle[item.key]"
                 :src="vehicle[item.key]"
+                class="h-[110px] w-[140px] border border-[var(--el-border-color)]"
+                :alt="item.label"
                 fit="cover"
                 :preview-src-list="[vehicle[item.key] || '']"
               />
-              <div v-else class="vehicle-query-archive-panel__image-empty">--</div>
-              <span>{{ item.label }}</span>
+              <div
+                v-else
+                class="vehicle-query-archive-panel__image-empty flex h-[110px] w-[140px] items-center justify-center border border-[var(--el-border-color)] bg-[var(--el-fill-color-light)] text-[var(--el-text-color-placeholder)]"
+                >--</div
+              >
+              <span class="font-semibold text-[var(--el-text-color-secondary)]">{{
+                item.label
+              }}</span>
             </div>
           </div>
         </ArtPageSection>
       </ElTabPane>
       <ElTabPane v-if="hasAuth('VehicleQuery:TabBody')" label="车身参数" name="body">
         <ArtPageSection title="车身参数">
-          <ArtDescriptions :data="descriptionData" :items="bodyDescriptionItems" />
+          <ArtDescriptions
+            :data="descriptionData"
+            :items="bodyDescriptionItems"
+            :label-width="128"
+          />
         </ArtPageSection>
       </ElTabPane>
       <ElTabPane v-if="hasAuth('VehicleQuery:TabEngine')" label="发动机参数" name="engine">
         <ArtPageSection title="发动机参数">
-          <ArtDescriptions :data="descriptionData" :items="engineDescriptionItems" />
+          <ArtDescriptions
+            :data="descriptionData"
+            :items="engineDescriptionItems"
+            :label-width="128"
+          />
         </ArtPageSection>
       </ElTabPane>
       <ElTabPane v-if="hasAuth('VehicleQuery:TabOther')" label="其他信息" name="other">
         <ArtPageSection title="其他信息">
-          <ArtDescriptions :data="descriptionData" :items="otherDescriptionItems" />
+          <ArtDescriptions
+            :data="descriptionData"
+            :items="otherDescriptionItems"
+            :label-width="128"
+          />
         </ArtPageSection>
       </ElTabPane>
     </ElTabs>
@@ -59,7 +85,8 @@
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import type { InfoItem, VehicleArchive } from './types'
-  import { createDescriptionItems, formatBoolean } from './query-format'
+  import { createDescriptionItems } from './query-format'
+  import { formatArtValue } from '@/utils/ui/format'
   import { canViewField } from '@/utils/field-permission'
 
   defineOptions({ name: 'VehicleQueryArchivePanel' })
@@ -139,7 +166,7 @@
       { label: '核定乘员数（人）', value: props.vehicle.approvedPassengerCount },
       { label: '座位数', value: props.vehicle.seatCount },
       { label: '业务类型', value: props.vehicle.businessType, dictCode: 'vehicleBusinessType' },
-      { label: '是否空调车', value: formatBoolean(props.vehicle.isAirConditioned) },
+      { label: '是否空调车', value: formatArtValue(props.vehicle.isAirConditioned, 'boolean') },
       {
         label: '营运状态',
         value: props.vehicle.operationStatus,
@@ -150,7 +177,7 @@
       { label: '购置状态变更', value: props.vehicle.purchaseStatusChangeDate },
       { label: '例检启用日期', value: props.vehicle.inspectionStartDate },
       { label: '车辆等级', value: props.vehicle.vehicleLevel, dictCode: 'vehicleLevel' },
-      { label: '是否新能源车', value: formatBoolean(props.vehicle.isNewEnergy) },
+      { label: '是否新能源车', value: formatArtValue(props.vehicle.isNewEnergy, 'boolean') },
       { label: '整车三包里程', value: props.vehicle.threeGuaranteeMileage, suffix: '公里' },
       { label: '整车三包时长', value: props.vehicle.threeGuaranteeDuration, suffix: '个月' },
       { label: '整车包修里程', value: props.vehicle.warrantyMileage, suffix: '公里' },
@@ -174,7 +201,7 @@
       { label: '车轴数', value: props.vehicle.axleCount },
       { label: '轮胎数', value: props.vehicle.tireCount },
       { label: '钢板弹簧数', value: props.vehicle.leafSpringCount, suffix: '片' },
-      { label: '是否双层', value: formatBoolean(props.vehicle.isDoubleDeck) }
+      { label: '是否双层', value: formatArtValue(props.vehicle.isDoubleDeck, 'boolean') }
     ] satisfies InfoItem[])
   )
 
@@ -240,69 +267,7 @@
         : []),
       { label: '服务开始时间', value: props.vehicle.serviceStartTime },
       { label: '服务结束时间', value: props.vehicle.serviceEndTime },
-      { label: '支持拍照', value: formatBoolean(props.vehicle.supportPhoto) }
+      { label: '支持拍照', value: formatArtValue(props.vehicle.supportPhoto, 'boolean') }
     ] satisfies InfoItem[])
   )
 </script>
-
-<style scoped lang="scss">
-  .vehicle-query-archive-panel {
-    :deep(.el-tabs__content) {
-      padding-top: 8px;
-    }
-
-    &__certificates {
-      margin-top: var(--art-space-6);
-    }
-
-    &__images {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: var(--art-space-5);
-      max-width: 860px;
-      padding: var(--art-space-5);
-      border: 1px solid var(--el-border-color-lighter);
-      border-radius: var(--el-border-radius-base);
-    }
-
-    &__image-item {
-      display: flex;
-      flex-direction: column;
-      gap: var(--art-space-2);
-      align-items: center;
-
-      :deep(.el-image),
-      .vehicle-query-archive-panel__image-empty {
-        width: 140px;
-        height: 110px;
-        border: 1px solid var(--el-border-color);
-      }
-
-      span {
-        font-weight: 600;
-        color: var(--el-text-color-secondary);
-      }
-    }
-
-    &__image-empty {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--el-text-color-placeholder);
-      background: var(--el-fill-color-light);
-    }
-
-    :deep(.art-descriptions .el-descriptions__label) {
-      width: 128px;
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-      background: var(--el-fill-color-lighter);
-    }
-
-    :deep(.art-descriptions .el-descriptions__content) {
-      min-width: 180px;
-      color: var(--el-text-color-secondary);
-      overflow-wrap: anywhere;
-    }
-  }
-</style>

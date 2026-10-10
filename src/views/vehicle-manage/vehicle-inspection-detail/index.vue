@@ -1,6 +1,6 @@
 <template>
   <ArtPageShell
-    class="vehicle-inspection-detail"
+    class="vehicle-inspection-detail min-h-full p-4 bg-[var(--art-main-bg-color)]"
     :loading="page.loading"
     loading-mode="skeleton"
     :error="page.error"
@@ -10,7 +10,7 @@
     @retry="loadDetail"
   >
     <ArtPageHeader
-      :title="detail.data?.inspectionNo || '车辆年检详情'"
+      :title="(canViewIdentifiers && detail.data?.inspectionNo) || '车辆年检详情'"
       :subtitle="
         [detail.data?.plateNo, detail.data?.companyName].filter(Boolean).join(' / ') || '--'
       "
@@ -18,35 +18,56 @@
       @back="goBack"
     />
 
-    <section class="vehicle-inspection-detail__summary art-card-xs">
-      <div v-if="canViewAmounts" class="vehicle-inspection-detail__summary-item">
-        <span>年检日期</span>
-        <strong>{{ detail.data?.inspectionDate || '--' }}</strong>
+    <section
+      class="vehicle-inspection-detail__summary art-card-xs mt-3 grid gap-4 p-4 grid-cols-2 min-[721px]:grid-cols-4"
+    >
+      <div class="vehicle-inspection-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">年检日期</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          detail.data?.inspectionDate || '--'
+        }}</strong>
       </div>
-      <div v-if="canViewDocuments" class="vehicle-inspection-detail__summary-item">
-        <span>到期日期</span>
-        <strong>{{ detail.data?.expireDate || '--' }}</strong>
+      <div class="vehicle-inspection-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">到期日期</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          detail.data?.expireDate || '--'
+        }}</strong>
       </div>
-      <div class="vehicle-inspection-detail__summary-item">
-        <span>年检金额</span>
-        <strong>{{
+      <div
+        class="vehicle-inspection-detail__summary-item flex min-w-0 flex-col gap-2"
+        v-if="canViewAmounts"
+      >
+        <span class="text-[var(--el-text-color-secondary)]">年检金额</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
           formatSensitiveNumberWithAffix(detail.data?.inspectionAmount, { suffix: ' 元' })
         }}</strong>
       </div>
-      <div class="vehicle-inspection-detail__summary-item">
-        <span>附件数量</span>
-        <strong>{{ detail.data?.attachments?.length ?? 0 }}</strong>
+      <div
+        class="vehicle-inspection-detail__summary-item flex min-w-0 flex-col gap-2"
+        v-if="canViewDocuments"
+      >
+        <span class="text-[var(--el-text-color-secondary)]">附件数量</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          detail.data?.attachments?.length ?? 0
+        }}</strong>
       </div>
     </section>
 
-    <div class="vehicle-inspection-detail__content art-card-xs">
-      <section v-if="canViewDocuments" class="vehicle-inspection-detail__section">
-        <ArtSectionTitle>年检信息</ArtSectionTitle>
-        <ArtDescriptions :data="descriptionData" :items="descriptionItems" :columns="2" />
-      </section>
+    <div class="vehicle-inspection-detail__content art-card-xs mt-3 flex flex-col gap-6 p-5">
+      <ArtPageSection title="年检信息" class="vehicle-inspection-detail__section">
+        <ArtDescriptions
+          :data="descriptionData"
+          :items="descriptionItems"
+          :columns="2"
+          :label-width="128"
+        />
+      </ArtPageSection>
 
-      <section class="vehicle-inspection-detail__section">
-        <ArtSectionTitle>年检附件</ArtSectionTitle>
+      <ArtPageSection
+        title="年检附件"
+        class="vehicle-inspection-detail__section"
+        v-if="canViewDocuments"
+      >
         <ArtTable
           :data="detail.data?.attachments ?? []"
           :columns="attachmentColumns"
@@ -54,20 +75,20 @@
           :show-table-header="false"
           empty-height="180px"
         />
-      </section>
+      </ArtPageSection>
     </div>
   </ArtPageShell>
 </template>
 
 <script setup lang="tsx">
+  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
+  import BusinessAttachmentRowActions from '@/components/business/business-attachment-row-actions/index.vue'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
-  import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
+  import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import { fetchVehicleInspectionDetail } from '@vms/api'
-  import { downloadAttachment, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canViewField, formatSensitiveNumberWithAffix } from '@/utils/field-permission'
 
@@ -125,16 +146,8 @@
       prop: 'operation',
       label: '操作',
       width: 104,
-      formatter: (row) => (
-        <>
-          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-          <ArtIconButton
-            icon="ri:download-2-line"
-            label="下载附件"
-            onClick={() => downloadAttachment(row)}
-          />
-        </>
-      )
+      fixed: 'right',
+      formatter: (row) => <BusinessAttachmentRowActions file={row} />
     }
   ]
 
@@ -151,10 +164,16 @@
     page.loading = true
     page.error = null
     try {
-      const { data } = await fetchVehicleInspectionDetail(id)
+      const { data, error } = await fetchVehicleInspectionDetail(id, { showErrorMessage: false })
+      if (error) throw error
       detail.data = data ? { ...data, attachments: data.attachments ?? [] } : undefined
     } catch (error) {
-      page.error = error instanceof Error ? error : new Error('车辆年检详情加载失败')
+      page.error =
+        error instanceof Error
+          ? error
+          : new Error(getFriendlySupabaseErrorMessage(error, '车辆年检详情加载失败'), {
+              cause: error
+            })
     } finally {
       page.loading = false
     }
@@ -164,70 +183,3 @@
     void router.push('/vms/vehicle-manage/vehicle-inspection')
   }
 </script>
-
-<style scoped lang="scss">
-  .vehicle-inspection-detail {
-    min-height: 100%;
-    padding: 16px;
-    background: var(--art-main-bg-color);
-
-    &__content {
-      padding: 20px;
-      margin-top: 12px;
-    }
-
-    &__summary {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      margin-top: 12px;
-    }
-
-    &__summary-item {
-      display: grid;
-      gap: 4px;
-      min-width: 0;
-      padding: 16px 20px;
-
-      &:not(:last-child) {
-        border-right: 1px solid var(--el-border-color-lighter);
-      }
-
-      span {
-        font-size: 12px;
-        color: var(--el-text-color-secondary);
-      }
-
-      strong {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-size: 18px;
-        font-variant-numeric: tabular-nums;
-        color: var(--el-text-color-primary);
-        white-space: nowrap;
-      }
-    }
-
-    &__section + &__section {
-      margin-top: 22px;
-    }
-
-    :deep(.art-descriptions .el-descriptions__label) {
-      width: 128px;
-      font-weight: 600;
-    }
-
-    @media (width <= 720px) {
-      &__summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      &__summary-item:nth-child(2) {
-        border-right: 0;
-      }
-
-      &__summary-item:nth-child(-n + 2) {
-        border-bottom: 1px solid var(--el-border-color-lighter);
-      }
-    }
-  }
-</style>

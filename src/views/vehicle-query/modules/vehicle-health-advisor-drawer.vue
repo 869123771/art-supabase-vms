@@ -128,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-  import { createDateTimeFormatter } from '@/utils/ui/format'
+  import { createDateTimeFormatter, formatSensitiveCountValue } from '@/utils/ui/format'
 
   import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
   import ArtEmptyState from '@/components/core/feedback/art-empty-state/index.vue'
@@ -198,7 +198,9 @@
       {
         label: '当前里程',
         value:
-          metrics.currentMileage === null ? '--' : `${metrics.currentMileage.toLocaleString()} km`,
+          metrics.currentMileage === null
+            ? '--'
+            : `${formatSensitiveCountValue(metrics.currentMileage)} km`,
         hint: metrics.currentMileage === null ? '需要补录里程' : '最近一条里程台账'
       },
       {

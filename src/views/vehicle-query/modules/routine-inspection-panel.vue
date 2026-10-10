@@ -1,6 +1,12 @@
 <template>
   <ArtPageSection title="例检记录">
-    <VehicleQueryTable :data="records" :columns="columns" :loading="loading" />
+    <VehicleQueryTable
+      :error="error"
+      @retry="loadRecords"
+      :data="records"
+      :columns="columns"
+      :loading="loading"
+    />
   </ArtPageSection>
 </template>
 
@@ -21,17 +27,19 @@
   }>()
 
   const vehicle = toRef(props, 'vehicle')
-  const { loading, records } = useVehiclePanelList<VehicleRoutineInspectionRecord>(
-    vehicle,
-    async (current) => {
-      const { data } = await fetchVehicleRoutineInspectionList({
-        vehicleId: current.id,
-        from: 0,
-        to: 9999
-      })
+  const { loading, records, error, loadRecords } =
+    useVehiclePanelList<VehicleRoutineInspectionRecord>(vehicle, async (current) => {
+      const { data, error: requestError } = await fetchVehicleRoutineInspectionList(
+        {
+          vehicleId: current.id,
+          from: 0,
+          to: 9999
+        },
+        { showErrorMessage: false }
+      )
+      if (requestError) throw requestError
       return data ?? []
-    }
-  )
+    })
 
   const effectiveFieldAccess = computed(() =>
     mergeFieldAccessMaps(...records.value.map((record) => record.fieldAccess))

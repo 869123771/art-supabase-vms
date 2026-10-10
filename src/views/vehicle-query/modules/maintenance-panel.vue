@@ -5,7 +5,7 @@
         v-model="panel.maintenanceType"
         clearable
         placeholder="维修类型"
-        class="w-full sm:w-45"
+        class="w-45! max-w-full"
       >
         <ElOption
           v-for="option in maintenanceTypeOptions"
@@ -15,7 +15,13 @@
         />
       </ElSelect>
     </template>
-    <VehicleQueryTable :data="filteredRecords" :columns="columns" :loading="loading" />
+    <VehicleQueryTable
+      :error="error"
+      @retry="loadRecords"
+      :data="filteredRecords"
+      :columns="columns"
+      :loading="loading"
+    />
   </ArtPageSection>
 </template>
 
@@ -48,14 +54,18 @@
     maintenanceType: ''
   })
 
-  const { loading, records } = useVehiclePanelList<VehicleMaintenanceRecord>(
+  const { loading, records, error, loadRecords } = useVehiclePanelList<VehicleMaintenanceRecord>(
     vehicle,
     async (current) => {
-      const { data } = await fetchVehicleMaintenanceList({
-        vehicleId: current.id,
-        from: 0,
-        to: 9999
-      })
+      const { data, error: requestError } = await fetchVehicleMaintenanceList(
+        {
+          vehicleId: current.id,
+          from: 0,
+          to: 9999
+        },
+        { showErrorMessage: false }
+      )
+      if (requestError) throw requestError
       return data ?? []
     }
   )

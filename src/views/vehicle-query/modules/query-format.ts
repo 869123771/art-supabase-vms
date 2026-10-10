@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { isEmpty, isNil, maxBy } from 'lodash-es'
+import { createDateTimeFormatter, formatNumberValue } from '@/utils/ui/format'
 import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
 import type { InfoItem } from './types'
 
@@ -11,34 +12,20 @@ export const formatValue = (value?: unknown, suffix = ''): string => {
   return `${value}${suffix}`
 }
 
-export const formatDate = (value?: string | null): string => {
-  if (isNil(value) || value === '') return EMPTY_TEXT
-  return dayjs(value).isValid() ? dayjs(value).format('YYYY-MM-DD') : EMPTY_TEXT
-}
+export const formatDate = createDateTimeFormatter({
+  format: 'YYYY-MM-DD',
+  invalidText: EMPTY_TEXT,
+  allowTimeOnly: false
+})
 
-export const formatDateTime = (value?: string | null): string => {
-  if (isNil(value) || value === '') return EMPTY_TEXT
-  return dayjs(value).isValid() ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : EMPTY_TEXT
-}
+export const formatDateTime = createDateTimeFormatter({
+  invalidText: EMPTY_TEXT,
+  allowTimeOnly: false
+})
 
 export const formatMileage = (value?: number | null): string => {
   if (isNil(value)) return EMPTY_TEXT
-  return `${Number(value).toLocaleString()}公里`
-}
-
-export const formatNumber = (value?: number | null, suffix = ''): string => {
-  if (isNil(value)) return EMPTY_TEXT
-  return `${Number(value).toLocaleString()}${suffix}`
-}
-
-export const formatMoney = (value?: number | null): string => {
-  if (isNil(value)) return EMPTY_TEXT
-  return Number(value).toFixed(1)
-}
-
-export const formatBoolean = (value?: boolean | null): string => {
-  if (isNil(value)) return EMPTY_TEXT
-  return value ? '是' : '否'
+  return `${formatNumberValue(value)}公里`
 }
 
 export const createDescriptionItems = (items: InfoItem[]): ArtDescriptionItem[] =>

@@ -1,6 +1,6 @@
 <template>
   <ArtPageShell
-    class="accident-record-detail"
+    class="accident-record-detail min-h-full p-4 bg-[var(--art-main-bg-color)]"
     :loading="page.loading"
     loading-mode="skeleton"
     :error="page.error"
@@ -16,14 +16,20 @@
       @back="goBack"
     />
 
-    <section class="accident-record-detail__summary art-card-xs">
-      <div class="accident-record-detail__summary-item">
-        <span>事故时间</span>
-        <strong>{{ formatArtValue(detail.data?.accidentTime) }}</strong>
+    <section
+      class="accident-record-detail__summary art-card-xs mt-3 grid gap-4 p-4 min-[901px]:grid-cols-3"
+    >
+      <div class="accident-record-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">事故时间</span>
+        <strong class="text-lg font-semibold wrap-anywhere">{{
+          formatArtValue(detail.data?.accidentTime, 'datetime')
+        }}</strong>
       </div>
-      <div class="accident-record-detail__summary-item">
-        <span>{{ canViewLossAmounts ? '经济损失' : '事故等级' }}</span>
-        <strong>
+      <div class="accident-record-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">{{
+          canViewLossAmounts ? '经济损失' : '事故等级'
+        }}</span>
+        <strong class="text-lg font-semibold wrap-anywhere">
           {{
             canViewLossAmounts
               ? formatSensitiveNumberWithAffix(detail.data?.economicLoss, { suffix: ' 元' })
@@ -31,9 +37,9 @@
           }}
         </strong>
       </div>
-      <div class="accident-record-detail__summary-item">
-        <span>处理状态</span>
-        <strong>
+      <div class="accident-record-detail__summary-item flex min-w-0 flex-col gap-2">
+        <span class="text-[var(--el-text-color-secondary)]">处理状态</span>
+        <strong class="text-lg font-semibold wrap-anywhere">
           <ArtDictDisplay
             dict-code="vehicleRecordProcessed"
             :value="getBooleanDictValue(detail.data?.processed)"
@@ -43,24 +49,37 @@
       </div>
     </section>
 
-    <div class="accident-record-detail__content art-card-xs">
-      <section class="accident-record-detail__section">
-        <ArtSectionTitle>基础信息</ArtSectionTitle>
-        <ArtDescriptions :data="descriptionData" :items="basicItems" :columns="2" />
-      </section>
+    <div class="accident-record-detail__content art-card-xs mt-3 flex flex-col gap-6 p-5">
+      <ArtPageSection title="基础信息" class="accident-record-detail__section">
+        <ArtDescriptions
+          :data="descriptionData"
+          :items="basicItems"
+          :columns="2"
+          :label-width="128"
+        />
+      </ArtPageSection>
 
-      <section class="accident-record-detail__section">
-        <ArtSectionTitle>责任及处理</ArtSectionTitle>
-        <ArtDescriptions :data="descriptionData" :items="responsibilityItems" :columns="2" />
-      </section>
+      <ArtPageSection title="责任及处理" class="accident-record-detail__section">
+        <ArtDescriptions
+          :data="descriptionData"
+          :items="responsibilityItems"
+          :columns="2"
+          :label-width="128"
+        />
+      </ArtPageSection>
 
-      <section v-if="canViewNarrative" class="accident-record-detail__section">
-        <ArtSectionTitle>备注</ArtSectionTitle>
-        <div class="accident-record-detail__remark">{{ formatArtValue(detail.data?.remark) }}</div>
-      </section>
+      <ArtPageSection title="备注" v-if="canViewNarrative" class="accident-record-detail__section">
+        <div
+          class="accident-record-detail__remark min-h-12 rounded-[var(--el-border-radius-base)] bg-[var(--el-fill-color-lighter)] px-3.5 py-3 leading-relaxed text-[var(--el-text-color-regular)] wrap-anywhere whitespace-pre-wrap"
+          >{{ formatArtValue(detail.data?.remark) }}</div
+        >
+      </ArtPageSection>
 
-      <section v-if="canViewDocuments" class="accident-record-detail__section">
-        <ArtSectionTitle>事故附件</ArtSectionTitle>
+      <ArtPageSection
+        title="事故附件"
+        v-if="canViewDocuments"
+        class="accident-record-detail__section"
+      >
         <ArtTable
           :data="detail.data?.attachments ?? []"
           :columns="attachmentColumns"
@@ -68,23 +87,24 @@
           :show-table-header="false"
           empty-height="180px"
         />
-      </section>
+      </ArtPageSection>
     </div>
   </ArtPageShell>
 </template>
 
 <script setup lang="tsx">
-  import { formatArtValue } from '@/utils/ui/format'
+  import { formatCoordinateValue } from '@/utils/ui/coordinates'
+  import { getFriendlySupabaseErrorMessage } from '@/utils/supabase'
+  import BusinessAttachmentRowActions from '@/components/business/business-attachment-row-actions/index.vue'
+  import { formatArtValue, formatPercentValue } from '@/utils/ui/format'
   import { isNil } from 'lodash-es'
   import ArtDescriptions from '@/components/core/base/art-descriptions/index.vue'
   import type { ArtDescriptionItem } from '@/components/core/base/art-descriptions/types'
   import ArtDictDisplay from '@/components/core/base/art-dict-display/index.vue'
-  import ArtSectionTitle from '@/components/core/surfaces/art-section-title/index.vue'
+  import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import type { ColumnOption } from '@/types'
   import { fetchVehicleAccidentDetail } from '@vms/api'
-  import { downloadAttachment, viewAttachment } from '@/utils/file'
   import { attachmentTableLink } from '@/components/core/media/art-file-viewer/table-link'
   import { canViewField, formatSensitiveNumberWithAffix } from '@/utils/field-permission'
 
@@ -124,7 +144,9 @@
             key: 'accidentCoordinate',
             label: '事故坐标',
             value: (data: Partial<AccidentRecord>) =>
-              formatCoordinate(data.accidentLongitude, data.accidentLatitude)
+              formatCoordinateValue(data.accidentLongitude, data.accidentLatitude, {
+                fractionDigits: 7
+              })
           }
         ]
       : []),
@@ -145,7 +167,10 @@
       key: 'responsibilityPercent',
       label: '责任比例',
       field: 'responsibilityPercent',
-      formatter: (value) => formatPercent(value as number | null | undefined)
+      formatter: (value) =>
+        formatPercentValue(value, {
+          numberFormat: { useGrouping: false, maximumFractionDigits: 20 }
+        })
     },
     ...(canViewLossAmounts.value
       ? [
@@ -199,17 +224,9 @@
     {
       prop: 'operation',
       label: '操作',
-      width: 96,
-      formatter: (row) => (
-        <div class="flex items-center">
-          <ArtIconButton icon="ri:eye-line" label="查看附件" onClick={() => viewAttachment(row)} />
-          <ArtIconButton
-            icon="ri:download-2-line"
-            label="下载附件"
-            onClick={() => downloadAttachment(row)}
-          />
-        </div>
-      )
+      width: 104,
+      fixed: 'right',
+      formatter: (row) => <BusinessAttachmentRowActions file={row} />
     }
   ]
 
@@ -226,10 +243,16 @@
     page.loading = true
     page.error = null
     try {
-      const { data } = await fetchVehicleAccidentDetail(id)
+      const { data, error } = await fetchVehicleAccidentDetail(id, { showErrorMessage: false })
+      if (error) throw error
       detail.data = data ? { ...data, attachments: data.attachments ?? [] } : undefined
     } catch (error) {
-      page.error = error instanceof Error ? error : new Error('事故记录详情加载失败')
+      page.error =
+        error instanceof Error
+          ? error
+          : new Error(getFriendlySupabaseErrorMessage(error, '事故记录详情加载失败'), {
+              cause: error
+            })
     } finally {
       page.loading = false
     }
@@ -239,79 +262,6 @@
     void router.push('/vms/vehicle-manage/accident-record')
   }
 
-  const formatPercent = (value?: number | null): string => {
-    if (isNil(value)) return '--'
-    return `${value}%`
-  }
-
-  const formatCoordinate = (longitude?: number | null, latitude?: number | null): string => {
-    if (isNil(longitude) || isNil(latitude)) return '--'
-    return `${Number(longitude).toFixed(7)}, ${Number(latitude).toFixed(7)}`
-  }
-
   const getBooleanDictValue = (value?: boolean | null): string | undefined =>
     isNil(value) ? undefined : String(value)
 </script>
-
-<style scoped lang="scss">
-  .accident-record-detail {
-    min-height: 100%;
-    padding: 16px;
-    background: var(--art-main-bg-color);
-
-    &__summary {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1px;
-      padding: 16px;
-      margin-top: 12px;
-    }
-
-    &__summary-item {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 0;
-
-      span {
-        color: var(--el-text-color-secondary);
-      }
-
-      strong {
-        font-size: 18px;
-        font-weight: 600;
-        overflow-wrap: anywhere;
-      }
-    }
-
-    &__content {
-      padding: 20px;
-      margin-top: 12px;
-    }
-
-    &__section + &__section {
-      margin-top: 22px;
-    }
-
-    &__remark {
-      min-height: 48px;
-      padding: 12px 14px;
-      line-height: 1.7;
-      color: var(--el-text-color-regular);
-      overflow-wrap: anywhere;
-      background: var(--el-fill-color-lighter);
-      border-radius: var(--el-border-radius-base);
-    }
-
-    :deep(.art-descriptions .el-descriptions__label) {
-      width: 128px;
-      font-weight: 600;
-    }
-
-    @media (width <= 900px) {
-      &__summary {
-        grid-template-columns: 1fr;
-      }
-    }
-  }
-</style>

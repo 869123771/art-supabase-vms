@@ -1,8 +1,13 @@
 <template>
   <div class="art-full-height">
-    <MasterDeleteProcessingNotice v-if="targetSourceKey" />
+    <MasterDeleteProcessingNotice
+      :table="tableQueryRef"
+      :record-id="targetSourceKey"
+      v-if="targetSourceKey"
+    />
     <VehicleReminderRiskOverview
-      v-if="!targetSourceKey"
+      :overview-hidden="Boolean(targetSourceKey)"
+      :table="tableQueryRef"
       title="车辆寿命"
       description="汇总车辆使用年限风险，帮助提前规划检修、替换与运力调整。"
       :filters="tableState.searchQuery"

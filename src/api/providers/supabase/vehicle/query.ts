@@ -1,4 +1,4 @@
-import { useSupabase } from '@/hooks'
+import { useSupabase } from '@/hooks/core/useSupabase'
 import { chunk, uniq } from 'lodash-es'
 import type { VehicleQuerySummaryRecords } from './types'
 
