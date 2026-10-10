@@ -93,6 +93,7 @@
   import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import { fetchVehiclePartUsageDetail } from '@vms/api'
   import { canViewField, formatSensitiveNumberWithAffix } from '@/utils/field-permission'
+  import { formatVehiclePartWarranty } from '../part-manage/modules/vehicle-part-display'
 
   defineOptions({ name: 'VehiclePartUsageDetail' })
 
@@ -143,18 +144,7 @@
       : [])
   ])
 
-  const warrantyText = computed(() => {
-    if (detail.data?.lifecycleLimitsMasked) return '***'
-    if (detail.data?.warrantyMode === 'vehicle') return '随整车质保'
-    return (
-      [
-        detail.data?.warrantyMileage ? `${detail.data.warrantyMileage}公里` : '',
-        detail.data?.warrantyDuration ? `${detail.data.warrantyDuration}个月` : ''
-      ]
-        .filter(Boolean)
-        .join(' / ') || '--'
-    )
-  })
+  const warrantyText = computed(() => formatVehiclePartWarranty(detail.data))
 
   const serviceLifeText = computed(() => {
     if (detail.data?.lifecycleLimitsMasked) return '***'

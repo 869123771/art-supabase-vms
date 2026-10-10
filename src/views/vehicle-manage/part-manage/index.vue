@@ -64,6 +64,7 @@
   } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
   import VehiclePartUsageDialog from './modules/vehicle-part-usage-dialog.vue'
+  import { formatVehiclePartWarranty } from './modules/vehicle-part-display'
   import BusinessWorkspaceHeader, {
     type BusinessWorkspaceMetric
   } from '@/components/business/business-workspace-header/index.vue'
@@ -242,8 +243,8 @@
             {
               prop: 'warrantySummary',
               label: '质保期',
-              minWidth: 160,
-              formatter: formatWarranty
+              minWidth: 200,
+              formatter: formatVehiclePartWarranty
             },
             {
               prop: 'serviceYears',
@@ -320,16 +321,6 @@
   const handleTableSuccess: NonNullable<ArtTableQueryProps['onSuccess']> = (rows, response) => {
     overview.rows = rows as Usage[]
     overview.total = response.total ?? rows.length
-  }
-
-  const formatWarranty = (row: Usage): string => {
-    if (row.lifecycleLimitsMasked) return '***'
-    if (row.warrantyMode === 'vehicle') return '随整车质保'
-    const values = [
-      row.warrantyMileage ? `${row.warrantyMileage}公里` : '',
-      row.warrantyDuration ? `${row.warrantyDuration}个月` : ''
-    ].filter(Boolean)
-    return values.join(' / ') || '--'
   }
 
   const formatUsedYears = (enableDate?: string | null): string => {

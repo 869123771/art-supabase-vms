@@ -29,6 +29,7 @@
   import { useVehiclePanelList } from './use-vehicle-panel-list'
   import { isNil } from 'lodash-es'
   import { canViewField, mergeFieldAccessMaps } from '@/utils/field-permission'
+  import { formatVehiclePartWarranty } from '@vms/views/vehicle-manage/part-manage/modules/vehicle-part-display'
 
   defineOptions({ name: 'VehicleQueryPartsPanel' })
 
@@ -93,8 +94,8 @@
           {
             prop: 'warrantySummary',
             label: '质保期',
-            width: 150,
-            formatter: (row) => formatWarranty(row)
+            minWidth: 200,
+            formatter: formatVehiclePartWarranty
           },
           {
             prop: 'serviceYears',
@@ -130,16 +131,6 @@
       dict: { code: 'vehiclePartUsageStatus', display: 'auto' }
     }
   ])
-
-  const formatWarranty = (row: VehiclePartUsage): string => {
-    if (row.lifecycleLimitsMasked) return '***'
-    if (row.warrantyMode === 'vehicle') return '随整车质保'
-    const values = [
-      row.warrantyDuration ? `${row.warrantyDuration}个月` : '',
-      row.warrantyMileage ? `${row.warrantyMileage}公里` : ''
-    ].filter(Boolean)
-    return values.join(' / ') || '--'
-  }
 
   const formatUsedYears = (enableDate?: string | null): string => {
     if (isNil(enableDate) || enableDate === '') return '--'
