@@ -28,6 +28,7 @@
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import { useDocumentNumberRule } from '@/hooks/core/useDocumentNumberRule'
+  import { useTenantScopeFormPolicy } from '@/hooks/core/useTenantScopeFormPolicy'
   import { useUserStore } from '@/store/modules/user'
   import { addParts, editParts, fetchPartsCategoryTree, fetchSupplierOptions } from '@vms/api'
 
@@ -46,8 +47,10 @@
   }>()
   const { getDictMap } = storeToRefs(useUserStore())
 
+  const { defaultWriteTenantId } = useTenantScopeFormPolicy()
   const createInitialForm = (): Parts => ({
     id: undefined,
+    tenantId: defaultWriteTenantId.value ?? undefined,
     partName: '',
     partCode: '',
     categoryId: null,
@@ -67,7 +70,7 @@
   })
 
   const form = reactive<Parts>(createInitialForm())
-  const partNumber = useDocumentNumberRule('vehicle.part')
+  const partNumber = useDocumentNumberRule('vehicle.part', () => form.tenantId)
 
   const rules = computed<FormRules<Parts>>(() => ({
     partName: [
@@ -282,15 +285,8 @@
       value: item.value === 'true'
     }))
 
-  const replaceForm = (nextForm: Parts): void => {
-    Object.keys(form).forEach((key) => {
-      delete form[key as keyof Parts]
-    })
-    Object.assign(form, nextForm)
-  }
-
   const resetForm = async (): Promise<void> => {
-    replaceForm(createInitialForm())
+    replaceReactiveModel(form, createInitialForm())
     await nextTick()
     formRef.value?.clearValidate()
   }
@@ -307,6 +303,7 @@
       const source = toRaw(form)
       const payload: Parts = {
         id: source.id,
+        ...(!source.id ? { tenantId: source.tenantId } : {}),
         partName: source.partName,
         partCode: source.partCode,
         categoryId: source.categoryId || null,
@@ -341,7 +338,7 @@
     await resetForm()
     const isEdit = !!row?.id
     if (isEdit) {
-      replaceForm({
+      replaceReactiveModel(form, {
         ...createInitialForm(),
         ...(structuredClone(toRaw(row)) as Parts)
       })

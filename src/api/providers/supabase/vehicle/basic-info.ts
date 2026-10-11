@@ -4,7 +4,7 @@ import TreeUtils from '@/utils/tree'
 import { fetchAllRangePages } from '@/utils/supabase/pagination'
 import { useSupabase } from '@/hooks/core/useSupabase'
 import { withRequestOptions } from '@/api/providers/supabase/query'
-import type { ApiRequestOptions } from '@/types/api/request'
+import type { ApiFeedbackOptions, ApiRequestOptions } from '@/types/api/request'
 import type { QueryResult } from '@/types/api/response'
 import { buildSupabaseRpcRange, applyFilters, type FilterSpec } from '@/utils/supabase'
 import {
@@ -88,15 +88,27 @@ export async function editInsuranceCompany(params: InsuranceCompany) {
 }
 
 export async function deleteInsuranceCompany(id: string) {
-  return await responseHandle(() => supabase.from('mdm_insurance_company').delete().eq('id', id), {
-    showMessage: true
-  })
+  return await responseHandle(
+    () => supabase.from('mdm_insurance_company').delete({ count: 'exact' }).eq('id', id),
+    {
+      showMessage: true,
+      showErrorMessage: false,
+      breakReturn: true,
+      requireAffected: true
+    }
+  )
 }
 
 export async function deleteInsuranceCompanyBatch(ids: string[]) {
-  return await responseHandle(() => supabase.from('mdm_insurance_company').delete().in('id', ids), {
-    showMessage: true
-  })
+  return await responseHandle(
+    () => supabase.from('mdm_insurance_company').delete({ count: 'exact' }).in('id', ids),
+    {
+      showMessage: true,
+      showErrorMessage: false,
+      breakReturn: true,
+      requireAffected: true
+    }
+  )
 }
 
 export async function importInsuranceCompanies(rows: InsuranceCompany[]) {
@@ -193,14 +205,14 @@ export async function editSupplier(params: Supplier) {
 export async function deleteSupplier(id: string) {
   return await responseHandle<number>(
     () => supabase.rpc('vms_delete_vehicle_suppliers_secure', { p_ids: [id] }),
-    { showMessage: true, message: '删除成功' }
+    { showMessage: true, showErrorMessage: false, breakReturn: true, requireAffected: true }
   )
 }
 
 export async function deleteSupplierBatch(ids: string[]) {
   return await responseHandle<number>(
     () => supabase.rpc('vms_delete_vehicle_suppliers_secure', { p_ids: ids }),
-    { showMessage: true }
+    { showMessage: true, showErrorMessage: false, breakReturn: true, requireAffected: true }
   )
 }
 
@@ -243,7 +255,7 @@ export async function fetchPartsCategoryList(
 
 export async function fetchPartsCategoryTree(
   params: Partial<Pick<PartsCategory, 'categoryName'>> = {},
-  options?: ApiRequestOptions
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ): Promise<QueryResult<PartsCategory[]>> {
   const result = await fetchAllRangePages<PartsCategory>(async ({ from, to }) => {
     let query = supabase
@@ -257,7 +269,7 @@ export async function fetchPartsCategoryTree(
       query = query.ilike('category_name', `%${params.categoryName}%`)
     }
     return responseHandle<PartsCategory[]>(() => withRequestOptions(query, options), {
-      showErrorMessage: true
+      showErrorMessage: options?.showErrorMessage ?? true
     })
   })
   return {
@@ -310,21 +322,27 @@ export async function addPartsCategory(params: PartsCategory) {
 export async function editPartsCategory(params: PartsCategory) {
   const { id, ...data } = params
   return await responseHandle(
-    () => supabase.from('mdm_part_category').update(keysToSnakeDeep(data)).eq('id', id),
-    { showMessage: true, breakReturn: true }
+    () =>
+      supabase
+        .from('mdm_part_category')
+        .update(keysToSnakeDeep(data), { count: 'exact' })
+        .eq('id', id),
+    { showMessage: true, breakReturn: true, requireAffected: true }
   )
 }
 
 export async function deletePartsCategory(id: string) {
-  return await responseHandle(() => supabase.from('mdm_part_category').delete().eq('id', id), {
-    showMessage: true
-  })
+  return await responseHandle(
+    () => supabase.from('mdm_part_category').delete({ count: 'exact' }).eq('id', id),
+    { showMessage: true, showErrorMessage: false, breakReturn: true, requireAffected: true }
+  )
 }
 
 export async function deletePartsCategoryBatch(ids: string[]) {
-  return await responseHandle(() => supabase.from('mdm_part_category').delete().in('id', ids), {
-    showMessage: true
-  })
+  return await responseHandle(
+    () => supabase.from('mdm_part_category').delete({ count: 'exact' }).in('id', ids),
+    { showMessage: true, showErrorMessage: false, breakReturn: true, requireAffected: true }
+  )
 }
 
 export async function importPartsCategories(rows: PartsCategory[]) {
@@ -433,15 +451,27 @@ export async function editParts(params: Parts) {
 }
 
 export async function deleteParts(id: string) {
-  return await responseHandle(() => supabase.from('mdm_part').delete().eq('id', id), {
-    showMessage: true
-  })
+  return await responseHandle(
+    () => supabase.from('mdm_part').delete({ count: 'exact' }).eq('id', id),
+    {
+      showMessage: true,
+      showErrorMessage: false,
+      breakReturn: true,
+      requireAffected: true
+    }
+  )
 }
 
 export async function deletePartsBatch(ids: string[]) {
-  return await responseHandle(() => supabase.from('mdm_part').delete().in('id', ids), {
-    showMessage: true
-  })
+  return await responseHandle(
+    () => supabase.from('mdm_part').delete({ count: 'exact' }).in('id', ids),
+    {
+      showMessage: true,
+      showErrorMessage: false,
+      breakReturn: true,
+      requireAffected: true
+    }
+  )
 }
 
 export async function importParts(rows: Parts[]) {

@@ -36,18 +36,21 @@
     />
 
     <PartsDialog ref="dialogRef" @success="handleSaveSuccess" />
+    <MasterDataDeleteGuard ref="deleteGuardRef" />
   </div>
 </template>
 
 <script setup lang="tsx">
-  import { useArtFeedback } from '@/hooks/core/useArtFeedback'
+  import MasterDataDeleteGuard from '@/components/business/master-data-delete-guard/index.vue'
+  import { useRecordDeleteGuard } from '@/hooks/core/useRecordDeleteGuard'
+  import BusinessTableRowActions from '@/components/business/business-table-row-actions/index.vue'
+  import ArtButtonMore from '@/components/core/forms/art-button-more/index.vue'
   import { ElMessage } from 'element-plus'
   import type { SearchFormItem } from '@/components/core/forms/art-search-bar/index.vue'
   import type {
     ArtTableQueryExpose,
     ArtTableQueryExcelColumn,
     ArtTableQueryHeaderAction,
-    ArtTableQueryHeaderActionContext,
     ArtTableQueryProps
   } from '@/components/core/tables/art-table-query/index.vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
@@ -70,7 +73,7 @@
 
   defineOptions({ name: 'VehicleParts' })
 
-  const { confirmAction } = useArtFeedback()
+  const { deleteGuardRef, deleteRecord, deleteRecords } = useRecordDeleteGuard('mdm_part', '零部件')
 
   type Parts = Api.Vms.BasicInfo.Parts
   type SearchParams = Api.Vms.BasicInfo.PartsSearchParams
@@ -232,14 +235,21 @@
     {
       permission: 'Parts:Delete',
       type: 'delete',
-      content: ({ selectedCount }: ArtTableQueryHeaderActionContext) =>
-        `确定删除选中的 ${selectedCount} 个零部件吗？删除后无法恢复。`,
+      label: '批量删除',
+      confirm: false,
       onClick: async ({ selectedRows }) => {
-        const ids = selectedRows
-          .map((row) => row.id)
-          .filter((id): id is string => typeof id === 'string')
-        await deletePartsBatch(ids)
-        await tableQueryRef.value?.refreshRemove()
+        const resources = selectedRows.map((row) => ({
+          id: String(row.id ?? ''),
+          label: String(row.partName || row.partCode || '零部件')
+        }))
+        await deleteRecords({
+          resources,
+          permission: 'Parts:Delete',
+          remove: () => deletePartsBatch(resources.map((resource) => resource.id)),
+          onDeleted: async () => {
+            await tableQueryRef.value?.refreshRemove()
+          }
+        })
       }
     }
   ])
@@ -308,14 +318,24 @@
       width: 120,
       fixed: 'right',
       formatter: (row) => (
-        <div class="parts-page__operation">
+        <BusinessTableRowActions>
           <ArtButtonTable type="edit" permission="Parts:Edit" onClick={() => openDialog(row)} />
-          <ArtButtonTable
-            type="delete"
-            permission="Parts:Delete"
-            onClick={() => handleDelete(row)}
+          <ArtButtonMore
+            trigger="click"
+            list={[
+              {
+                key: 'delete',
+                label: '删除',
+                icon: 'ri:delete-bin-5-line',
+                auth: 'Parts:Delete',
+                color: 'var(--el-color-danger)'
+              }
+            ]}
+            onClick={(item) => {
+              if (item.key === 'delete') void handleDelete(row)
+            }}
           />
-        </div>
+        </BusinessTableRowActions>
       )
     }
   ]
@@ -336,20 +356,15 @@
   }
 
   const handleDelete = async (row: Parts): Promise<void> => {
-    if (!row.id) return
-
-    try {
-      await confirmAction(`确定删除零部件“${row.partName}”吗？删除后无法恢复。`, '删除确认', {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-        confirmButtonType: 'danger'
-      })
-      await deleteParts(row.id)
-      await tableQueryRef.value?.refreshRemove()
-    } catch {
-      // 用户取消删除时无需额外提示。
-    }
+    const id = row.id ?? ''
+    await deleteRecord({
+      resource: { id, label: row.partName || row.partCode || '零部件' },
+      permission: 'Parts:Delete',
+      remove: () => deleteParts(id),
+      onDeleted: async () => {
+        await tableQueryRef.value?.refreshRemove()
+      }
+    })
   }
 
   const handleImportError = (): void => {
@@ -361,15 +376,5 @@
   .parts-page {
     gap: 12px;
     min-width: 0;
-
-    :deep(.parts-page__operation) {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-
-      .art-button-table {
-        margin-right: 0;
-      }
-    }
   }
 </style>

@@ -31,19 +31,20 @@
       focusable
     />
 
+    <MasterDataDeleteGuard ref="deleteGuardRef" />
     <InsuranceCompanyDialog ref="dialogRef" @success="handleSaveSuccess" />
   </div>
 </template>
 
 <script setup lang="tsx">
-  import { useArtFeedback } from '@/hooks/core/useArtFeedback'
+  import MasterDataDeleteGuard from '@/components/business/master-data-delete-guard/index.vue'
+  import { useRecordDeleteGuard } from '@/hooks/core/useRecordDeleteGuard'
   import { ElMessage } from 'element-plus'
   import type { SearchFormItem } from '@/components/core/forms/art-search-bar/index.vue'
   import type {
     ArtTableQueryExpose,
     ArtTableQueryExcelColumn,
     ArtTableQueryHeaderAction,
-    ArtTableQueryHeaderActionContext,
     ArtTableQueryProps
   } from '@/components/core/tables/art-table-query/index.vue'
   import { ColumnOption, DialogType } from '@/types'
@@ -64,8 +65,6 @@
 
   defineOptions({ name: 'InsuranceCompany' })
 
-  const { confirmAction } = useArtFeedback()
-
   type InsuranceCompany = Api.Vms.BasicInfo.InsuranceCompany
   type SearchParams = Api.Vms.BasicInfo.InsuranceCompanySearchParams
   type TableParams = SearchParams & Pick<Api.Common.PaginationParams, 'current' | 'size'>
@@ -75,6 +74,10 @@
   }
 
   const tableQueryRef = ref<ArtTableQueryExpose>()
+  const { deleteGuardRef, deleteRecord, deleteRecords } = useRecordDeleteGuard(
+    'mdm_insurance_company',
+    '保险公司'
+  )
   const dialogRef = ref<DialogExpose>()
   const overview = reactive<{ total: number; rows: InsuranceCompany[] }>({ total: 0, rows: [] })
   const workspaceMetrics = computed<BusinessWorkspaceMetric[]>(() => [
@@ -167,13 +170,18 @@
     {
       permission: 'InsuranceCompany:Delete',
       type: 'delete',
-      // permission: 'delete',
-      content: ({ selectedCount }: ArtTableQueryHeaderActionContext) =>
-        `确定删除选中的 ${selectedCount} 家保险公司吗？删除后无法恢复。`,
+      label: '批量删除',
+      confirm: false,
       onClick: async ({ selectedRows }) => {
-        const ids = selectedRows.map((row) => row.id).filter(Boolean)
-        await deleteInsuranceCompanyBatch(ids)
-        await tableQueryRef.value?.refreshRemove()
+        const rows = selectedRows as InsuranceCompany[]
+        await deleteRecords({
+          resources: rows.map((row) => ({ id: row.id ?? '', label: row.companyName })),
+          permission: 'InsuranceCompany:Delete',
+          remove: () => deleteInsuranceCompanyBatch(rows.map((row) => row.id ?? '')),
+          onDeleted: async () => {
+            await tableQueryRef.value?.refreshRemove()
+          }
+        })
       }
     }
   ])
@@ -266,20 +274,15 @@
   }
 
   const handleDelete = async (row: InsuranceCompany): Promise<void> => {
-    if (!row.id) return
-
-    try {
-      await confirmAction(`确定删除保险公司“${row.companyName}”吗？删除后无法恢复。`, '删除确认', {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-        confirmButtonType: 'danger'
-      })
-      await deleteInsuranceCompany(row.id)
-      await tableQueryRef.value?.refreshRemove()
-    } catch {
-      // 用户取消删除时无需额外提示。
-    }
+    const id = row.id ?? ''
+    await deleteRecord({
+      resource: { id, label: row.companyName },
+      permission: 'InsuranceCompany:Delete',
+      remove: () => deleteInsuranceCompany(id),
+      onDeleted: async () => {
+        await tableQueryRef.value?.refreshRemove()
+      }
+    })
   }
 
   const handleImportError = (): void => {

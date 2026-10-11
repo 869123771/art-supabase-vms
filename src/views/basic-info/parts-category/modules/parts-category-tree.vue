@@ -4,6 +4,7 @@
       <div class="tree-toolbar">
         <ElInput v-model="keyword" placeholder="请输入类别名称" clearable @input="debounceFetch" />
         <ElButton
+          v-auth="'PartsCategory:Add'"
           type="primary"
           aria-label="新增一级类别"
           title="新增一级类别"
@@ -14,81 +15,74 @@
       </div>
     </template>
 
-    <ArtOverlayLoading
-      v-if="loading"
-      loading
-      overlay
-      size="compact"
-      text="正在加载类别树…"
-      description=""
-    />
-    <ElScrollbar>
-      <ElTree
-        ref="treeRef"
-        :data="treeData"
-        :props="treeProps"
-        node-key="id"
-        default-expand-all
-        highlight-current
-        empty-text="暂无类别"
-        @node-click="handleNodeClick"
-      >
-        <template #default="{ data }">
-          <div class="tree-node">
-            <div class="label">
-              <span class="name">{{ data.categoryName }}</span>
-              <ElTag size="small" type="info">{{ data.categoryCode }}</ElTag>
+    <ArtAsyncState :loading="loading" :error="loadError" full-height @retry="refreshTree">
+      <ElScrollbar>
+        <ElTree
+          ref="treeRef"
+          :data="treeData"
+          :props="treeProps"
+          node-key="id"
+          default-expand-all
+          highlight-current
+          empty-text="暂无类别"
+          @node-click="handleNodeClick"
+        >
+          <template #default="{ data }">
+            <div class="tree-node">
+              <div class="label">
+                <span class="name">{{ data.categoryName }}</span>
+                <ElTag size="small" type="info">{{ data.categoryCode }}</ElTag>
+              </div>
+              <div class="actions" :class="{ 'is-current': currentId === data.id }" @click.stop>
+                <ArtIconButton
+                  v-auth="'PartsCategory:Add'"
+                  class="size-6.5! text-base!"
+                  icon="ri:add-line"
+                  label="新增子类别"
+                  @click.stop="handleAddChild(data)"
+                />
+                <ArtIconButton
+                  v-auth="'PartsCategory:Edit'"
+                  class="size-6.5! text-base!"
+                  icon="ri:pencil-line"
+                  label="编辑类别"
+                  @click.stop="handleEdit(data)"
+                />
+                <ArtButtonMore
+                  trigger="click"
+                  :list="deleteActions"
+                  @click="(item) => item.key === 'delete' && handleDelete(data)"
+                />
+              </div>
             </div>
-            <div class="actions" :class="{ 'is-current': currentId === data.id }">
-              <ArtIconButton
-                class="size-6.5! text-base!"
-                icon="ri:add-line"
-                label="新增子类别"
-                @click.stop="handleAddChild(data)"
-              />
-              <ArtIconButton
-                class="size-6.5! text-base!"
-                icon="ri:pencil-line"
-                label="编辑类别"
-                @click.stop="handleEdit(data)"
-              />
-              <ElPopconfirm
-                title="确定删除该类别及其子类别吗？"
-                confirm-button-text="删除"
-                cancel-button-text="取消"
-                @confirm="handleDelete(data)"
-              >
-                <template #reference>
-                  <ArtIconButton
-                    class="size-6.5! text-base!"
-                    icon="ri:delete-bin-5-line"
-                    tone="danger"
-                    label="删除类别"
-                    @click.stop
-                  />
-                </template>
-              </ElPopconfirm>
-            </div>
-          </div>
-        </template>
-        <template #empty>
-          <ArtEmptyState
-            title="暂无可显示内容"
-            description="请调整当前范围或稍后刷新。"
-            size="compact"
-            :visual-size="64"
-          />
-        </template>
-      </ElTree>
-    </ElScrollbar>
+          </template>
+          <template #empty>
+            <ArtEmptyState
+              title="暂无可显示内容"
+              description="请调整当前范围或稍后刷新。"
+              size="compact"
+              :visual-size="64"
+            />
+          </template>
+        </ElTree>
+      </ElScrollbar>
+    </ArtAsyncState>
   </ElCard>
 
   <PartsCategoryDialog ref="dialogRef" @success="handleDialogSuccess" />
+  <MasterDataDeleteGuard ref="deleteGuardRef" />
 </template>
 
 <script setup lang="ts">
   import ArtEmptyState from '@/components/core/feedback/art-empty-state/index.vue'
-  import { debounce } from 'lodash-es'
+  import ArtAsyncState from '@/components/core/feedback/art-async-state/index.vue'
+  import ArtButtonMore from '@/components/core/forms/art-button-more/index.vue'
+  import MasterDataDeleteGuard from '@/components/business/master-data-delete-guard/index.vue'
+  import { useRecordDeleteGuard } from '@/hooks/core/useRecordDeleteGuard'
+  import { fetchPartsCategoryChildReferences } from './parts-category-delete-references'
+  import { debounce, noop } from 'lodash-es'
+  import { useAsyncState } from '@vueuse/core'
+  import { useTenantScopeStore } from '@/store/modules/tenant-scope'
   import type { ElTree } from 'element-plus'
   import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import { deletePartsCategory, fetchPartsCategoryTree } from '@vms/api'
@@ -106,12 +100,44 @@
   }
 
   const emit = defineEmits<Emits>()
+  const { deleteGuardRef, deleteRecord } = useRecordDeleteGuard(
+    'mdm_part_category',
+    '零部件类别',
+    {},
+    fetchPartsCategoryChildReferences
+  )
+  const deleteActions = [
+    { key: 'delete', label: '删除', icon: 'ri:delete-bin-5-line', auth: 'PartsCategory:Delete' }
+  ]
 
   const treeRef = ref<InstanceType<typeof ElTree>>()
   const dialogRef = ref<DialogExpose>()
   const keyword = ref('')
-  const loading = ref(false)
-  const treeData = ref<PartsCategory[]>([])
+  const tenantScope = useTenantScopeStore()
+  let requestController: AbortController | undefined
+  const {
+    state: treeData,
+    isLoading: loading,
+    error: rawError,
+    executeImmediate
+  } = useAsyncState(
+    async (categoryName: string): Promise<PartsCategory[]> => {
+      requestController?.abort()
+      const controller = new AbortController()
+      requestController = controller
+      const { data, error } = await fetchPartsCategoryTree(
+        { categoryName },
+        { signal: controller.signal, showErrorMessage: false }
+      )
+      if (error || !data) throw new Error('类别树加载失败，请重试', { cause: error })
+      return data
+    },
+    [] as PartsCategory[],
+    { immediate: false, resetOnExecute: false, onError: noop }
+  )
+  const loadError = computed(() =>
+    rawError.value ? new Error('类别树加载失败，请重试', { cause: rawError.value }) : null
+  )
   const currentId = ref<string>()
 
   const treeProps = {
@@ -129,13 +155,7 @@
   }
 
   const refreshTree = async (): Promise<void> => {
-    try {
-      loading.value = true
-      const { data } = await fetchPartsCategoryTree({ categoryName: keyword.value })
-      treeData.value = data ?? []
-    } finally {
-      loading.value = false
-    }
+    await executeImmediate(keyword.value)
   }
 
   const debounceFetch = debounce(() => {
@@ -155,14 +175,20 @@
   }
 
   const handleDelete = async (row: PartsCategory): Promise<void> => {
-    if (!row.id) return
-    await deletePartsCategory(row.id)
-    if (currentId.value === row.id) {
-      currentId.value = undefined
-      emit('tree-node-click', undefined)
-    }
-    await refreshTree()
-    emit('data-change')
+    const id = row.id ?? ''
+    await deleteRecord({
+      resource: { id, label: row.categoryName || row.categoryCode || '零部件类别' },
+      permission: 'PartsCategory:Delete',
+      remove: () => deletePartsCategory(id),
+      onDeleted: async () => {
+        if (currentId.value === id) {
+          currentId.value = undefined
+          emit('tree-node-click', undefined)
+        }
+        await refreshTree()
+        emit('data-change')
+      }
+    })
   }
 
   const handleDialogSuccess = async (): Promise<void> => {
@@ -172,6 +198,21 @@
 
   onMounted(() => {
     void refreshTree()
+  })
+
+  watch(
+    () => tenantScope.effectiveTenantId,
+    () => {
+      debounceFetch.cancel()
+      treeData.value = []
+      currentId.value = undefined
+      emit('tree-node-click', undefined)
+      void refreshTree()
+    }
+  )
+  onBeforeUnmount(() => {
+    debounceFetch.cancel()
+    requestController?.abort()
   })
 
   defineExpose({
@@ -236,9 +277,12 @@
         position: absolute;
         right: 8px;
         display: none;
+        gap: var(--art-control-icon-gap);
+        align-items: center;
       }
 
       &:hover .actions,
+      &:focus-within .actions,
       .actions.is-current {
         display: inline-flex;
       }

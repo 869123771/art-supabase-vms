@@ -1,6 +1,7 @@
 import http from '@/utils/http'
 import TreeUtils from '@/utils/tree'
 import type { QueryResult } from '@/types/api/response'
+import type { ApiFeedbackOptions, ApiRequestOptions } from '@/types/api/request'
 
 type InsuranceCompany = Api.Vms.BasicInfo.InsuranceCompany
 type InsuranceCompanySearchParams = Api.Vms.BasicInfo.InsuranceCompanySearchParams
@@ -203,11 +204,14 @@ export async function fetchPartsCategoryList(params: PartsCategorySearchParams) 
 }
 
 export async function fetchPartsCategoryTree(
-  params: Partial<Pick<PartsCategory, 'categoryName'>> = {}
+  params: Partial<Pick<PartsCategory, 'categoryName'>> = {},
+  options?: ApiRequestOptions & ApiFeedbackOptions
 ): Promise<QueryResult<PartsCategory[]>> {
   const result = await http.get<PartsCategory[] | JavaPageResult<PartsCategory>>({
     url: `${ENDPOINTS.partsCategory}/tree`,
-    params
+    params,
+    signal: options?.signal,
+    showErrorMessage: options?.showErrorMessage
   })
   const normalized = normalizeListResult(result)
   const rows = normalized.data

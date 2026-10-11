@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
   import { replaceReactiveModel } from '@/utils/form/model'
+  import { pick } from 'lodash-es'
   import { validateArtFormForSubmit } from '@/utils/form/validate-art-form'
   import { notifyFriendlyError } from '@/hooks/core/useArtFeedback'
   import type { FormRules } from 'element-plus'
@@ -27,12 +28,25 @@
   import type { ArtDialogExpose } from '@/components/core/dialogs/art-dialog/types'
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import { useDocumentNumberRule } from '@/hooks/core/useDocumentNumberRule'
+  import { useTenantScopeFormPolicy } from '@/hooks/core/useTenantScopeFormPolicy'
+  import { normalizeNonNullableText } from '@/utils/form/normalize'
   import { addPartsCategory, editPartsCategory, fetchPartsCategoryTree } from '@vms/api'
   import { useUserStore } from '@/store/modules/user'
   import TreeUtils from '@/utils/tree'
 
   type PartsCategory = Api.Vms.BasicInfo.PartsCategory
-  type PartsCategoryForm = Omit<PartsCategory, 'children'>
+  type PartsCategoryForm = Pick<
+    PartsCategory,
+    | 'id'
+    | 'tenantId'
+    | 'parentId'
+    | 'categoryName'
+    | 'categoryCode'
+    | 'categoryLevel'
+    | 'sort'
+    | 'status'
+    | 'remark'
+  >
 
   interface Emits {
     (e: 'success', type: 'add' | 'edit'): void
@@ -46,8 +60,10 @@
     clearValidate: () => void
   }>()
 
+  const { defaultWriteTenantId } = useTenantScopeFormPolicy()
   const createInitialForm = (): PartsCategoryForm => ({
     id: undefined,
+    tenantId: defaultWriteTenantId.value ?? undefined,
     parentId: null,
     categoryName: '',
     categoryCode: '',
@@ -61,7 +77,7 @@
 
   const categoryTree = new TreeUtils({ parentKey: 'parentId' })
 
-  const categoryNumber = useDocumentNumberRule('vehicle.part_category')
+  const categoryNumber = useDocumentNumberRule('vehicle.part_category', () => form.tenantId)
 
   const rules = computed<FormRules<PartsCategoryForm>>(() => ({
     categoryName: [
@@ -167,15 +183,8 @@
     }
   ])
 
-  const replaceForm = (nextForm: PartsCategoryForm): void => {
-    Object.keys(form).forEach((key) => {
-      delete form[key as keyof PartsCategoryForm]
-    })
-    Object.assign(form, nextForm)
-  }
-
   const resetForm = async (): Promise<void> => {
-    replaceForm(createInitialForm())
+    replaceReactiveModel(form, createInitialForm())
     await nextTick()
     formRef.value?.clearValidate()
   }
@@ -189,8 +198,17 @@
     }
 
     try {
-      const payload = toRaw(form)
-      payload.parentId = payload.parentId || null
+      const payload: PartsCategoryForm = {
+        id: form.id,
+        ...(!form.id ? { tenantId: form.tenantId } : {}),
+        parentId: form.parentId || null,
+        categoryName: normalizeNonNullableText(form.categoryName),
+        categoryCode: normalizeNonNullableText(form.categoryCode),
+        categoryLevel: form.categoryLevel,
+        sort: form.sort,
+        status: form.status,
+        remark: normalizeNonNullableText(form.remark)
+      }
       if (form.id) {
         await editPartsCategory(payload)
       } else {
@@ -209,12 +227,13 @@
     const isEdit = !!row?.id
 
     if (isEdit) {
-      replaceForm({
+      replaceReactiveModel(form, {
         ...createInitialForm(),
-        ...(structuredClone(toRaw(row)) as PartsCategoryForm)
+        ...pick(row, Object.keys(createInitialForm()))
       })
     } else if (parent?.id) {
       form.parentId = parent.id
+      form.tenantId = parent.tenantId
     }
 
     await dialogRef.value?.handleOpen(row, {

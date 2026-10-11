@@ -60,11 +60,15 @@
     </div>
 
     <PartsCategoryDialog ref="dialogRef" @success="handleSaveSuccess" />
+    <MasterDataDeleteGuard ref="deleteGuardRef" />
   </div>
 </template>
 
 <script setup lang="tsx">
-  import { useArtFeedback } from '@/hooks/core/useArtFeedback'
+  import MasterDataDeleteGuard from '@/components/business/master-data-delete-guard/index.vue'
+  import BusinessTableRowActions from '@/components/business/business-table-row-actions/index.vue'
+  import { useRecordDeleteGuard } from '@/hooks/core/useRecordDeleteGuard'
+  import { fetchPartsCategoryChildReferences } from './modules/parts-category-delete-references'
   import { ElMessage } from 'element-plus'
   import { storeToRefs } from 'pinia'
   import type { SearchFormItem } from '@/components/core/forms/art-search-bar/index.vue'
@@ -72,7 +76,6 @@
     ArtTableQueryExpose,
     ArtTableQueryExcelColumn,
     ArtTableQueryHeaderAction,
-    ArtTableQueryHeaderActionContext,
     ArtTableQueryProps
   } from '@/components/core/tables/art-table-query/index.vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
@@ -99,7 +102,12 @@
 
   defineOptions({ name: 'PartsCategory' })
 
-  const { confirmAction } = useArtFeedback()
+  const { deleteGuardRef, deleteRecord, deleteRecords } = useRecordDeleteGuard(
+    'mdm_part_category',
+    '零部件类别',
+    {},
+    fetchPartsCategoryChildReferences
+  )
 
   type PartsCategory = Api.Vms.BasicInfo.PartsCategory
   type SearchParams = Api.Vms.BasicInfo.PartsCategorySearchParams
@@ -215,15 +223,22 @@
     {
       permission: 'PartsCategory:Delete',
       type: 'delete',
-      content: ({ selectedCount }: ArtTableQueryHeaderActionContext) =>
-        `确定删除选中的 ${selectedCount} 个零部件类别吗？子类别会一并删除，删除后无法恢复。`,
+      label: '批量删除',
+      confirm: false,
       onClick: async ({ selectedRows }) => {
-        const ids = selectedRows
-          .map((row) => row.id)
-          .filter((id): id is string => typeof id === 'string')
-        await deletePartsCategoryBatch(ids)
-        await treeRef.value?.refreshTree()
-        await tableQueryRef.value?.refreshRemove()
+        const resources = selectedRows.map((row) => ({
+          id: String(row.id ?? ''),
+          label: String(row.categoryName || row.categoryCode || '零部件类别')
+        }))
+        await deleteRecords({
+          resources,
+          permission: 'PartsCategory:Delete',
+          remove: () => deletePartsCategoryBatch(resources.map((resource) => resource.id)),
+          onDeleted: async () => {
+            await treeRef.value?.refreshTree()
+            await tableQueryRef.value?.refreshRemove()
+          }
+        })
       }
     }
   ])
@@ -281,17 +296,18 @@
       width: 120,
       fixed: 'right',
       formatter: (row) => (
-        <div class="flex">
+        <BusinessTableRowActions>
           <ArtButtonTable
             type="edit"
             permission="PartsCategory:Edit"
             onClick={() => openDialog(row)}
           />
           <ArtButtonMore
+            trigger="click"
             list={getMoreActions()}
             onClick={(item: ButtonMoreItem) => handleMoreAction(item, row)}
           />
-        </div>
+        </BusinessTableRowActions>
       )
     }
   ]
@@ -312,7 +328,7 @@
       key: 'delete',
       label: '删除',
       icon: 'ri:delete-bin-5-line',
-      color: '#f56c6c'
+      color: 'var(--el-color-danger)'
     }
   ]
 
@@ -343,25 +359,16 @@
   }
 
   const handleDelete = async (row: PartsCategory): Promise<void> => {
-    if (!row.id) return
-
-    try {
-      await confirmAction(
-        `确定删除零部件类别“${row.categoryName}”吗？子类别会一并删除，删除后无法恢复。`,
-        '删除确认',
-        {
-          confirmButtonText: '删除',
-          cancelButtonText: '取消',
-          type: 'warning',
-          confirmButtonType: 'danger'
-        }
-      )
-      await deletePartsCategory(row.id)
-      await treeRef.value?.refreshTree()
-      await tableQueryRef.value?.refreshRemove()
-    } catch {
-      // 用户取消删除时不需要额外提示。
-    }
+    const id = row.id ?? ''
+    await deleteRecord({
+      resource: { id, label: row.categoryName || row.categoryCode || '零部件类别' },
+      permission: 'PartsCategory:Delete',
+      remove: () => deletePartsCategory(id),
+      onDeleted: async () => {
+        await treeRef.value?.refreshTree()
+        await tableQueryRef.value?.refreshRemove()
+      }
+    })
   }
 
   const handleImportError = (): void => {

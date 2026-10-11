@@ -140,15 +140,8 @@
     }
   ])
 
-  const replaceForm = (nextForm: InsuranceCompanyForm): void => {
-    Object.keys(form).forEach((key) => {
-      delete form[key as keyof InsuranceCompanyForm]
-    })
-    Object.assign(form, nextForm)
-  }
-
   const resetForm = async (): Promise<void> => {
-    replaceForm(createInitialForm())
+    replaceReactiveModel(form, createInitialForm())
     await nextTick()
     formRef.value?.clearValidate()
   }
@@ -184,7 +177,7 @@
     if (isEdit) {
       const editData = structuredClone(toRaw(row)) as InsuranceCompanyForm
       editData.regionPath = editData.region?.split('/').filter(Boolean) || []
-      replaceForm(editData)
+      replaceReactiveModel(form, editData)
     }
 
     await dialogRef.value?.handleOpen(row, {
