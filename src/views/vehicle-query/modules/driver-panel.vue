@@ -53,7 +53,7 @@
       prop: 'enabled',
       label: '状态',
       width: 100,
-      dict: { code: 'commonBoolean', display: 'tag', value: (row) => String(row.enabled) }
+      dict: { code: 'commonBoolean', display: 'tag', value: (row) => String(row.enabled ?? '') }
     }
   ])
 </script>

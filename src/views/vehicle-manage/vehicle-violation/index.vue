@@ -196,7 +196,7 @@
         dict: {
           code: 'vehicleRecordProcessed',
           display: 'auto',
-          value: (row) => String(row.processed)
+          value: (row) => String(row.processed ?? '')
         }
       },
       { prop: 'createBy', label: '创建人', width: 130 }
