@@ -44,6 +44,7 @@
   import type { VehicleArchive, VehicleQuerySummary } from './modules/types'
   import { isNil } from 'lodash-es'
   import { canViewField, mergeFieldAccessMaps } from '@/utils/field-permission'
+  import { getVehicleUsageYears } from '@vms/utils/vehicle-lifecycle'
 
   defineOptions({ name: 'VehicleQuery' })
 
@@ -259,7 +260,7 @@
       insuranceReady: row.id ? (summaries[row.id]?.coverage.insuranceReady ?? false) : false,
       inspectionReady: row.id ? (summaries[row.id]?.coverage.inspectionReady ?? false) : false,
       maintenanceReady: row.id ? (summaries[row.id]?.coverage.maintenanceReady ?? false) : false,
-      operationYears: getOperationYears(row.startUseDate),
+      operationYears: getVehicleUsageYears(row.startUseDate, false),
       threeGuaranteeReady: !isNil(row.threeGuaranteeMileage) || !isNil(row.threeGuaranteeDuration),
       warrantyReady: !isNil(row.warrantyMileage) || !isNil(row.warrantyDuration)
     }))
@@ -312,13 +313,6 @@
       ))}
     </div>
   )
-
-  const getOperationYears = (startUseDate?: string): number | null => {
-    if (!startUseDate) return null
-    const start = new Date(startUseDate)
-    if (Number.isNaN(start.getTime())) return null
-    return Number(((Date.now() - start.getTime()) / (365.25 * 24 * 60 * 60 * 1000)).toFixed(1))
-  }
 
   const formatDecimal = (value?: number | null): string => {
     if (isNil(value)) return '--'

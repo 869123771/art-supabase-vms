@@ -46,6 +46,7 @@
   import { createDescriptionItems, formatDate, formatMileage } from './query-format'
   import { formatNumberValue } from '@/utils/ui/format'
   import { canViewField } from '@/utils/field-permission'
+  import { getVehicleUsageYears } from '@vms/utils/vehicle-lifecycle'
 
   defineOptions({ name: 'VehicleQuerySummary' })
 
@@ -56,8 +57,9 @@
   const emit = defineEmits<{ analyze: [] }>()
   const descriptionData = Object.freeze({})
 
-  const descriptionItems = computed(() =>
-    createDescriptionItems([
+  const descriptionItems = computed(() => {
+    const years = getVehicleUsageYears(props.vehicle.startUseDate)
+    return createDescriptionItems([
       { label: '车牌号', value: props.vehicle.plateNo },
       { label: '所属机构', value: props.vehicle.companyName },
       { label: '车型', value: props.vehicle.vehicleType, dictCode: 'vehicleType' },
@@ -72,7 +74,11 @@
         value: props.vehicle.operationStatus,
         dictCode: 'vehicleOperationStatus'
       },
-      { label: '运营时长', value: getOperationYears(), suffix: '年' },
+      {
+        label: '运营时长',
+        value: years === null ? undefined : formatNumberValue(years),
+        suffix: '年'
+      },
       { label: '运营行驶里程', value: formatMileage(props.summary.runningMileage) },
       { label: '商业险到期', value: formatDate(props.summary.commercialExpireDate) },
       { label: '交强险到期', value: formatDate(props.summary.compulsoryExpireDate) },
@@ -80,13 +86,5 @@
       { label: '下次保养里程', value: formatMileage(props.summary.nextMaintenanceMileage) },
       { label: '下次保养时间', value: formatDate(props.summary.nextMaintenanceDate) }
     ] satisfies InfoItem[])
-  )
-
-  const getOperationYears = (): string | undefined => {
-    if (!props.vehicle.startUseDate) return undefined
-    const startTime = new Date(props.vehicle.startUseDate).getTime()
-    if (Number.isNaN(startTime)) return undefined
-    const years = Math.max(0, (Date.now() - startTime) / (365.25 * 24 * 60 * 60 * 1000))
-    return formatNumberValue(Number(years.toFixed(1)))
-  }
+  })
 </script>

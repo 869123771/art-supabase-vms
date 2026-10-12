@@ -497,7 +497,7 @@
   .vehicle-archive-detail {
     min-height: 100%;
     padding: 16px;
-    background: var(--art-main-bg-color);
+    background: var(--default-box-color);
 
     &__header {
       :deep(.art-page-header__title-row) {

@@ -173,7 +173,7 @@
   .vehicle-query-detail {
     min-height: 100%;
     padding: var(--art-space-4);
-    background: var(--art-main-bg-color);
+    background: var(--default-box-color);
 
     &__body {
       display: grid;

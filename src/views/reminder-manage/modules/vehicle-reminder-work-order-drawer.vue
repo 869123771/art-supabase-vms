@@ -421,13 +421,13 @@
         margin: 3px 0 4px;
         font-size: 20px;
         line-height: 1.35;
-        color: var(--art-text-gray-900);
+        color: var(--el-text-color-primary);
       }
 
       p {
         margin: 0;
         line-height: 1.5;
-        color: var(--art-text-gray-600);
+        color: var(--el-text-color-secondary);
       }
     }
 
@@ -481,14 +481,14 @@
       span {
         margin-bottom: 5px;
         font-size: 12px;
-        color: var(--art-text-gray-500);
+        color: var(--el-text-color-secondary);
       }
 
       strong {
         overflow: hidden;
         text-overflow: ellipsis;
         font-weight: 600;
-        color: var(--art-text-gray-800);
+        color: var(--el-text-color-primary);
         white-space: nowrap;
       }
 
@@ -511,7 +511,7 @@
         margin: 2px 0 0;
         font-size: 12px;
         line-height: 1.5;
-        color: var(--art-text-gray-500);
+        color: var(--el-text-color-secondary);
       }
     }
 
@@ -543,13 +543,13 @@
       > strong {
         margin-top: 8px;
         font-size: 13px;
-        color: var(--art-text-gray-700);
+        color: var(--el-text-color-regular);
       }
 
       > span {
         margin-top: 3px;
         font-size: 12px;
-        color: var(--art-text-gray-500);
+        color: var(--el-text-color-secondary);
       }
 
       &.is-complete {
@@ -560,7 +560,7 @@
         }
 
         > strong {
-          color: var(--art-text-gray-900);
+          color: var(--el-text-color-primary);
         }
       }
 
@@ -583,7 +583,7 @@
       width: 32px;
       height: 32px;
       font-size: 15px;
-      color: var(--art-text-gray-400);
+      color: var(--el-text-color-secondary);
       background: var(--default-box-color);
       border: 1px solid var(--el-border-color);
       border-radius: 50%;
@@ -607,13 +607,13 @@
 
       span {
         font-size: 12px;
-        color: var(--art-text-gray-500);
+        color: var(--el-text-color-secondary);
       }
 
       p {
         margin: 6px 0 0;
         line-height: 1.6;
-        color: var(--art-text-gray-800);
+        color: var(--el-text-color-primary);
         overflow-wrap: anywhere;
       }
     }

@@ -1472,7 +1472,7 @@
   .vehicle-archive-edit {
     min-height: 100%;
     padding: var(--art-space-4) var(--art-space-4) 0;
-    background: var(--art-main-bg-color);
+    background: var(--default-box-color);
 
     :deep(> .art-async-state) {
       display: flex;

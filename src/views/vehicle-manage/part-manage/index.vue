@@ -65,6 +65,7 @@
   import { useUserStore } from '@/store/modules/user'
   import VehiclePartUsageDialog from './modules/vehicle-part-usage-dialog.vue'
   import { formatVehiclePartWarranty } from './modules/vehicle-part-display'
+  import { getVehicleUsageYears } from '@vms/utils/vehicle-lifecycle'
   import BusinessWorkspaceHeader, {
     type BusinessWorkspaceMetric
   } from '@/components/business/business-workspace-header/index.vue'
@@ -257,7 +258,9 @@
               label: '已使用时长（年）',
               width: 140,
               formatter: (row) =>
-                row.lifecycleLimitsMasked ? '***' : formatUsedYears(row.enableDate)
+                row.lifecycleLimitsMasked
+                  ? '***'
+                  : (getVehicleUsageYears(row.enableDate)?.toFixed(1) ?? '--')
             },
             {
               prop: 'serviceMileage',
@@ -321,14 +324,6 @@
   const handleTableSuccess: NonNullable<ArtTableQueryProps['onSuccess']> = (rows, response) => {
     overview.rows = rows as Usage[]
     overview.total = response.total ?? rows.length
-  }
-
-  const formatUsedYears = (enableDate?: string | null): string => {
-    if (!enableDate) return '--'
-    const start = new Date(enableDate)
-    if (Number.isNaN(start.getTime())) return '--'
-    const years = Math.max(0, (Date.now() - start.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-    return years.toFixed(1)
   }
 
   const openDialog = (row?: Usage): void => {

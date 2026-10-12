@@ -1,6 +1,6 @@
 <template>
   <ArtPageShell
-    class="vehicle-part-usage-detail min-h-full p-4 bg-[var(--art-main-bg-color)]"
+    class="vehicle-part-usage-detail min-h-full p-4 bg-[var(--default-box-color)]"
     :loading="page.loading"
     loading-mode="skeleton"
     :error="page.error"

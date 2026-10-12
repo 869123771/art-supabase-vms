@@ -25,9 +25,9 @@
   import ArtPageSection from '@/components/core/layouts/art-page-section/index.vue'
   import VehicleQueryTable from './vehicle-query-table.vue'
   import type { VehicleArchive, VehiclePartUsage } from './types'
-  import { formatDate, formatValue } from './query-format'
+  import { formatDate } from './query-format'
   import { useVehiclePanelList } from './use-vehicle-panel-list'
-  import { isNil } from 'lodash-es'
+  import { getVehicleUsageYears } from '@vms/utils/vehicle-lifecycle'
   import { canViewField, mergeFieldAccessMaps } from '@/utils/field-permission'
   import { formatVehiclePartWarranty } from '@vms/views/vehicle-manage/part-manage/modules/vehicle-part-display'
 
@@ -108,7 +108,9 @@
             label: '已使用时长（年）',
             width: 150,
             formatter: (row) =>
-              row.lifecycleLimitsMasked ? '***' : formatUsedYears(row.enableDate)
+              row.lifecycleLimitsMasked
+                ? '***'
+                : (getVehicleUsageYears(row.enableDate)?.toFixed(1) ?? '--')
           },
           {
             prop: 'serviceMileage',
@@ -131,12 +133,4 @@
       dict: { code: 'vehiclePartUsageStatus', display: 'auto' }
     }
   ])
-
-  const formatUsedYears = (enableDate?: string | null): string => {
-    if (isNil(enableDate) || enableDate === '') return '--'
-    const start = new Date(enableDate)
-    if (Number.isNaN(start.getTime())) return '--'
-    const years = Math.max(0, (Date.now() - start.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-    return formatValue(years.toFixed(1))
-  }
 </script>
