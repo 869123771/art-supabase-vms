@@ -116,14 +116,11 @@
                 >
                   <span class="vehicle-type-tab__spec-heading">
                     <strong>{{ vehicleTypeProfileLabel(profile) }}</strong>
-                    <ElTag
-                      :type="profile.status === '1' ? 'success' : 'info'"
-                      size="small"
-                      effect="light"
-                      round
-                    >
-                      {{ profile.status === '1' ? '启用' : '禁用' }}
-                    </ElTag>
+                    <ArtDictDisplay
+                      dict-code="commonEnabledStatus"
+                      :value="profile.status === '1' ? 'enabled' : 'disabled'"
+                      display="tag"
+                    />
                   </span>
                   <span>
                     容积 {{ profile.volumeM3 == null ? '未配置' : `${profile.volumeM3} 立方米` }} ·
@@ -297,14 +294,7 @@
 <script setup lang="ts">
   import { replaceReactiveModel } from '@/utils/form/model'
   import ArtEmptyState from '@/components/core/feedback/art-empty-state/index.vue'
-  import {
-    ElButton,
-    ElImage,
-    ElInputNumber,
-    ElTag,
-    ElTreeV2,
-    type TreeV2Instance
-  } from 'element-plus'
+  import { ElButton, ElImage, ElInputNumber, ElTreeV2, type TreeV2Instance } from 'element-plus'
   import { ElAutoResizer } from 'element-plus/es/components/table-v2/index.mjs'
   import { useElementSize, useWindowSize } from '@vueuse/core'
   import type { FormRules } from 'element-plus'
@@ -314,9 +304,11 @@
   import ArtForm, { type FormItem } from '@/components/core/forms/art-form/index.vue'
   import ArtUploadImage from '@/components/core/forms/art-upload-image/index.vue'
   import ArtSvgIcon from '@/components/core/base/art-svg-icon/index.vue'
+  import ArtDictDisplay from '@/components/core/base/art-dict-display/index.vue'
   import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import VehicleTypeArt from './vehicle-type-art.vue'
   import { useArtFeedback } from '@/hooks/core/useArtFeedback'
+  import { useDictionaryOptions } from '@/hooks/core/useDictionaryOptions'
   import { useAuth } from '@/hooks/core/useAuth'
   import { useTenantScopeStore } from '@/store/modules/tenant-scope'
   import { useUserStore } from '@/store/modules/user'
@@ -361,6 +353,9 @@
   const tenantScopeStore = useTenantScopeStore()
   const userStore = useUserStore()
   const { getDictMap } = storeToRefs(userStore)
+  const profileStatusOptions = useDictionaryOptions<'1' | '2'>('commonEnabledStatus', (value) =>
+    value === 'enabled' ? '1' : '2'
+  )
   const { effectiveTenantId, isAllTenants } = storeToRefs(tenantScopeStore)
   const categories = computed(() =>
     (getDictMap.value.vehicleTypeCategory ?? []).map((option) => option.value).filter(Boolean)
@@ -513,10 +508,7 @@
       key: 'status',
       type: 'segment',
       span: 12,
-      options: [
-        { label: '启用', value: '1' },
-        { label: '禁用', value: '2' }
-      ]
+      options: profileStatusOptions
     },
     { label: '方案颜色', key: 'schemeColor', type: 'colorPicker', span: 12 },
     { label: '标签样式', key: 'tagStyle', type: 'tagStyleSelect', span: 12 },
