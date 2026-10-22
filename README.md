@@ -4,13 +4,13 @@
   <p>统一车辆档案、证照合规、维修保养、事故违章、零部件、里程与风险提醒。</p>
 
   <p>
-    <a href="https://gitee.com/wangyanghub/art-supabase-vms">Gitee</a>
+    <a href="https://gitee.com/art-si/art-supabase-vms">Gitee</a>
     ·
-    <a href="https://github.com/869123771/art-supabase-vms">GitHub</a>
+    <a href="https://github.com/art-si/art-supabase-vms">GitHub</a>
     ·
-    <a href="https://gitee.com/wangyanghub/art-supabase-pro">主平台</a>
+    <a href="https://gitee.com/art-si/art-supabase-pro">主平台</a>
     ·
-    <a href="https://869123771.github.io/art-supabase-doc/modules/vms">使用文档</a>
+    <a href="https://art-si.github.io/art-supabase-doc/modules/vms">使用文档</a>
   </p>
 </div>
 
@@ -18,7 +18,7 @@
 
 亿企工场 VMS 是亿企工场的车辆管理业务应用。它以车辆档案为主线，聚合司机、证照、保险、年检、维修、事故、违章、例检、里程、零部件与设备信息，支持从建档审核到退役提醒的连续治理。
 
-本仓只维护 VMS 页面、业务 API、领域类型、车辆规则与专属 Edge Function。认证、租户、菜单、权限、布局、路由、公共组件、Store 和 Supabase 公共客户端由 [`art-supabase-pro`](https://gitee.com/wangyanghub/art-supabase-pro) 统一提供。
+本仓只维护 VMS 页面、业务 API、领域类型、车辆规则与专属 Edge Function。认证、租户、菜单、权限、布局、路由、公共组件、Store 和 Supabase 公共客户端由 [`art-supabase-pro`](https://gitee.com/art-si/art-supabase-pro) 统一提供。
 
 ![车辆全生命周期档案](screenshots/vehicle-lifecycle.png)
 
