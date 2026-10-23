@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { getVehicleUsageYears } from '../../src/utils/vehicle-lifecycle'
+import { getVehicleUsageYears } from '../../src/views/vehicle-manage/modules/vehicle-lifecycle'
 
 const now = Date.parse('2026-10-12T00:00:00Z')
 

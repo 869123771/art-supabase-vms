@@ -65,7 +65,7 @@
   import { useUserStore } from '@/store/modules/user'
   import VehiclePartUsageDialog from './modules/vehicle-part-usage-dialog.vue'
   import { formatVehiclePartWarranty } from './modules/vehicle-part-display'
-  import { getVehicleUsageYears } from '@vms/utils/vehicle-lifecycle'
+  import { getVehicleUsageYears } from '@vms/views/vehicle-manage/modules/vehicle-lifecycle'
   import BusinessWorkspaceHeader, {
     type BusinessWorkspaceMetric
   } from '@/components/business/business-workspace-header/index.vue'

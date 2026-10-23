@@ -46,7 +46,7 @@
   import { createDescriptionItems, formatDate, formatMileage } from './query-format'
   import { formatNumberValue } from '@/utils/ui/format'
   import { canViewField } from '@/utils/field-permission'
-  import { getVehicleUsageYears } from '@vms/utils/vehicle-lifecycle'
+  import { getVehicleUsageYears } from '@vms/views/vehicle-manage/modules/vehicle-lifecycle'
 
   defineOptions({ name: 'VehicleQuerySummary' })
 

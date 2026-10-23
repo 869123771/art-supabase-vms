@@ -44,7 +44,7 @@
   import type { VehicleArchive, VehicleQuerySummary } from './modules/types'
   import { isNil } from 'lodash-es'
   import { canViewField, mergeFieldAccessMaps } from '@/utils/field-permission'
-  import { getVehicleUsageYears } from '@vms/utils/vehicle-lifecycle'
+  import { getVehicleUsageYears } from '@vms/views/vehicle-manage/modules/vehicle-lifecycle'
 
   defineOptions({ name: 'VehicleQuery' })
 

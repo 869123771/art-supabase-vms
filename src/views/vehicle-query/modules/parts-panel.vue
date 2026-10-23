@@ -27,7 +27,7 @@
   import type { VehicleArchive, VehiclePartUsage } from './types'
   import { formatDate } from './query-format'
   import { useVehiclePanelList } from './use-vehicle-panel-list'
-  import { getVehicleUsageYears } from '@vms/utils/vehicle-lifecycle'
+  import { getVehicleUsageYears } from '@vms/views/vehicle-manage/modules/vehicle-lifecycle'
   import { canViewField, mergeFieldAccessMaps } from '@/utils/field-permission'
   import { formatVehiclePartWarranty } from '@vms/views/vehicle-manage/part-manage/modules/vehicle-part-display'
 
